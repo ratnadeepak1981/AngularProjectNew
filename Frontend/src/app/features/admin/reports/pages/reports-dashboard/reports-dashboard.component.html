@@ -1,0 +1,2691 @@
+<div class="space-y-6 pb-12">
+  <!-- ========================================================================= -->
+  <!-- 1. DEDICATED VISUAL ANALYTICS & CHARTS DASHBOARD PAGE (/admin/analytics)  -->
+  <!-- ========================================================================= -->
+  @if (isAnalyticsRoute()) {
+    <div class="space-y-6 animate-fadeIn">
+      <!-- Top Analytics Header Banner -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-blue-700 flex items-center justify-center text-3xl shadow-lg font-black shrink-0">
+            📈
+          </div>
+          <div>
+            <div class="text-[11px] font-black uppercase tracking-widest text-indigo-400">
+              {{ institutionName }} • VISUAL BUSINESS INTELLIGENCE
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
+              Executive Analytics & Interactive Charts
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Multi-dimensional Bar, Line, and Pie vector charts with full Audit-Logs filter controls and Excel export
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- Chart Mode Switcher Buttons -->
+          <div class="bg-slate-800/80 p-1 rounded-2xl border border-slate-700 flex items-center gap-1">
+            <button
+              type="button"
+              (click)="setChartDisplayMode('all')"
+              [class.bg-blue-600]="chartDisplayMode() === 'all'"
+              [class.text-white]="chartDisplayMode() === 'all'"
+              [class.text-slate-400]="chartDisplayMode() !== 'all'"
+              class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>🌟</span> All Charts
+            </button>
+            <button
+              type="button"
+              (click)="setChartDisplayMode('bar')"
+              [class.bg-blue-600]="chartDisplayMode() === 'bar'"
+              [class.text-white]="chartDisplayMode() === 'bar'"
+              [class.text-slate-400]="chartDisplayMode() !== 'bar'"
+              class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>📊</span> Bar
+            </button>
+            <button
+              type="button"
+              (click)="setChartDisplayMode('line')"
+              [class.bg-blue-600]="chartDisplayMode() === 'line'"
+              [class.text-white]="chartDisplayMode() === 'line'"
+              [class.text-slate-400]="chartDisplayMode() !== 'line'"
+              class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>📈</span> Line
+            </button>
+            <button
+              type="button"
+              (click)="setChartDisplayMode('pie')"
+              [class.bg-blue-600]="chartDisplayMode() === 'pie'"
+              [class.text-white]="chartDisplayMode() === 'pie'"
+              [class.text-slate-400]="chartDisplayMode() !== 'pie'"
+              class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+            >
+              <span>🥧</span> Pie
+            </button>
+          </div>
+
+          <button
+            type="button"
+            (click)="onExportExcelReport()"
+            class="px-4 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg hover:shadow-emerald-600/30 transition-all flex items-center gap-2 cursor-pointer border border-emerald-500/40"
+            title="Export current analytics dataset to Microsoft Excel (.xlsx)"
+          >
+            <span>📊</span>
+            <span>Export to Excel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Reusable Operational Domain Tab Bar -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs px-2 pt-2">
+        <app-tab-component
+          [tabs]="tabs"
+          [activeTabId]="activeTab"
+          variant="3d"
+          (tabChange)="selectTab($event)"
+        ></app-tab-component>
+      </div>
+
+      <!-- Domain Module Card Container with Internal 2-Tabs (Chart vs Data) -->
+      @if (loading()) {
+        <div class="py-20 flex flex-col items-center justify-center gap-3">
+          <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p class="text-xs font-semibold text-slate-400">Loading Analytics & Computing Visual Metrics...</p>
+        </div>
+      } @else {
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-6">
+          <!-- Module Card Top Banner with Reusable 2-Tab Component & Export Actions -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-2xl font-black shrink-0">
+                @switch (activeTab) {
+                  @case ('kpi') { 📊 }
+                  @case ('students') { 🎓 }
+                  @case ('student-pending') { 📋 }
+                  @case ('hostels') { 🏢 }
+                  @case ('hostel-rooms') { 🛏️ }
+                  @case ('hostel-pending') { ⏳ }
+                  @case ('labs') { 💻 }
+                  @case ('lab-directory') { 🖥️ }
+                  @case ('billing') { 💳 }
+                  @case ('complaints') { 📝 }
+                  @case ('complaint-categories-sla') { ⏱️ }
+                  @case ('certificates') { 📜 }
+                  @case ('certificate-types') { 🏷️ }
+                  @case ('events') { 📅 }
+                  @case ('venues') { 🏛️ }
+                  @case ('notifications') { 📡 }
+                  @default { 📈 }
+                }
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300">
+                    Live Analytics Module
+                  </span>
+                  <span class="text-[10px] text-slate-400">• Database Synchronized</span>
+                </div>
+                <h3 class="text-base font-black text-slate-900 dark:text-white mt-0.5">
+                  @switch (activeTab) {
+                    @case ('kpi') { Executive Institutional Operations & Capacity Overview }
+                    @case ('students') { Student Demographics & Faculty Enrollment Intelligence }
+                    @case ('student-pending') { Pending Student Registrations & Verification Queue }
+                    @case ('hostels') { Campus Hostel Occupancy & Capacity Utilization }
+                    @case ('hostel-rooms') { Hostel Rooms & Bed Inventory Directory }
+                    @case ('hostel-pending') { Pending Hostel Allocation Applications Queue }
+                    @case ('labs') { Computer Lab Workstation Utilization & Schedules }
+                    @case ('lab-directory') { IT Lab Directory & Layout Configurations }
+                    @case ('billing') { Financial Fee Revenue & Ledger Transactions }
+                    @case ('complaints') { Student Grievances Resolution & SLA Triage }
+                    @case ('complaint-categories-sla') { Grievance Categories & SLA Performance }
+                    @case ('certificates') { Registry Clearance & Certificate Issuance }
+                    @case ('certificate-types') { Certificate Types & Service Catalog SLAs }
+                    @case ('events') { Campus Events & Venue Attendance Analytics }
+                    @case ('venues') { Event Venues & Facility Capacity Directory }
+                    @case ('notifications') { System Notification Dispatch & Engagement Audit }
+                    @default { Analytics Overview }
+                  }
+                </h3>
+              </div>
+            </div>
+
+            <!-- Reusable Internal 2-Tab Component (Chart vs Data) & Action Buttons -->
+            <div class="flex items-center gap-3 flex-wrap">
+              <div class="min-w-[280px]">
+                <app-tab-component
+                  [tabs]="moduleSubTabs"
+                  [activeTabId]="activeModuleSubTab()"
+                  variant="3d"
+                  (tabChange)="setModuleSubTab($any($event))"
+                ></app-tab-component>
+              </div>
+
+              <!-- Export Buttons -->
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="onExportExcelReport()"
+                  class="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  title="Export current domain dataset to Excel (.xlsx)"
+                >
+                  <span>📊</span>
+                  <span>Excel</span>
+                </button>
+                <button
+                  type="button"
+                  (click)="onExportCsvReport()"
+                  class="px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer"
+                  title="Export current domain dataset to CSV"
+                >
+                  <span>📥</span>
+                  <span>CSV</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================================= -->
+          <!-- SUB-TAB 1: 📊 VISUAL CHARTS, REUSABLE CARDS & OPERATIONAL KPI -->
+          <!-- ============================================================= -->
+          @if (activeModuleSubTab() === 'chart') {
+            <div class="space-y-6 animate-fadeIn">
+              <!-- 1. KPI TAB CHARTS -->
+              @if (activeTab === 'kpi' && kpiData) {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <app-dashboard-card
+                      title="Total Enrolled"
+                      [value]="kpiData.totalStudents"
+                      icon="👨‍🎓"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                      linkText="Active: "
+                      [linkRoute]="'/admin/students'"
+                    />
+                    <app-dashboard-card
+                      title="Hostel Occupancy"
+                      [value]="(kpiData.occupancyRate | number:'1.1-1') + '%'"
+                      icon="🏢"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                      linkText="Capacity: "
+                      [linkRoute]="'/admin/hostels'"
+                    />
+                    <app-amount-card
+                      title="Total Fee Collection"
+                      [amount]="'Rs. ' + (kpiData.totalPaidAmount | number:'1.0-0')"
+                      icon="💳"
+                      variant="purple"
+                    />
+                    <app-dashboard-card
+                      title="Complaint Resolution"
+                      [value]="kpiData.resolvedComplaints + ' / ' + kpiData.totalComplaints"
+                      icon="🛠️"
+                      iconVariant="amber"
+                      valueVariant="amber"
+                      linkText="Pending: "
+                      [linkRoute]="'/admin/complaints'"
+                    />
+                  </div>
+
+                  <!-- 4 SVG Radial Meters -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Meter 1: Students -->
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/50 border border-blue-200 dark:border-slate-800 rounded-2xl shadow-xs flex items-center justify-between">
+                      <div>
+                        <div class="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Total Enrolled</div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">{{ kpiData.totalStudents }}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Active: <strong class="text-blue-600">{{ kpiData.activeStudents }}</strong></div>
+                      </div>
+                      <div class="relative w-14 h-14 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="12" fill="none" class="dark:stroke-slate-800" />
+                          <circle cx="50" cy="50" r="40" stroke="#3b82f6" stroke-width="12" fill="none" stroke-linecap="round"
+                            [attr.stroke-dasharray]="((kpiData.totalStudents > 0 ? (kpiData.activeStudents / kpiData.totalStudents) : 1) * donutCircumference) + ' ' + donutCircumference" />
+                        </svg>
+                        <span class="absolute text-[10px] font-black text-blue-600">
+                          {{ kpiData.totalStudents > 0 ? ((kpiData.activeStudents / kpiData.totalStudents) * 100 | number:'1.0-0') : 100 }}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Meter 2: Hostels -->
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/50 border border-emerald-200 dark:border-slate-800 rounded-2xl shadow-xs flex items-center justify-between">
+                      <div>
+                        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Hostel Occupancy</div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">{{ kpiData.occupancyRate | number:'1.1-1' }}%</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5"><strong class="text-emerald-600">{{ kpiData.allocatedBeds }}</strong> / {{ kpiData.totalBedsCapacity }} Beds</div>
+                      </div>
+                      <div class="relative w-14 h-14 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="12" fill="none" class="dark:stroke-slate-800" />
+                          <circle cx="50" cy="50" r="40" stroke="#10b981" stroke-width="12" fill="none" stroke-linecap="round"
+                            [attr.stroke-dasharray]="((kpiData.occupancyRate / 100) * donutCircumference) + ' ' + donutCircumference" />
+                        </svg>
+                        <span class="absolute text-[10px] font-black text-emerald-600">
+                          {{ kpiData.occupancyRate | number:'1.0-0' }}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Meter 3: Billing -->
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/50 border border-indigo-200 dark:border-slate-800 rounded-2xl shadow-xs flex items-center justify-between">
+                      <div>
+                        <div class="text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wider">Fee Collection Rate</div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">{{ kpiData.collectionRate | number:'1.1-1' }}%</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Rs. <strong class="text-indigo-600">{{ kpiData.totalPaidAmount | number:'1.0-0' }}</strong></div>
+                      </div>
+                      <div class="relative w-14 h-14 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="12" fill="none" class="dark:stroke-slate-800" />
+                          <circle cx="50" cy="50" r="40" stroke="#6366f1" stroke-width="12" fill="none" stroke-linecap="round"
+                            [attr.stroke-dasharray]="((kpiData.collectionRate / 100) * donutCircumference) + ' ' + donutCircumference" />
+                        </svg>
+                        <span class="absolute text-[10px] font-black text-indigo-600">
+                          {{ kpiData.collectionRate | number:'1.0-0' }}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Meter 4: Complaints -->
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/50 border border-amber-200 dark:border-slate-800 rounded-2xl shadow-xs flex items-center justify-between">
+                      <div>
+                        <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Complaint Resolution</div>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">{{ kpiData.resolvedComplaints }} / {{ kpiData.totalComplaints }}</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Pending: <strong class="text-amber-600">{{ kpiData.pendingComplaints }}</strong></div>
+                      </div>
+                      <div class="relative w-14 h-14 flex items-center justify-center">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                          <circle cx="50" cy="50" r="40" stroke="#e2e8f0" stroke-width="12" fill="none" class="dark:stroke-slate-800" />
+                          <circle cx="50" cy="50" r="40" stroke="#f59e0b" stroke-width="12" fill="none" stroke-linecap="round"
+                            [attr.stroke-dasharray]="(kpiData.totalComplaints > 0 ? ((kpiData.resolvedComplaints / kpiData.totalComplaints) * donutCircumference) : 0) + ' ' + donutCircumference" />
+                        </svg>
+                        <span class="absolute text-[10px] font-black text-amber-600">
+                          {{ kpiData.totalComplaints > 0 ? ((kpiData.resolvedComplaints / kpiData.totalComplaints) * 100 | number:'1.0-0') : 0 }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Operational Breakdown Table -->
+                  <div class="bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+                    <div class="p-4 bg-slate-100 dark:bg-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                      <span>🏛️ University Institutional Operations & Capacity Summary</span>
+                      <span class="text-[10px] text-slate-500 font-medium">Live Database Sync</span>
+                    </div>
+                    <table class="w-full text-xs">
+                      <tbody>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300 w-1/3">Student Enrollment</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Total Enrolled: <strong>{{ kpiData.totalStudents }}</strong> | Active Accounts: <strong>{{ kpiData.activeStudents }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/40">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">Hostel & Accommodation</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Hostels: <strong>{{ kpiData.totalHostels }}</strong> | Rooms: <strong>{{ kpiData.totalRooms }}</strong> | Occupied: <strong>{{ kpiData.allocatedBeds }}/{{ kpiData.totalBedsCapacity }}</strong> ({{ kpiData.occupancyRate }}%)</td>
+                        </tr>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">Computer Labs & Workstations</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Total Labs: <strong>{{ kpiData.totalLabs }}</strong> | Workstations: <strong>{{ kpiData.totalWorkstations }}</strong> | Active Bookings Today: <strong>{{ kpiData.activeBookingsToday }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/40">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">Financial Revenue & Ledger</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Total Billed: <strong>Rs. {{ kpiData.totalBilledAmount | number:'1.2-2' }}</strong> | Collected: <strong>Rs. {{ kpiData.totalPaidAmount | number:'1.2-2' }}</strong> ({{ kpiData.collectionRate }}%)</td>
+                        </tr>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">Complaints Resolution</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Total Complaints: <strong>{{ kpiData.totalComplaints }}</strong> | In Progress: <strong>{{ kpiData.inProgressComplaints }}</strong> | Resolved: <strong>{{ kpiData.resolvedComplaints }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/40">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">Certificates & Clearance</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Total Requests: <strong>{{ kpiData.totalCertificateRequests }}</strong> | Pending: <strong>{{ kpiData.pendingCertificateRequests }}</strong> | Approved: <strong>{{ kpiData.approvedCertificateRequests }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-200 dark:border-slate-800/60">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">Campus Events</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Active Events: <strong>{{ kpiData.activeEvents }}/{{ kpiData.totalEvents }}</strong> | Total Attendees: <strong>{{ kpiData.totalEventAttendees }}</strong></td>
+                        </tr>
+                        <tr class="bg-white/50 dark:bg-slate-900/40">
+                          <td class="p-3.5 font-bold text-slate-700 dark:text-slate-300">System Notifications</td>
+                          <td class="p-3.5 text-slate-900 dark:text-slate-200">Dispatched: <strong>{{ kpiData.totalNotificationsSent }}</strong> | Unread: <strong>{{ kpiData.unreadNotifications }}</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+
+              <!-- 2. STUDENTS TAB CHARTS -->
+              @if (activeTab === 'students' || activeTab === 'student-pending') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Total Enrolled Students"
+                      [value]="totalCount"
+                      icon="👨‍🎓"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                      linkText="Master Intake"
+                      [linkRoute]="'/admin/students'"
+                    />
+                    <app-dashboard-card
+                      title="Active Academic Faculties"
+                      [value]="facultySummaries.length"
+                      icon="🏛️"
+                      iconVariant="purple"
+                      valueVariant="purple"
+                    />
+                    <app-dashboard-card
+                      title="Average / Faculty"
+                      [value]="facultyAveragePerDepartment"
+                      icon="📊"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                    />
+                  </div>
+
+                  @if (facultySummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-6">
+                      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center gap-2.5">
+                          <span class="text-xl">🎓</span>
+                          <div>
+                            <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                              Faculty Enrollment Analytics: Multi-View Visual Intelligence
+                            </h4>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                              Interactive Bar, Line Trend, and Pie proportion distribution across all faculties
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- 1. PIE / DONUT -->
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'pie') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 w-full flex items-center justify-between">
+                              <span>🥧 Pie / Donut Proportion</span>
+                              <span class="text-[10px] text-blue-600 font-black">{{ totalCount }} Students</span>
+                            </div>
+                            <div class="relative w-36 h-36 my-2">
+                              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                                @for (seg of facultyDonutSegments; track seg.name) {
+                                  <circle
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    [attr.stroke]="seg.color"
+                                    stroke-width="14"
+                                    fill="none"
+                                    [attr.stroke-dasharray]="seg.strokeDasharray"
+                                    [attr.stroke-dashoffset]="seg.strokeDashoffset"
+                                  />
+                                }
+                              </svg>
+                              <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span class="text-base font-black text-slate-900 dark:text-white">{{ totalCount }}</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase">Enrolled</span>
+                              </div>
+                            </div>
+                            <div class="w-full space-y-1 mt-2">
+                              @for (fac of facultyDonutSegments; track fac.name) {
+                                <div class="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-300">
+                                  <span class="flex items-center gap-1.5 truncate">
+                                    <span class="w-2 h-2 rounded-full shrink-0" [style.backgroundColor]="fac.color"></span>
+                                    <span class="truncate">{{ fac.name }}</span>
+                                  </span>
+                                  <span class="font-bold">{{ fac.percentage }}%</span>
+                                </div>
+                              }
+                            </div>
+                          </div>
+                        }
+
+                        <!-- 2. BAR CHART -->
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'bar') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📊 Total vs Active Students</span>
+                              <span class="text-[10px] text-slate-500 font-semibold">Faculty Comparison</span>
+                            </div>
+                            <div class="h-44 flex items-end justify-around gap-2 pt-6 pb-2 border-b border-slate-200 dark:border-slate-700">
+                              @for (b of facultyBarChart; track b.name) {
+                                <div class="flex-1 flex flex-col items-center h-full justify-end group/bar relative">
+                                  <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                    {{ b.count }}
+                                  </span>
+                                  <div class="w-full flex items-end justify-center gap-0.5 h-full">
+                                    <div class="w-1/2 bg-blue-500 rounded-t-sm" [style.height.%]="b.heightPercent" title="Total: {{ b.count }}"></div>
+                                    <div class="w-1/2 bg-emerald-500 rounded-t-sm" [style.height.%]="b.count > 0 ? (b.active / b.count) * b.heightPercent : 0" title="Active: {{ b.active }}"></div>
+                                  </div>
+                                  <span class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[50px] text-center" [title]="b.name">
+                                    {{ b.name }}
+                                  </span>
+                                </div>
+                              }
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Blue (Total Enrolled) vs Green (Active Accounts)
+                            </div>
+                          </div>
+                        }
+
+                        <!-- 3. LINE / TREND CHART -->
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'line') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📈 Enrollment Trend Distribution</span>
+                              <span class="text-[10px] text-blue-600 font-bold">Trend Curve</span>
+                            </div>
+                            <div class="h-44 w-full flex items-center justify-center">
+                              <svg class="w-full h-full" viewBox="0 0 500 150">
+                                <defs>
+                                  <linearGradient id="facGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.4" />
+                                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <line x1="20" y1="130" x2="480" y2="130" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <line x1="20" y1="75" x2="480" y2="75" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <path [attr.d]="facultyLineChart.areaPath" fill="url(#facGrad)" />
+                                <path [attr.d]="facultyLineChart.path" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                @for (p of facultyLineChart.points; track p.name) {
+                                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#ffffff" stroke="#2563eb" stroke-width="2.5">
+                                    <title>{{ p.name }}: {{ p.count }} students</title>
+                                  </circle>
+                                  <text [attr.x]="p.x" [attr.y]="p.y - 8" text-anchor="middle" font-size="10" font-weight="bold" fill="#2563eb">
+                                    {{ p.count }}
+                                  </text>
+                                }
+                              </svg>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Comparative intake curve across departments
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 3. HOSTELS TAB CHARTS -->
+              @if (activeTab === 'hostels' || activeTab === 'hostel-rooms' || activeTab === 'hostel-pending') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Total Bed Capacity"
+                      [value]="hostelOccupancyStats.totalBeds"
+                      icon="🏢"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                      linkText="Manage Rooms"
+                      [linkRoute]="'/admin/hostels'"
+                    />
+                    <app-dashboard-card
+                      title="Occupied Beds"
+                      [value]="hostelOccupancyStats.occupied"
+                      icon="🛏️"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                    />
+                    <app-dashboard-card
+                      title="Overall Occupancy Rate"
+                      [value]="hostelOccupancyStats.rate + '%'"
+                      icon="📈"
+                      iconVariant="amber"
+                      valueVariant="amber"
+                    />
+                  </div>
+
+                  @if (hostelSummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-6">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">🏢</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            Campus Hostel Occupancy: Bar, Line & Radial Gauge Intelligence
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Block-wise bed capacities, occupancy loads, and capacity utilization curves
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'pie') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 w-full flex items-center justify-between">
+                              <span>🥧 Radial Capacity Gauge</span>
+                              <span class="text-[10px] text-emerald-600 font-black">{{ hostelOccupancyStats.rate }}% Full</span>
+                            </div>
+                            <div class="relative w-36 h-36 my-2">
+                              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="40"
+                                  stroke="#10b981"
+                                  stroke-width="14"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  [attr.stroke-dasharray]="hostelOccupancyStats.dasharray"
+                                />
+                              </svg>
+                              <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span class="text-xl font-black text-emerald-600">{{ hostelOccupancyStats.rate }}%</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase">Occupied</span>
+                              </div>
+                            </div>
+                            <div class="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-2 text-center">
+                              {{ hostelOccupancyStats.occupied }} / {{ hostelOccupancyStats.totalBeds }} Beds Occupied
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'bar') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📊 Block Beds (Occupied / Total)</span>
+                              <span class="text-[10px] text-slate-500 font-semibold">Dual Stack</span>
+                            </div>
+                            <div class="h-44 flex items-end justify-around gap-3 pt-6 pb-2 border-b border-slate-200 dark:border-slate-700">
+                              @for (h of hostelBarChart; track h.name) {
+                                <div class="flex-1 flex flex-col items-center h-full justify-end group/bar relative">
+                                  <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                    {{ h.occupied }}/{{ h.capacity }}
+                                  </span>
+                                  <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-t-lg overflow-hidden flex flex-col justify-end" [style.height.%]="h.capacityPercent">
+                                    <div class="w-full bg-emerald-500 rounded-t-lg transition-all duration-500" [style.height.%]="h.rate"></div>
+                                  </div>
+                                  <span class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[50px] text-center" [title]="h.name">
+                                    {{ h.name }}
+                                  </span>
+                                </div>
+                              }
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Green fill indicates occupied beds within total capacity
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'line') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📈 Occupancy Rate Curve</span>
+                              <span class="text-[10px] text-emerald-600 font-bold">% Load Trend</span>
+                            </div>
+                            <div class="h-44 w-full flex items-center justify-center">
+                              <svg class="w-full h-full" viewBox="0 0 500 150">
+                                <defs>
+                                  <linearGradient id="hostelGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#10b981" stop-opacity="0.4" />
+                                    <stop offset="100%" stop-color="#10b981" stop-opacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <line x1="20" y1="130" x2="480" y2="130" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <line x1="20" y1="75" x2="480" y2="75" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <path [attr.d]="hostelLineChart.areaPath" fill="url(#hostelGrad)" />
+                                <path [attr.d]="hostelLineChart.path" fill="none" stroke="#059669" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                @for (p of hostelLineChart.points; track p.name) {
+                                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#ffffff" stroke="#059669" stroke-width="2.5">
+                                    <title>{{ p.name }}: {{ p.rate }}% ({{ p.occupied }}/{{ p.capacity }} beds)</title>
+                                  </circle>
+                                  <text [attr.x]="p.x" [attr.y]="p.y - 8" text-anchor="middle" font-size="10" font-weight="bold" fill="#059669">
+                                    {{ p.rate }}%
+                                  </text>
+                                }
+                              </svg>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Hostel building occupancy efficiency curve
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 4. LABS TAB CHARTS -->
+              @if (activeTab === 'labs' || activeTab === 'lab-directory') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Computer Labs"
+                      [value]="labUtilizationStats.totalLabs"
+                      icon="🧪"
+                      iconVariant="purple"
+                      valueVariant="purple"
+                      linkText="Lab Builder"
+                      [linkRoute]="'/admin/labs'"
+                    />
+                    <app-dashboard-card
+                      title="Total Booking Sessions"
+                      [value]="labUtilizationStats.totalBookings"
+                      icon="💻"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                    />
+                    <app-dashboard-card
+                      title="Booking Approval Rate"
+                      [value]="labUtilizationStats.rate + '%'"
+                      icon="📊"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                    />
+                  </div>
+
+                  @if (labSummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-6">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">💻</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            IT Computer Labs: Bar, Line & Utilization Analytics
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Workstation booking sessions, approval volume, and lab schedules
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'pie') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 w-full flex items-center justify-between">
+                              <span>🥧 Booking Approval Gauge</span>
+                              <span class="text-[10px] text-cyan-600 font-black">{{ labUtilizationStats.rate }}% Approved</span>
+                            </div>
+                            <div class="relative w-36 h-36 my-2">
+                              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="40"
+                                  stroke="#06b6d4"
+                                  stroke-width="14"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  [attr.stroke-dasharray]="labUtilizationStats.dasharray"
+                                />
+                              </svg>
+                              <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span class="text-xl font-black text-cyan-600">{{ labUtilizationStats.rate }}%</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase">Approved</span>
+                              </div>
+                            </div>
+                            <div class="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-2 text-center">
+                              {{ labUtilizationStats.approvedBookings }} / {{ labUtilizationStats.totalBookings }} Bookings Approved
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'bar') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📊 Total vs Approved Bookings</span>
+                              <span class="text-[10px] text-slate-500 font-semibold">Lab Comparison</span>
+                            </div>
+                            <div class="h-44 flex items-end justify-around gap-2 pt-6 pb-2 border-b border-slate-200 dark:border-slate-700">
+                              @for (l of labBarChart; track l.name) {
+                                <div class="flex-1 flex flex-col items-center h-full justify-end group/bar relative">
+                                  <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                    {{ l.total }}
+                                  </span>
+                                  <div class="w-full flex items-end justify-center gap-0.5 h-full">
+                                    <div class="w-1/2 bg-cyan-400 rounded-t-sm" [style.height.%]="l.totalHeight" title="Total: {{ l.total }}"></div>
+                                    <div class="w-1/2 bg-blue-600 rounded-t-sm" [style.height.%]="l.approvedHeight" title="Approved: {{ l.approved }}"></div>
+                                  </div>
+                                  <span class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[50px] text-center" [title]="l.name">
+                                    {{ l.name }}
+                                  </span>
+                                </div>
+                              }
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Student booking volume per computer laboratory
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'line') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📈 Lab Utilization Curve</span>
+                              <span class="text-[10px] text-cyan-600 font-bold">Booking Load</span>
+                            </div>
+                            <div class="h-44 w-full flex items-center justify-center">
+                              <svg class="w-full h-full" viewBox="0 0 500 150">
+                                <defs>
+                                  <linearGradient id="labGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.4" />
+                                    <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <line x1="20" y1="130" x2="480" y2="130" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <line x1="20" y1="75" x2="480" y2="75" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <path [attr.d]="labLineChart.areaPath" fill="url(#labGrad)" />
+                                <path [attr.d]="labLineChart.path" fill="none" stroke="#0891b2" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                @for (p of labLineChart.points; track p.name) {
+                                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#ffffff" stroke="#0891b2" stroke-width="2.5">
+                                    <title>{{ p.name }}: {{ p.bookings }} bookings ({{ p.approved }} approved)</title>
+                                  </circle>
+                                  <text [attr.x]="p.x" [attr.y]="p.y - 8" text-anchor="middle" font-size="10" font-weight="bold" fill="#0891b2">
+                                    {{ p.bookings }}
+                                  </text>
+                                }
+                              </svg>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Workstation demand distribution across campus
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 5. BILLING TAB CHARTS -->
+              @if (activeTab === 'billing') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-amount-card
+                      title="Total Invoiced / Billed"
+                      [amount]="'Rs. ' + (billingLedgerDistribution.total | number:'1.2-2')"
+                      icon="🧾"
+                      variant="blue"
+                    />
+                    <app-amount-card
+                      title="Total Revenue Collected"
+                      [amount]="'Rs. ' + (billingLedgerDistribution.paid | number:'1.2-2')"
+                      icon="💳"
+                      variant="emerald"
+                    />
+                    <app-amount-card
+                      title="Outstanding / Pending Dues"
+                      [amount]="'Rs. ' + (billingLedgerDistribution.pending | number:'1.2-2')"
+                      icon="⏳"
+                      variant="rose"
+                    />
+                  </div>
+
+                  @if (feeTypeSummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-6">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">💳</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            Fee Revenue Ledger: Bar, Line & Financial Analytics
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Billed vs Paid comparisons, collection recovery curves, and ledger distributions
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'pie') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 w-full flex items-center justify-between">
+                              <span>🥧 Collection Split</span>
+                              <span class="text-[10px] text-emerald-600 font-black">{{ billingLedgerDistribution.paidPct }}% Recovered</span>
+                            </div>
+                            <div class="relative w-36 h-36 my-2">
+                              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="40"
+                                  stroke="#10b981"
+                                  stroke-width="14"
+                                  fill="none"
+                                  [attr.stroke-dasharray]="billingLedgerDistribution.paidDasharray"
+                                />
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="40"
+                                  stroke="#f59e0b"
+                                  stroke-width="14"
+                                  fill="none"
+                                  [attr.stroke-dasharray]="billingLedgerDistribution.pendingDasharray"
+                                  [attr.stroke-dashoffset]="billingLedgerDistribution.pendingOffset"
+                                />
+                              </svg>
+                              <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span class="text-xl font-black text-emerald-600">{{ billingLedgerDistribution.paidPct }}%</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase">Paid</span>
+                              </div>
+                            </div>
+                            <div class="text-[11px] text-slate-700 dark:text-slate-300 font-bold mt-2 text-center">
+                              Rs. {{ billingLedgerDistribution.paid | number:'1.0-0' }} Paid / Rs. {{ billingLedgerDistribution.pending | number:'1.0-0' }} Due
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'bar') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📊 Billed vs Paid Amount</span>
+                              <span class="text-[10px] text-slate-500 font-semibold">Dual Bars</span>
+                            </div>
+                            <div class="h-44 flex items-end justify-around gap-3 pt-6 pb-2 border-b border-slate-200 dark:border-slate-700">
+                              @for (b of billingBarChart; track b.name) {
+                                <div class="flex-1 flex flex-col items-center h-full justify-end group/bar relative">
+                                  <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                    {{ b.rate }}%
+                                  </span>
+                                  <div class="w-full flex items-end justify-center gap-0.5 h-full">
+                                    <div class="w-1/2 bg-indigo-400 rounded-t-sm" [style.height.%]="b.billedHeight" title="Billed: Rs. {{ b.billed }}"></div>
+                                    <div class="w-1/2 bg-emerald-500 rounded-t-sm" [style.height.%]="b.paidHeight" title="Paid: Rs. {{ b.paid }}"></div>
+                                  </div>
+                                  <span class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[50px] text-center" [title]="b.name">
+                                    {{ b.name }}
+                                  </span>
+                                </div>
+                              }
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Indigo (Billed) vs Emerald (Collected) per category
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'line') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📈 Revenue Invoicing Curve</span>
+                              <span class="text-[10px] text-indigo-600 font-bold">Billing Trend</span>
+                            </div>
+                            <div class="h-44 w-full flex items-center justify-center">
+                              <svg class="w-full h-full" viewBox="0 0 500 150">
+                                <defs>
+                                  <linearGradient id="billGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.4" />
+                                    <stop offset="100%" stop-color="#4f46e5" stop-opacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <line x1="20" y1="130" x2="480" y2="130" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <line x1="20" y1="75" x2="480" y2="75" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <path [attr.d]="billingLineChart.areaPath" fill="url(#billGrad)" />
+                                <path [attr.d]="billingLineChart.path" fill="none" stroke="#4338ca" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                @for (p of billingLineChart.points; track p.name) {
+                                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#ffffff" stroke="#4338ca" stroke-width="2.5">
+                                    <title>{{ p.name }}: Rs. {{ p.billed }} billed (Rs. {{ p.paid }} paid)</title>
+                                  </circle>
+                                  <text [attr.x]="p.x" [attr.y]="p.y - 8" text-anchor="middle" font-size="9" font-weight="bold" fill="#4338ca">
+                                    Rs.{{ (p.billed / 1000) | number:'1.0-0' }}k
+                                  </text>
+                                }
+                              </svg>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Total invoiced volume curve across student fee accounts
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 6. COMPLAINTS TAB CHARTS -->
+              @if (activeTab === 'complaints' || activeTab === 'complaint-categories-sla') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Total Grievances Logged"
+                      [value]="complaintSlaStats.total"
+                      icon="📝"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                      linkText="Complaints Hub"
+                      [linkRoute]="'/admin/complaints'"
+                    />
+                    <app-dashboard-card
+                      title="Resolved Tickets"
+                      [value]="complaintSlaStats.resolved"
+                      icon="✅"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                    />
+                    <app-dashboard-card
+                      title="Resolution SLA Compliance"
+                      [value]="complaintSlaStats.rate + '%'"
+                      icon="⏱️"
+                      iconVariant="amber"
+                      valueVariant="amber"
+                    />
+                  </div>
+
+                  @if (complaintCategorySummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs space-y-6">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">📝</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            Grievance Resolution & SLA Performance: Multi-View Intelligence
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Ticket categorization, resolution volume, and response time compliance curves
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'pie') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 w-full flex items-center justify-between">
+                              <span>🥧 SLA Resolution Gauge</span>
+                              <span class="text-[10px] text-emerald-600 font-black">{{ complaintSlaStats.rate }}% Resolved</span>
+                            </div>
+                            <div class="relative w-36 h-36 my-2">
+                              <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                                <circle
+                                  cx="50"
+                                  cy="50"
+                                  r="40"
+                                  stroke="#10b981"
+                                  stroke-width="14"
+                                  fill="none"
+                                  stroke-linecap="round"
+                                  [attr.stroke-dasharray]="complaintSlaStats.dasharray"
+                                />
+                              </svg>
+                              <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span class="text-xl font-black text-emerald-600">{{ complaintSlaStats.rate }}%</span>
+                                <span class="text-[8px] font-bold text-slate-400 uppercase">Resolved</span>
+                              </div>
+                            </div>
+                            <div class="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-2 text-center">
+                              {{ complaintSlaStats.resolved }} / {{ complaintSlaStats.total }} Grievances Resolved
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'bar') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📊 Tickets per Category</span>
+                              <span class="text-[10px] text-slate-500 font-semibold">Total / Resolved</span>
+                            </div>
+                            <div class="h-44 flex items-end justify-around gap-3 pt-6 pb-2 border-b border-slate-200 dark:border-slate-700">
+                              @for (c of complaintBarChart; track c.name) {
+                                <div class="flex-1 flex flex-col items-center h-full justify-end group/bar relative">
+                                  <span class="text-[9px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                                    {{ c.resolved }}/{{ c.total }}
+                                  </span>
+                                  <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-t-lg overflow-hidden flex flex-col justify-end" [style.height.%]="c.totalHeight">
+                                    <div class="w-full bg-amber-500 rounded-t-lg transition-all duration-500" [style.height.%]="c.rate"></div>
+                                  </div>
+                                  <span class="text-[9px] font-semibold text-slate-500 dark:text-slate-400 mt-1 truncate max-w-[50px] text-center" [title]="c.name">
+                                    {{ c.name }}
+                                  </span>
+                                </div>
+                              }
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Amber fill indicates resolved grievance tickets
+                            </div>
+                          </div>
+                        }
+
+                        @if (chartDisplayMode() === 'all' || chartDisplayMode() === 'line') {
+                          <div class="p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+                              <span>📈 Resolution SLA Curve</span>
+                              <span class="text-[10px] text-amber-600 font-bold">% Compliance</span>
+                            </div>
+                            <div class="h-44 w-full flex items-center justify-center">
+                              <svg class="w-full h-full" viewBox="0 0 500 150">
+                                <defs>
+                                  <linearGradient id="compGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.4" />
+                                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.0" />
+                                  </linearGradient>
+                                </defs>
+                                <line x1="20" y1="130" x2="480" y2="130" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <line x1="20" y1="75" x2="480" y2="75" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" />
+                                <path [attr.d]="complaintLineChart.areaPath" fill="url(#compGrad)" />
+                                <path [attr.d]="complaintLineChart.path" fill="none" stroke="#d97706" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                @for (p of complaintLineChart.points; track p.name) {
+                                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#ffffff" stroke="#d97706" stroke-width="2.5">
+                                    <title>{{ p.name }}: {{ p.rate }}% resolved ({{ p.resolved }}/{{ p.total }})</title>
+                                  </circle>
+                                  <text [attr.x]="p.x" [attr.y]="p.y - 8" text-anchor="middle" font-size="10" font-weight="bold" fill="#d97706">
+                                    {{ p.rate }}%
+                                  </text>
+                                }
+                              </svg>
+                            </div>
+                            <div class="text-[10px] text-slate-400 mt-2 text-center font-medium">
+                              Category SLA compliance resolution speed
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 7. CERTIFICATES TAB CHARTS -->
+              @if (activeTab === 'certificates' || activeTab === 'certificate-types') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Total Certificate Requests"
+                      [value]="certificateSlaStats.total"
+                      icon="📜"
+                      iconVariant="purple"
+                      valueVariant="purple"
+                    />
+                    <app-dashboard-card
+                      title="Approved & Issued"
+                      [value]="certificateSlaStats.approved"
+                      icon="✅"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                    />
+                    <app-dashboard-card
+                      title="Pending Verification"
+                      [value]="certificateSlaStats.pending"
+                      icon="⏳"
+                      iconVariant="amber"
+                      valueVariant="amber"
+                    />
+                  </div>
+
+                  @if (certificateTypeSummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">📜</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            Certificate Issuance & Clearance SLA Analytics
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Official statutory certificate demand distribution and issuance turnaround
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-center">
+                        <div class="lg:col-span-4 flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                          <div class="relative w-36 h-36">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                              <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                              <circle
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                stroke="#8b5cf6"
+                                stroke-width="14"
+                                fill="none"
+                                stroke-linecap="round"
+                                [attr.stroke-dasharray]="certificateSlaStats.dasharray"
+                              />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                              <span class="text-xl font-black text-purple-600">{{ certificateSlaStats.rate }}%</span>
+                              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Approved</span>
+                            </div>
+                          </div>
+                          <div class="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-2 text-center">
+                            {{ certificateSlaStats.approved }} / {{ certificateSlaStats.total }} Issued
+                          </div>
+                        </div>
+
+                        <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          @for (c of certificateSlaStats.types; track c.id) {
+                            <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                              <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="truncate text-slate-800 dark:text-slate-200">{{ c.name }}</span>
+                                <span class="text-[10px] text-purple-600 font-black">{{ c.percentage }}%</span>
+                              </div>
+                              <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden my-2">
+                                <div class="h-full bg-purple-500 rounded-full" [style.width.%]="c.percentage"></div>
+                              </div>
+                              <div class="flex items-center justify-between text-[10px] text-slate-500">
+                                <span>Total: {{ c.total }}</span>
+                                <span class="text-purple-700 dark:text-purple-400 font-bold">Approved: {{ c.approved }}</span>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 8. EVENTS TAB CHARTS -->
+              @if (activeTab === 'events' || activeTab === 'venues') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Campus Events"
+                      [value]="eventAttendanceStats.totalEvents"
+                      icon="📅"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                    />
+                    <app-dashboard-card
+                      title="Registered Attendees"
+                      [value]="eventAttendanceStats.registeredAttendees"
+                      icon="👥"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                    />
+                    <app-dashboard-card
+                      title="Capacity Utilization"
+                      [value]="eventAttendanceStats.rate + '%'"
+                      icon="🏛️"
+                      iconVariant="purple"
+                      valueVariant="purple"
+                    />
+                  </div>
+
+                  @if (eventSummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">📅</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            Campus Events & Venue Capacity Utilization Analytics
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Auditorium seating capacity, registered attendee counts, and attendance rate
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-center">
+                        <div class="lg:col-span-4 flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                          <div class="relative w-36 h-36">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                              <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                              <circle
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                stroke="#ec4899"
+                                stroke-width="14"
+                                fill="none"
+                                stroke-linecap="round"
+                                [attr.stroke-dasharray]="eventAttendanceStats.dasharray"
+                              />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                              <span class="text-xl font-black text-pink-600">{{ eventAttendanceStats.rate }}%</span>
+                              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Booked</span>
+                            </div>
+                          </div>
+                          <div class="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-2 text-center">
+                            {{ eventAttendanceStats.registeredAttendees }} / {{ eventAttendanceStats.maxCapacity }} Seats
+                          </div>
+                        </div>
+
+                        <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          @for (e of eventAttendanceStats.events; track e.id) {
+                            <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                              <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="truncate text-slate-800 dark:text-slate-200">{{ e.title }}</span>
+                                <span class="text-[10px] text-pink-600 font-black">{{ e.rate }}%</span>
+                              </div>
+                              <div class="text-[10px] text-slate-500 mt-0.5">{{ e.venue }}</div>
+                              <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden my-2">
+                                <div class="h-full bg-pink-500 rounded-full" [style.width.%]="e.rate"></div>
+                              </div>
+                              <div class="flex items-center justify-between text-[10px] text-slate-500">
+                                <span>Attendees: <strong>{{ e.registered }}/{{ e.capacity }}</strong></span>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- 9. NOTIFICATIONS TAB CHARTS -->
+              @if (activeTab === 'notifications') {
+                <div class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <app-dashboard-card
+                      title="Total Notifications Dispatched"
+                      [value]="notificationEngagementStats.total"
+                      icon="📡"
+                      iconVariant="blue"
+                      valueVariant="blue"
+                    />
+                    <app-dashboard-card
+                      title="Read Notifications"
+                      [value]="notificationEngagementStats.read"
+                      icon="📬"
+                      iconVariant="emerald"
+                      valueVariant="emerald"
+                    />
+                    <app-dashboard-card
+                      title="Engagement / Open Rate"
+                      [value]="notificationEngagementStats.rate + '%'"
+                      icon="📈"
+                      iconVariant="purple"
+                      valueVariant="purple"
+                    />
+                  </div>
+
+                  @if (notificationTypeSummaries.length > 0) {
+                    <div class="p-5 bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+                      <div class="flex items-center gap-2.5 pb-3 border-b border-slate-200 dark:border-slate-700">
+                        <span class="text-xl">📡</span>
+                        <div>
+                          <h4 class="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                            System Notification Dispatch & Channel Engagement Analytics
+                          </h4>
+                          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                            Automated notification logs, delivery channels, and read rate performance
+                          </p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-4 items-center">
+                        <div class="lg:col-span-4 flex flex-col items-center justify-center p-4 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+                          <div class="relative w-36 h-36">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                              <circle cx="50" cy="50" r="40" stroke="#f1f5f9" stroke-width="14" fill="none" class="dark:stroke-slate-700" />
+                              <circle
+                                cx="50"
+                                cy="50"
+                                r="40"
+                                stroke="#3b82f6"
+                                stroke-width="14"
+                                fill="none"
+                                stroke-linecap="round"
+                                [attr.stroke-dasharray]="notificationEngagementStats.readDasharray"
+                              />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                              <span class="text-xl font-black text-blue-600">{{ notificationEngagementStats.rate }}%</span>
+                              <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Read Rate</span>
+                            </div>
+                          </div>
+                          <div class="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-2 text-center">
+                            {{ notificationEngagementStats.read }} / {{ notificationEngagementStats.total }} Read
+                          </div>
+                        </div>
+
+                        <div class="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          @for (n of notificationEngagementStats.types; track n.type) {
+                            <div class="p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                              <div class="flex items-center justify-between text-xs font-bold">
+                                <span class="truncate text-slate-800 dark:text-slate-200">{{ n.formattedType }}</span>
+                                <span class="text-[10px] text-blue-600 font-black">{{ n.readRate }}%</span>
+                              </div>
+                              <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden my-2">
+                                <div class="h-full bg-blue-500 rounded-full" [style.width.%]="n.readRate"></div>
+                              </div>
+                              <div class="flex items-center justify-between text-[10px] text-slate-500">
+                                <span>Sent: {{ n.totalSent }}</span>
+                                <span class="text-blue-700 dark:text-blue-400 font-bold">Read: {{ n.readCount }}</span>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
+          <!-- ============================================================= -->
+          <!-- SUB-TAB 2: 📋 DATA RECORDS & AUDIT-LOGS FILTER DATA GRID      -->
+          <!-- ============================================================= -->
+          @if (activeModuleSubTab() === 'data') {
+            <div class="space-y-4 animate-fadeIn">
+              <!-- Full Audit-Logs Style Filter Panel -->
+              <div class="p-5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+                <!-- 1. Global Search Input -->
+                <div>
+                  <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                    <span>🔍</span>
+                    <span>Global Keyword Search</span>
+                  </label>
+                  <div class="relative w-full">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 text-sm">
+                      🔍
+                    </span>
+                    <input
+                      type="text"
+                      [(ngModel)]="filter.searchTerm"
+                      (keyup.enter)="applyFilters()"
+                      placeholder="Search records across names, registration numbers, codes, invoice IDs, statuses..."
+                      class="w-full h-11 pl-10 pr-4 text-xs font-medium bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-600 shadow-2xs"
+                    />
+                  </div>
+                </div>
+
+                <!-- 2. 6-Column Aligned Filter Controls Row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 items-end">
+                  <!-- Period Preset -->
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+                      <span>📅</span> Period Preset
+                    </label>
+                    <select
+                      [ngModel]="selectedDatePreset"
+                      (ngModelChange)="onDatePresetChange($event)"
+                      class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                    >
+                      @for (opt of datePresetOptions; track opt.value) {
+                        <option [value]="opt.value">{{ opt.label }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <!-- Date From -->
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">From Date</label>
+                    <input
+                      type="date"
+                      [(ngModel)]="filter.dateFrom"
+                      (change)="selectedDatePreset = 'custom'"
+                      class="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden shadow-2xs"
+                    />
+                  </div>
+
+                  <!-- Date To -->
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5">To Date</label>
+                    <input
+                      type="date"
+                      [(ngModel)]="filter.dateTo"
+                      (change)="selectedDatePreset = 'custom'"
+                      class="w-full h-10 px-3 text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden shadow-2xs"
+                    />
+                  </div>
+
+                  <!-- Domain-Specific Dropdown -->
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+                      <span>📁</span> Domain Category
+                    </label>
+                    @switch (activeTab) {
+                      @case ('students') {
+                        <select
+                          [ngModel]="filter.facultyIds?.[0] || ''"
+                          (ngModelChange)="filter.facultyIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Faculties</option>
+                          @for (f of facultyOptions; track f.id) {
+                            <option [value]="f.id">{{ f.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('student-pending') {
+                        <select
+                          [ngModel]="filter.facultyIds?.[0] || ''"
+                          (ngModelChange)="filter.facultyIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Faculties</option>
+                          @for (f of facultyOptions; track f.id) {
+                            <option [value]="f.id">{{ f.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('hostels') {
+                        <select
+                          [ngModel]="filter.hostelIds?.[0] || ''"
+                          (ngModelChange)="filter.hostelIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Hostel Blocks</option>
+                          @for (h of hostelOptions; track h.id) {
+                            <option [value]="h.id">{{ h.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('hostel-rooms') {
+                        <select
+                          [ngModel]="filter.hostelIds?.[0] || ''"
+                          (ngModelChange)="filter.hostelIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Hostel Blocks</option>
+                          @for (h of hostelOptions; track h.id) {
+                            <option [value]="h.id">{{ h.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('labs') {
+                        <select
+                          [ngModel]="filter.labIds?.[0] || ''"
+                          (ngModelChange)="filter.labIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All IT Labs</option>
+                          @for (l of labOptions; track l.id) {
+                            <option [value]="l.id">{{ l.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('billing') {
+                        <select
+                          [ngModel]="filter.feeTypeIds?.[0] || ''"
+                          (ngModelChange)="filter.feeTypeIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Fee Types</option>
+                          @for (ft of feeTypeOptions; track ft.id) {
+                            <option [value]="ft.id">{{ ft.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('complaints') {
+                        <select
+                          [ngModel]="filter.categoryIds?.[0] || ''"
+                          (ngModelChange)="filter.categoryIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Categories</option>
+                          @for (c of complaintCategoryOptions; track c.id) {
+                            <option [value]="c.id">{{ c.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('certificates') {
+                        <select
+                          [ngModel]="filter.certificateTypeIds?.[0] || ''"
+                          (ngModelChange)="filter.certificateTypeIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Certificate Types</option>
+                          @for (ct of certificateTypeOptions; track ct.id) {
+                            <option [value]="ct.id">{{ ct.label }}</option>
+                          }
+                        </select>
+                      }
+                      @case ('events') {
+                        <select
+                          [ngModel]="filter.eventIds?.[0] || ''"
+                          (ngModelChange)="filter.eventIds = $event ? [+$event] : []; applyFilters()"
+                          class="w-full h-10 px-3 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                        >
+                          <option value="">All Events</option>
+                          @for (e of eventOptions; track e.id) {
+                            <option [value]="e.id">{{ e.label }}</option>
+                          }
+                        </select>
+                      }
+                      @default {
+                        <div class="h-10 px-3 flex items-center text-xs text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-300 dark:border-slate-700">
+                          All Records
+                        </div>
+                      }
+                    }
+                  </div>
+
+                  <!-- Sort By & Direction -->
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+                      <span>🔃</span> Sort Field
+                    </label>
+                    <div class="flex items-center gap-1">
+                      <select
+                        [(ngModel)]="filter.sortBy"
+                        (change)="applyFilters()"
+                        class="flex-1 h-10 px-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs truncate"
+                      >
+                        @for (s of availableSortOptions; track s.value) {
+                          <option [value]="s.value">{{ s.label }}</option>
+                        }
+                      </select>
+                      <button
+                        type="button"
+                        (click)="toggleSortDirection()"
+                        class="h-10 px-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold cursor-pointer transition-all"
+                        [title]="'Direction: ' + currentSortDirection.toUpperCase()"
+                      >
+                        {{ currentSortDirection === 'asc' ? '🔼' : '🔽' }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Page Size & Filter Actions -->
+                  <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+                      <span>📄</span> Page Size
+                    </label>
+                    <div class="flex items-center gap-2">
+                      <select
+                        [ngModel]="filter.pageSize"
+                        (ngModelChange)="onPageSizeChange($event)"
+                        class="w-20 h-10 px-2 text-xs font-semibold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-hidden cursor-pointer shadow-2xs"
+                      >
+                        @for (size of pageSizeOptions; track size) {
+                          <option [value]="size">{{ size }} / pg</option>
+                        }
+                      </select>
+                      <button
+                        type="button"
+                        (click)="applyFilters()"
+                        class="flex-1 h-10 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer flex items-center justify-center gap-1"
+                        title="Apply filters"
+                      >
+                        <span>⚡</span>
+                        <span>Filter</span>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="resetFilters()"
+                        class="h-10 px-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                        title="Reset all filters"
+                      >
+                        🔄
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Records Counter Bar -->
+              <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
+                <span>Total: <strong class="text-blue-600 dark:text-blue-400">{{ totalCount }}</strong> matching records</span>
+                <span>Sorted by: <strong class="text-slate-700 dark:text-slate-300">{{ filter.sortBy || 'Default' }}</strong> ({{ currentSortDirection.toUpperCase() }})</span>
+              </div>
+
+              <!-- Interactive Data Grid for Active Tab -->
+              <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
+                @switch (activeTab) {
+                  @case ('students') {
+                    <app-report-detail-grid
+                      [columns]="studentColumns"
+                      [items]="studentItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [showDrilldown]="true"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                      drilldownButtonLabel="Profile ➔"
+                      (drilldown)="onStudentDrilldown($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('student-pending') {
+                    <app-report-detail-grid
+                      [columns]="pendingStudentColumns"
+                      [items]="pendingStudentItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('hostels') {
+                    <app-report-detail-grid
+                      [columns]="hostelColumns"
+                      [items]="unallocatedItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('hostel-rooms') {
+                    <app-report-detail-grid
+                      [columns]="hostelRoomColumns"
+                      [items]="hostelRoomItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('hostel-pending') {
+                    <app-report-detail-grid
+                      [columns]="pendingHostelColumns"
+                      [items]="pendingHostelItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('labs') {
+                    <app-report-detail-grid
+                      [columns]="labColumns"
+                      [items]="labBookingItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('lab-directory') {
+                    <app-report-detail-grid
+                      [columns]="labDirectoryColumns"
+                      [items]="labDirectoryItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('billing') {
+                    <app-report-detail-grid
+                      [columns]="billingColumns"
+                      [items]="billingItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('complaints') {
+                    <app-report-detail-grid
+                      [columns]="complaintColumns"
+                      [items]="complaintItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('complaint-categories-sla') {
+                    <app-report-detail-grid
+                      [columns]="complaintCategorySlaColumns"
+                      [items]="complaintCategorySlaItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('certificates') {
+                    <app-report-detail-grid
+                      [columns]="certificateColumns"
+                      [items]="certificateItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('certificate-types') {
+                    <app-report-detail-grid
+                      [columns]="certificateTypeColumns"
+                      [items]="certificateTypeItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('events') {
+                    <app-report-detail-grid
+                      [columns]="eventColumns"
+                      [items]="eventAttendeeItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('venues') {
+                    <app-report-detail-grid
+                      [columns]="venueColumns"
+                      [items]="venueItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @case ('notifications') {
+                    <app-report-detail-grid
+                      [columns]="notificationColumns"
+                      [items]="notificationItems"
+                      [showRowNumbers]="true"
+                      [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                      [sortBy]="filter.sortBy || ''"
+                      [sortDirection]="currentSortDirection"
+                      (sort)="onSortChange($event)"
+                    ></app-report-detail-grid>
+                  }
+                  @default {
+                    <div class="py-12 text-center text-xs text-slate-400">
+                      Select a specific domain tab above to inspect tabular records.
+                    </div>
+                  }
+                }
+              </div>
+
+              <!-- Full Pagination Bar Component -->
+              @if (activeTab !== 'kpi') {
+                <app-report-pagination
+                  [pageNumber]="filter.pageNumber || 1"
+                  [pageSize]="filter.pageSize || 25"
+                  [totalCount]="totalCount"
+                  [totalPages]="totalPages"
+                  [hasPreviousPage]="hasPreviousPage"
+                  [hasNextPage]="hasNextPage"
+                  (pageChange)="onPageChange($event)"
+                  (pageSizeChange)="onPageSizeChange($event)"
+                ></app-report-pagination>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (!isAnalyticsRoute()) {
+    <!-- A. REPORTS CATALOG DIRECTORY (HUB VIEW) -->
+    @if (!isReportModalOpen()) {
+      <!-- Top Catalog Header Banner -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900 text-white p-6 rounded-3xl shadow-xl border border-slate-800">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-3xl shadow-lg font-black shrink-0">
+            📑
+          </div>
+          <div>
+            <div class="text-[11px] font-black uppercase tracking-widest text-blue-400">
+              {{ institutionName }} • INSTITUTIONAL REPORTS
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
+              Official Institutional Reports Catalog
+            </h1>
+            <p class="text-xs text-slate-400 mt-1">
+              Official document generation engine, Crystal Reports banded previews, and multi-format exports
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <span class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-blue-500/10 text-blue-300 border border-blue-400/20">
+            ⚡ Zero-Tracking ADO.NET
+          </span>
+          <span class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-400/20">
+            🏛️ {{ academicTerm }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Search & Overview Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs">
+        <div class="flex items-center gap-2 flex-1 max-w-md">
+          <span class="text-base">🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="searchCatalogTerm"
+            placeholder="Filter report domains (e.g., student, hostel, billing, lab)..."
+            class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+
+        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Showing <strong>{{ filteredModuleCards.length }}</strong> institutional modules
+        </div>
+      </div>
+
+      <!-- 1 Master Card per Module Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
+        @for (card of filteredModuleCards; track card.id) {
+          <div
+            class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500/60 dark:hover:border-blue-500/60 rounded-3xl p-5 shadow-xs hover:shadow-xl transition-all duration-200 flex flex-col justify-between"
+          >
+            <div>
+              <!-- Card Header -->
+              <div class="flex items-center justify-between gap-2 mb-3">
+                <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/40 flex items-center justify-center text-2xl">
+                  {{ card.icon }}
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider {{ card.badgeColor }}">
+                  {{ card.badge }}
+                </span>
+              </div>
+
+              <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">
+                {{ card.category }}
+              </div>
+              <h3 class="text-base font-black text-slate-900 dark:text-white">
+                {{ card.moduleName }}
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+                {{ card.description }}
+              </p>
+
+              <!-- Available Reports List inside Module -->
+              <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 space-y-1.5">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
+                  <span>📑 Available Reports ({{ card.reports.length }})</span>
+                </div>
+                @for (rep of card.reports; track rep.id) {
+                  <button
+                    type="button"
+                    (click)="openReportModal(rep.id)"
+                    class="w-full text-left px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 hover:bg-blue-50 dark:hover:bg-blue-900/40 border border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 flex items-center justify-between group/sub transition-all cursor-pointer shadow-2xs"
+                  >
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 group-hover/sub:text-blue-600 dark:group-hover/sub:text-blue-400 flex items-center gap-2 truncate">
+                      <span>{{ rep.icon }}</span>
+                      <span class="truncate">{{ rep.title }}</span>
+                    </span>
+                    <span class="text-xs font-bold text-slate-400 group-hover/sub:text-blue-500 shrink-0">➔</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Card Footer Action -->
+            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span class="text-[10px] font-semibold text-slate-400">
+                Crystal Reports Canvas
+              </span>
+              <button
+                type="button"
+                (click)="openReportModal(card.reports[0].id)"
+                class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+              >
+                <span>Open Canvas</span>
+                <span>↗</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- B. FULLSCREEN CRYSTAL REPORTS DOCUMENT STUDIO -->
+    @if (isReportModalOpen()) {
+      <div class="fixed inset-0 z-50 bg-slate-950 flex flex-col md:flex-row overflow-hidden text-slate-100 animate-fadeIn print:static print:inset-auto print:z-auto print:bg-white print:text-slate-900 print:overflow-visible print:p-0 print:m-0 print:block">
+        <!-- LEFT STUDIO FILTER SIDEBAR -->
+        @if (!isSidebarCollapsed()) {
+          <aside class="w-full md:w-80 lg:w-84 bg-slate-900 border-r border-slate-800 flex flex-col p-4 space-y-4 overflow-y-auto shrink-0 shadow-2xl transition-all duration-300 print:hidden">
+            <!-- Top Navigation & Collapse Header -->
+            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-800">
+              <button
+                type="button"
+                (click)="closeReportModal()"
+                class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow-xs"
+                title="Return to Reports Catalog"
+              >
+                <span>◀</span> Back to Catalog
+              </button>
+
+              <button
+                type="button"
+                (click)="toggleSidebar()"
+                class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Collapse Filter Panel"
+              >
+                ◀
+              </button>
+            </div>
+
+            <!-- Active Domain Selector with <optgroup> Module Grouping -->
+            <div>
+              <label class="block text-[11px] font-black uppercase tracking-wider text-slate-400 mb-1.5">
+                📁 Selected Report Domain
+              </label>
+              <select
+                [ngModel]="activeTab"
+                (ngModelChange)="selectTab($any($event))"
+                class="w-full bg-slate-800 border border-blue-500/60 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-inner"
+              >
+                @for (group of reportGroups; track group.name) {
+                  <optgroup [label]="group.name" class="bg-slate-950 text-slate-400 font-bold py-1">
+                    @for (rep of group.reports; track rep.id) {
+                      <option [value]="rep.id" class="bg-slate-800 text-white font-normal py-1">
+                        {{ rep.icon }} {{ rep.label }}
+                      </option>
+                    }
+                  </optgroup>
+                }
+              </select>
+            </div>
+
+            <!-- Filter Parameters Section -->
+            <div class="p-3.5 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-3">
+              <div class="flex items-center justify-between text-xs font-bold text-slate-300">
+                <span class="flex items-center gap-1.5"><span>🔍</span> Filter Parameters</span>
+                <button
+                  type="button"
+                  (click)="resetFilters()"
+                  class="text-[10px] text-slate-400 hover:text-white underline cursor-pointer font-normal"
+                >
+                  Reset
+                </button>
+              </div>
+
+              <!-- Quick Date Presets Dropdown -->
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">📅 Date Range Preset</label>
+                <select
+                  [ngModel]="selectedDatePreset"
+                  (ngModelChange)="onDatePresetChange($event)"
+                  class="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer shadow-inner"
+                >
+                  @for (opt of datePresetOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <!-- Side-by-Side Date From & Date To -->
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Date From</label>
+                  <input
+                    type="date"
+                    [(ngModel)]="filter.dateFrom"
+                    (change)="selectedDatePreset = 'custom'"
+                    class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Date To</label>
+                  <input
+                    type="date"
+                    [(ngModel)]="filter.dateTo"
+                    (change)="selectedDatePreset = 'custom'"
+                    class="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <!-- Domain-specific MultiSelect Filters -->
+              @if (activeTab === 'students') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Faculties"
+                    placeholder="All Faculties"
+                    [options]="facultyOptions"
+                    [ngModel]="filter.facultyIds"
+                    (selectionChange)="filter.facultyIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              @if (activeTab === 'hostels') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Hostels"
+                    placeholder="All Hostels"
+                    [options]="hostelOptions"
+                    [ngModel]="filter.hostelIds"
+                    (selectionChange)="filter.hostelIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              @if (activeTab === 'labs') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Computer Labs"
+                    placeholder="All Labs"
+                    [options]="labOptions"
+                    [ngModel]="filter.labIds"
+                    (selectionChange)="filter.labIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              @if (activeTab === 'billing') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Fee Types"
+                    placeholder="All Fee Types"
+                    [options]="feeTypeOptions"
+                    [ngModel]="filter.feeTypeIds"
+                    (selectionChange)="filter.feeTypeIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              @if (activeTab === 'complaints') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Categories"
+                    placeholder="All Categories"
+                    [options]="complaintCategoryOptions"
+                    [ngModel]="filter.categoryIds"
+                    (selectionChange)="filter.categoryIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              @if (activeTab === 'certificates') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Certificate Types"
+                    placeholder="All Certificate Types"
+                    [options]="certificateTypeOptions"
+                    [ngModel]="filter.certificateTypeIds"
+                    (selectionChange)="filter.certificateTypeIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              @if (activeTab === 'events') {
+                <div>
+                  <app-multi-select-dropdown
+                    label="Events"
+                    placeholder="All Events"
+                    [options]="eventOptions"
+                    [ngModel]="filter.eventIds"
+                    (selectionChange)="filter.eventIds = $any($event)"
+                  ></app-multi-select-dropdown>
+                </div>
+              }
+
+              <!-- Search Keyword -->
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-1 font-semibold">Search Keyword</label>
+                <input
+                  type="text"
+                  [(ngModel)]="filter.searchTerm"
+                  (keyup.enter)="applyFilters()"
+                  placeholder="Search name, index, reg no..."
+                  class="w-full px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                />
+              </div>
+
+              <!-- Apply & Reset Actions -->
+              <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-slate-800/80">
+                <button
+                  type="button"
+                  (click)="resetFilters()"
+                  class="py-2 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 font-medium text-xs transition-colors cursor-pointer"
+                >
+                  Reset
+                </button>
+                <button
+                  type="button"
+                  (click)="applyFilters()"
+                  class="col-span-2 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-md cursor-pointer flex items-center justify-center gap-1"
+                >
+                  <span>🔍 Apply Filters</span>
+                </button>
+              </div>
+            </div>
+          </aside>
+        }
+
+        <!-- RIGHT DOCUMENT CANVAS -->
+        <main class="flex-1 bg-slate-950 flex flex-col min-h-screen relative overflow-hidden print:bg-white print:overflow-visible print:min-h-0 print:p-0 print:m-0 print:block">
+          <!-- TOP ENTERPRISE DOCUMENT RIBBON TOOLBAR -->
+          <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 px-4 py-2 flex flex-wrap items-center justify-between gap-3 shadow-md shrink-0 print:hidden">
+            <!-- Left: Viewport Controls & Layout Setup -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <!-- Sidebar Toggle Button -->
+              <button
+                type="button"
+                (click)="toggleSidebar()"
+                class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex items-center gap-1.5 border border-slate-700 transition-all cursor-pointer shadow-2xs"
+                title="Toggle Filter Parameters Panel"
+              >
+                <span>{{ isSidebarCollapsed() ? '▶ Show Filters' : '◀ Hide Filters' }}</span>
+              </button>
+
+              <!-- Document Title Pill -->
+              <div class="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-950/80 border border-slate-800 rounded-lg text-xs font-bold text-blue-400">
+                <span>📄</span>
+                <span class="truncate max-w-[200px]">{{ activeTabTitle }}</span>
+              </div>
+
+              <!-- Orientation Toggle -->
+              <div class="flex items-center bg-slate-950/80 p-0.5 rounded-lg border border-slate-800">
+                <button
+                  type="button"
+                  (click)="reportOrientation = 'portrait'"
+                  [class.bg-blue-600]="reportOrientation === 'portrait'"
+                  [class.text-white]="reportOrientation === 'portrait'"
+                  [class.text-slate-400]="reportOrientation !== 'portrait'"
+                  class="px-2 py-1 rounded-md text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Portrait Layout (210×297mm)"
+                >
+                  📄 Portrait
+                </button>
+                <button
+                  type="button"
+                  (click)="reportOrientation = 'landscape'"
+                  [class.bg-blue-600]="reportOrientation === 'landscape'"
+                  [class.text-white]="reportOrientation === 'landscape'"
+                  [class.text-slate-400]="reportOrientation !== 'landscape'"
+                  class="px-2 py-1 rounded-md text-[11px] font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                  title="Landscape Layout (297×210mm)"
+                >
+                  📜 Landscape
+                </button>
+              </div>
+
+              <!-- Paper Size Selector -->
+              <select
+                [(ngModel)]="reportPaperSize"
+                class="bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+                title="Paper Specification"
+              >
+                <option value="a4">A4 (210×297)</option>
+                <option value="letter">Letter</option>
+                <option value="legal">Legal</option>
+              </select>
+
+              <!-- Zoom Selector -->
+              <select
+                [(ngModel)]="reportZoom"
+                class="bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-bold cursor-pointer"
+                title="Viewer Zoom Level"
+              >
+                <option [ngValue]="50">50%</option>
+                <option [ngValue]="60">60%</option>
+                <option [ngValue]="70">70%</option>
+                <option [ngValue]="75">75%</option>
+                <option [ngValue]="80">80%</option>
+                <option [ngValue]="90">90%</option>
+                <option [ngValue]="100">100%</option>
+                <option [ngValue]="110">110%</option>
+                <option [ngValue]="125">125%</option>
+                <option [ngValue]="150">150%</option>
+                <option [ngValue]="175">175%</option>
+                <option [ngValue]="200">200%</option>
+                <option [ngValue]="250">250%</option>
+              </select>
+
+              <!-- Watermark Security Selector -->
+              <select
+                [(ngModel)]="reportWatermark"
+                class="bg-slate-950/80 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-300 focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-bold cursor-pointer"
+                title="Security Watermark Overlay"
+              >
+                <option value="NONE">🔒 Watermark: None</option>
+                <option value="CONFIDENTIAL">🔒 Confidential</option>
+                <option value="OFFICIAL COPY">🔒 Official Copy</option>
+                <option value="DRAFT">🔒 Draft Document</option>
+              </select>
+            </div>
+
+            <!-- Right: Enterprise Clickable Action & Export Icons -->
+            <div class="flex items-center gap-1.5">
+              <!-- 1. Print Button -->
+              <button
+                type="button"
+                (click)="onPrintReport()"
+                class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold text-white text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                title="Print Document"
+              >
+                <span>🖨️</span>
+                <span class="hidden md:inline">Print</span>
+              </button>
+
+              <!-- 2. PDF Export -->
+              <button
+                type="button"
+                (click)="onExportPdfReport()"
+                class="px-2.5 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-600 font-bold text-white text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                title="Export as Adobe PDF"
+              >
+                <span>📄</span>
+                <span class="hidden md:inline">PDF</span>
+              </button>
+
+              <!-- 3. Excel Export -->
+              <button
+                type="button"
+                (click)="onExportExcelReport()"
+                class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold text-white text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                title="Export as Microsoft Excel (.xlsx)"
+              >
+                <span>📊</span>
+                <span class="hidden md:inline">Excel</span>
+              </button>
+
+              <!-- 4. Word Export -->
+              <button
+                type="button"
+                (click)="onExportWordReport()"
+                class="px-2.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 font-bold text-white text-xs flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                title="Export as Microsoft Word (.docx)"
+              >
+                <span>📝</span>
+                <span class="hidden md:inline">Word</span>
+              </button>
+
+              <!-- 5. CSV Export -->
+              <button
+                type="button"
+                (click)="onExportCsvReport()"
+                class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 font-bold text-slate-200 text-xs flex items-center gap-1 border border-slate-700 shadow-xs transition-all cursor-pointer"
+                title="Export as Comma-Separated Values (.csv)"
+              >
+                <span>📋</span>
+                <span class="hidden md:inline">CSV</span>
+              </button>
+
+              <div class="h-5 w-px bg-slate-800 mx-1"></div>
+
+              <!-- 6. Close Modal Button -->
+              <button
+                type="button"
+                (click)="closeReportModal()"
+                class="px-2.5 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-600 text-red-300 hover:text-white font-bold text-xs flex items-center gap-1 border border-red-800/40 transition-all cursor-pointer shadow-xs"
+                title="Exit Preview Modal"
+              >
+                <span>✕</span>
+                <span class="hidden sm:inline">Exit</span>
+              </button>
+            </div>
+          </header>
+
+          <!-- Document Scroll Area -->
+          <div class="flex-1 overflow-y-auto p-3 sm:p-6 print:overflow-visible print:p-0 print:m-0 print:block">
+            <!-- Loading State -->
+            @if (loading()) {
+              <div class="m-auto py-24 flex flex-col items-center justify-center gap-3">
+                <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="text-xs font-semibold text-slate-400">
+                  Generating Crystal Report & Institutional Aggregations...
+                </p>
+              </div>
+            } @else {
+              <!-- Main Crystal Reports White Sheet Canvas Container (Strict Formal Printout) -->
+              <app-report-viewer
+                [documentTitle]="activeTabTitle"
+                [exportColumns]="currentExportColumns"
+                [exportData]="currentTableItems"
+                [grandTotals]="currentGrandTotalsObj"
+                [showToolbar]="false"
+                [orientation]="reportOrientation"
+                [paperSize]="reportPaperSize"
+                [zoom]="reportZoom"
+              >
+                <!-- Dynamic Security Watermark Overlay -->
+                @if (reportWatermark !== 'NONE') {
+                  <div class="pointer-events-none select-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden opacity-10 dark:opacity-15 print:opacity-15">
+                    <span class="text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-widest text-slate-900 dark:text-white transform -rotate-35 border-8 border-dashed border-slate-900/40 dark:border-white/40 p-8 rounded-3xl">
+                      {{ reportWatermark }}
+                    </span>
+                  </div>
+                }
+
+                <!-- 1. Report Header Band -->
+                <app-report-header
+                  [title]="activeTabTitle"
+                  [subtitle]="activeTabSubtitle"
+                  [institutionName]="institutionName"
+                  [academicTerm]="academicTerm"
+                  [generatedBy]="'System Administrator'"
+                  [generatedDate]="reportGeneratedDate"
+                  [filterChips]="activeFilterChips"
+                ></app-report-header>
+
+                <!-- 2. Formal Domain Report Grids & Groups -->
+                <!-- KPI Table -->
+                @if (activeTab === 'kpi' && kpiData) {
+                  <div class="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
+                    <div class="p-3.5 bg-slate-100 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center justify-between">
+                      <span>🏛️ Institutional Operations & Infrastructure Overview</span>
+                      <span class="text-[10px] text-slate-500 font-medium">Validated Official Records</span>
+                    </div>
+                    <table class="w-full text-xs">
+                      <tbody>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300 w-1/3">Student Enrollment</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Total Enrolled: <strong>{{ kpiData.totalStudents }}</strong> | Active Accounts: <strong>{{ kpiData.activeStudents }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-900/40">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">Hostel & Accommodation</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Hostels: <strong>{{ kpiData.totalHostels }}</strong> | Rooms: <strong>{{ kpiData.totalRooms }}</strong> | Occupied: <strong>{{ kpiData.allocatedBeds }}/{{ kpiData.totalBedsCapacity }}</strong> ({{ kpiData.occupancyRate }}%)</td>
+                        </tr>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">Computer Labs & Workstations</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Total Labs: <strong>{{ kpiData.totalLabs }}</strong> | Workstations: <strong>{{ kpiData.totalWorkstations }}</strong> | Active Bookings Today: <strong>{{ kpiData.activeBookingsToday }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-900/40">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">Financial Revenue & Ledger</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Total Billed: <strong>Rs. {{ kpiData.totalBilledAmount | number:'1.2-2' }}</strong> | Collected: <strong>Rs. {{ kpiData.totalPaidAmount | number:'1.2-2' }}</strong> ({{ kpiData.collectionRate }}%)</td>
+                        </tr>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">Complaints Resolution</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Total Complaints: <strong>{{ kpiData.totalComplaints }}</strong> | In Progress: <strong>{{ kpiData.inProgressComplaints }}</strong> | Resolved: <strong>{{ kpiData.resolvedComplaints }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-900/40">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">Certificates & Clearance</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Total Requests: <strong>{{ kpiData.totalCertificateRequests }}</strong> | Pending: <strong>{{ kpiData.pendingCertificateRequests }}</strong> | Approved: <strong>{{ kpiData.approvedCertificateRequests }}</strong></td>
+                        </tr>
+                        <tr class="border-b border-slate-100 dark:border-slate-800/60">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">Campus Events</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Active Events: <strong>{{ kpiData.activeEvents }}/{{ kpiData.totalEvents }}</strong> | Total Attendees: <strong>{{ kpiData.totalEventAttendees }}</strong></td>
+                        </tr>
+                        <tr class="bg-slate-50/70 dark:bg-slate-900/40">
+                          <td class="p-3 font-bold text-slate-700 dark:text-slate-300">System Notifications</td>
+                          <td class="p-3 text-slate-900 dark:text-slate-200">Dispatched: <strong>{{ kpiData.totalNotificationsSent }}</strong> | Unread: <strong>{{ kpiData.unreadNotifications }}</strong></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                }
+
+                <!-- Students Grouped Roster -->
+                @if (activeTab === 'students') {
+                  <div class="space-y-4">
+                    @if (facultySummaries.length > 0) {
+                      @for (fac of facultySummaries; track fac.facultyId) {
+                        <div class="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+                          <!-- Group Header Band -->
+                          <app-report-group-header
+                            [title]="fac.facultyName"
+                            [count]="fac.totalStudents"
+                            [isExpanded]="isFacultyExpanded(fac.facultyId)"
+                            [submetrics]="[
+                              { label: 'Active', value: fac.activeStudents },
+                              { label: 'Hostel Eligible', value: fac.hostelEligibleCount }
+                            ]"
+                            (toggle)="toggleFacultyExpansion(fac.facultyId)"
+                          ></app-report-group-header>
+
+                          <!-- Group Detail Band -->
+                          @if (isFacultyExpanded(fac.facultyId)) {
+                            <div class="p-2 bg-white dark:bg-slate-900">
+                              <app-report-detail-grid
+                                [columns]="studentColumns"
+                                [items]="getStudentsForFaculty(fac.facultyId)"
+                                [showRowNumbers]="true"
+                                [startIndex]="1"
+                                [showDrilldown]="true"
+                                [sortBy]="filter.sortBy || ''"
+                                [sortDirection]="currentSortDirection"
+                                (sort)="onSortChange($event)"
+                                drilldownButtonLabel="Profile ➔"
+                                (drilldown)="onStudentDrilldown($event)"
+                                emptyMessage="No students found matching filters for this faculty"
+                              ></app-report-detail-grid>
+                            </div>
+
+                            <!-- Group Footer / Subtotals Band -->
+                            <app-report-group-footer
+                              [label]="fac.facultyName + ' Subtotals'"
+                              [subtotals]="[
+                                { label: 'Total Enrolled', value: fac.totalStudents },
+                                { label: 'Active Accounts', value: fac.activeStudents },
+                                { label: 'Deactivated', value: fac.deactivatedStudents },
+                                { label: 'Hostel Eligible', value: fac.hostelEligibleCount }
+                              ]"
+                            ></app-report-group-footer>
+                          }
+                        </div>
+                      }
+                    } @else {
+                      <app-report-detail-grid
+                        [columns]="studentColumns"
+                        [items]="studentItems"
+                        [showRowNumbers]="true"
+                        [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                        [showDrilldown]="true"
+                        [sortBy]="filter.sortBy || ''"
+                        [sortDirection]="currentSortDirection"
+                        (sort)="onSortChange($event)"
+                        drilldownButtonLabel="View Roster"
+                        (drilldown)="onStudentDrilldown($event)"
+                      ></app-report-detail-grid>
+                    }
+                  </div>
+                }
+
+                <!-- Pending Student Registrations Grid -->
+                @if (activeTab === 'student-pending') {
+                  <app-report-detail-grid
+                    [columns]="pendingStudentColumns"
+                    [items]="pendingStudentItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Hostels Occupancy Grid -->
+                @if (activeTab === 'hostels') {
+                  <app-report-detail-grid
+                    [columns]="hostelColumns"
+                    [items]="unallocatedItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Hostel Rooms Grid -->
+                @if (activeTab === 'hostel-rooms') {
+                  <app-report-detail-grid
+                    [columns]="hostelRoomColumns"
+                    [items]="hostelRoomItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Pending Hostel Applications Grid -->
+                @if (activeTab === 'hostel-pending') {
+                  <app-report-detail-grid
+                    [columns]="pendingHostelColumns"
+                    [items]="pendingHostelItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Labs Grid -->
+                @if (activeTab === 'labs') {
+                  <app-report-detail-grid
+                    [columns]="labColumns"
+                    [items]="labBookingItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Lab Directory Grid -->
+                @if (activeTab === 'lab-directory') {
+                  <app-report-detail-grid
+                    [columns]="labDirectoryColumns"
+                    [items]="labDirectoryItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Billing Grid -->
+                @if (activeTab === 'billing') {
+                  <app-report-detail-grid
+                    [columns]="billingColumns"
+                    [items]="billingItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Complaints Grid -->
+                @if (activeTab === 'complaints') {
+                  <app-report-detail-grid
+                    [columns]="complaintColumns"
+                    [items]="complaintItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Complaint Categories SLA Grid -->
+                @if (activeTab === 'complaint-categories-sla') {
+                  <app-report-detail-grid
+                    [columns]="complaintCategorySlaColumns"
+                    [items]="complaintCategorySlaItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Certificates Grid -->
+                @if (activeTab === 'certificates') {
+                  <app-report-detail-grid
+                    [columns]="certificateColumns"
+                    [items]="certificateItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Certificate Types Grid -->
+                @if (activeTab === 'certificate-types') {
+                  <app-report-detail-grid
+                    [columns]="certificateTypeColumns"
+                    [items]="certificateTypeItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Events Grid -->
+                @if (activeTab === 'events') {
+                  <app-report-detail-grid
+                    [columns]="eventColumns"
+                    [items]="eventAttendeeItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Venues Grid -->
+                @if (activeTab === 'venues') {
+                  <app-report-detail-grid
+                    [columns]="venueColumns"
+                    [items]="venueItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- Notifications Grid -->
+                @if (activeTab === 'notifications') {
+                  <app-report-detail-grid
+                    [columns]="notificationColumns"
+                    [items]="notificationItems"
+                    [showRowNumbers]="true"
+                    [startIndex]="(filter.pageNumber! - 1) * filter.pageSize! + 1"
+                    [sortBy]="filter.sortBy || ''"
+                    [sortDirection]="currentSortDirection"
+                    (sort)="onSortChange($event)"
+                  ></app-report-detail-grid>
+                }
+
+                <!-- 3. Report Footer Band -->
+                <app-report-footer
+                  [grandTotals]="currentGrandTotals"
+                  [showSignOff]="true"
+                  [preparedBy]="'System Administrator'"
+                  [institutionName]="institutionName"
+                  [printedDateTime]="reportGeneratedDate"
+                  [systemInfo]="systemInfo"
+                ></app-report-footer>
+
+                <!-- 4. Pagination Controls -->
+                @if (activeTab !== 'kpi') {
+                  <app-report-pagination
+                    [pageNumber]="filter.pageNumber || 1"
+                    [pageSize]="filter.pageSize || 25"
+                    [totalCount]="totalCount"
+                    [totalPages]="totalPages"
+                    [hasPreviousPage]="hasPreviousPage"
+                    [hasNextPage]="hasNextPage"
+                    (pageChange)="onPageChange($event)"
+                    (pageSizeChange)="onPageSizeChange($event)"
+                  ></app-report-pagination>
+                }
+              </app-report-viewer>
+            }
+          </div>
+        </main>
+      </div>
+    }
+  }
+
+  <!-- Subreport Drilldown Modal (Available in both modes) -->
+  <app-report-subreport
+    [isOpen]="isSubreportOpen"
+    [title]="subreportTitle"
+    [parentCategory]="subreportParentCategory"
+    [columns]="subreportColumns"
+    [items]="subreportItems"
+    [loading]="subreportLoading"
+    (close)="isSubreportOpen = false"
+  ></app-report-subreport>
+</div>

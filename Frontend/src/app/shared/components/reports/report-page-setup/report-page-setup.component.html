@@ -1,0 +1,126 @@
+<div class="no-print flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-800 text-white rounded-xl shadow-md border border-slate-700 text-xs">
+  <!-- Page Setup Controls -->
+  <div class="flex flex-wrap items-center gap-3">
+    <div class="flex items-center gap-1.5 font-semibold text-slate-300">
+      <span>⚙️ Page Setup:</span>
+    </div>
+
+    <!-- Orientation Selector -->
+    <div class="flex items-center bg-slate-900/80 rounded-lg p-0.5 border border-slate-700">
+      <button
+        type="button"
+        (click)="setOrientation('portrait')"
+        [class.bg-blue-600]="orientation === 'portrait'"
+        [class.text-white]="orientation === 'portrait'"
+        [class.text-slate-400]="orientation !== 'portrait'"
+        class="px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1"
+      >
+        <span>📄</span> Portrait
+      </button>
+      <button
+        type="button"
+        (click)="setOrientation('landscape')"
+        [class.bg-blue-600]="orientation === 'landscape'"
+        [class.text-white]="orientation === 'landscape'"
+        [class.text-slate-400]="orientation !== 'landscape'"
+        class="px-2.5 py-1 rounded-md font-medium transition-colors flex items-center gap-1"
+      >
+        <span>📜</span> Landscape
+      </button>
+    </div>
+
+    <!-- Paper Size Selector -->
+    <div class="flex items-center gap-1.5">
+      <label class="text-slate-400 font-medium">Size:</label>
+      <select
+        [(ngModel)]="paperSize"
+        (ngModelChange)="onPaperSizeChange($event)"
+        class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+      >
+        <option value="a4">A4 (210 × 297 mm)</option>
+        <option value="letter">Letter (8.5 × 11 in)</option>
+        <option value="legal">Legal (8.5 × 14 in)</option>
+      </select>
+    </div>
+
+    <!-- Zoom Selector -->
+    <div class="flex items-center gap-1.5">
+      <label class="text-slate-400 font-medium">Zoom:</label>
+      <select
+        [(ngModel)]="zoom"
+        (ngModelChange)="onZoomChange($event)"
+        class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-hidden focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer"
+      >
+        <option [ngValue]="50">50% (Compact View)</option>
+        <option [ngValue]="60">60%</option>
+        <option [ngValue]="70">70%</option>
+        <option [ngValue]="75">75%</option>
+        <option [ngValue]="80">80%</option>
+        <option [ngValue]="90">90%</option>
+        <option [ngValue]="100">100% (Actual Size)</option>
+        <option [ngValue]="110">110%</option>
+        <option [ngValue]="125">125% (Readable)</option>
+        <option [ngValue]="150">150% (Large Print)</option>
+        <option [ngValue]="175">175%</option>
+        <option [ngValue]="200">200% (High Detail)</option>
+        <option [ngValue]="250">250% (Max Zoom)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Multi-Format Export & Print Actions -->
+  <div class="flex flex-wrap items-center gap-2">
+    <button
+      type="button"
+      (click)="print.emit()"
+      class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 font-bold text-white flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+    >
+      <span>🖨️</span> Print
+    </button>
+
+    <button
+      type="button"
+      (click)="exportPdf.emit()"
+      class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 font-bold text-white flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+    >
+      <span>📄</span> PDF
+    </button>
+
+    <button
+      type="button"
+      (click)="exportExcel.emit()"
+      class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 font-bold text-white flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+    >
+      <span>📊</span> Excel
+    </button>
+
+    <button
+      type="button"
+      (click)="exportWord.emit()"
+      class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 font-bold text-white flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+    >
+      <span>📝</span> Word
+    </button>
+
+    <button
+      type="button"
+      (click)="exportCsv.emit()"
+      class="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 font-bold text-slate-200 flex items-center gap-1.5 border border-slate-600 shadow-2xs transition-all cursor-pointer"
+    >
+      <span>📋</span> CSV
+    </button>
+
+    <div class="h-5 w-px bg-slate-700 mx-1 hidden sm:block"></div>
+
+    <!-- Fullscreen / Pop-up Preview Button -->
+    <button
+      type="button"
+      (click)="toggleFullscreen.emit()"
+      class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 font-bold text-white flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+      [title]="isFullscreen ? 'Exit Fullscreen Modal' : 'View in Fullscreen Pop-up Modal'"
+    >
+      <span>{{ isFullscreen ? '🗗' : '⛶' }}</span>
+      <span>{{ isFullscreen ? 'Exit Modal' : 'Pop-up Preview' }}</span>
+    </button>
+  </div>
+</div>

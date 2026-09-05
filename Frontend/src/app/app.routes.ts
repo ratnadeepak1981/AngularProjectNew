@@ -189,6 +189,22 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'admin/reports',
+        loadChildren: () =>
+          import('./features/admin/reports/admin-reports.routes').then(
+            (m) => m.ADMIN_REPORTS_ROUTES
+          ),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'admin/analytics',
+        loadChildren: () =>
+          import('./features/admin/reports/admin-reports.routes').then(
+            (m) => m.ADMIN_REPORTS_ROUTES
+          ),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'student/dashboard',
         loadChildren: () =>
           import('./features/student/dashboard/student-dashboard.routes').then(

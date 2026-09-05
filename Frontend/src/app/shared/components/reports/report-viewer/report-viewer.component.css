@@ -1,0 +1,48 @@
+:host {
+  display: block;
+}
+
+.sheet-portrait {
+  width: 100%;
+  max-width: 860px;
+  min-height: 1100px;
+}
+
+.sheet-landscape {
+  width: 100%;
+  max-width: 1200px;
+  min-height: 800px;
+}
+
+.fullscreen-active {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 1.25rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.fullscreen-active .report-canvas-backdrop {
+  min-height: calc(100vh - 100px);
+  background-color: transparent;
+  padding: 1rem 0;
+}
+
+@media print {
+  .report-canvas-backdrop {
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .crystal-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    transform: none !important;
+  }
+}

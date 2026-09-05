@@ -1,0 +1,38 @@
+<div class="report-viewer-wrapper flex flex-col gap-4" [class.fullscreen-active]="isFullscreen">
+  <!-- Top Page Setup & Multi-Format Export Toolbar -->
+  @if (showToolbar) {
+    <app-report-page-setup
+      [orientation]="orientation"
+      [paperSize]="paperSize"
+      [zoom]="zoom"
+      [isFullscreen]="isFullscreen"
+      (orientationChange)="onOrientationChange($event)"
+      (paperSizeChange)="onPaperSizeChange($event)"
+      (zoomChange)="onZoomChange($event)"
+      (toggleFullscreen)="onToggleFullscreen()"
+      (print)="onPrint()"
+      (exportPdf)="onExportPdf()"
+      (exportExcel)="onExportExcel()"
+      (exportWord)="onExportWord()"
+      (exportCsv)="onExportCsv()"
+    ></app-report-page-setup>
+  }
+
+  <!-- Gray Backdrop Canvas (PDF / Crystal Reports style) -->
+  <div
+    class="report-canvas-backdrop bg-slate-700/80 dark:bg-slate-950 p-3 sm:p-6 rounded-2xl overflow-x-auto min-h-[500px] flex justify-center items-start shadow-inner transition-all duration-200"
+  >
+    <!-- Physical White Sheet Paper Container -->
+    <div
+      id="crystal-report-sheet"
+      [style.transform]="'scale(' + (zoom / 100) + ')'"
+      [style.transform-origin]="'top center'"
+      [class.sheet-portrait]="orientation === 'portrait'"
+      [class.sheet-landscape]="orientation === 'landscape'"
+      class="crystal-sheet bg-white text-slate-900 rounded-sm shadow-2xl p-5 sm:p-8 border border-slate-300 transition-all"
+    >
+      <!-- Projected Content (Report Header, Groups, Grids, Footers) -->
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

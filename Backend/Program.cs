@@ -175,6 +175,14 @@ namespace CampusServicesPortal
             builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 
+            // Reports & Institutional Analytics Module
+            builder.Services.AddScoped<
+                CampusServicesPortal.Repositories.Interfaces.IReportRepository,
+                CampusServicesPortal.Repositories.Implementations.ReportRepository>();
+            builder.Services.AddScoped<
+                CampusServicesPortal.Services.Interfaces.IReportService,
+                CampusServicesPortal.Services.Implementations.ReportService>();
+
             // Module 3 & 4 Hold Sweeper Daemon Worker [PDF: 0.1.12, 0.1.19]
             builder.Services.AddHostedService<BookingExpiryWorker>();
 

@@ -1,4 +1,4 @@
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="w-full space-y-6">
   <!-- Page Header with Quick Snapshot Toggle -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div class="flex-1">
@@ -124,8 +124,8 @@
     </div>
   </div>
 
-  <!-- Windows Control Panel Cards Grid (3 Columns on Desktop, Responsive Breakpoint) -->
-  <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+  <!-- Windows Control Panel Cards Grid (Responsive 3-4 Columns on Desktop) -->
+  <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
     @for (card of filteredCards(); track card.id) {
       <app-control-panel-card
         [card]="card"

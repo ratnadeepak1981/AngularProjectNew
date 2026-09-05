@@ -1,0 +1,56 @@
+<footer class="report-footer mt-6 pt-4 border-t-2 border-slate-900 dark:border-slate-700 text-xs">
+  <!-- Grand Totals Summary Strip (Crystal Reports style) -->
+  @if (grandTotals.length > 0) {
+    <div class="grand-total-box p-3.5 bg-slate-900 text-white rounded-xl shadow-md mb-5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-base">📊</span>
+        <span class="font-black uppercase tracking-wider text-xs text-blue-300">Grand Institutional Totals:</span>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-5">
+        @for (tot of grandTotals; track tot.label) {
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="text-slate-400 font-medium">{{ tot.label }}:</span>
+            <span class="font-black text-sm text-white">
+              {{ tot.isCurrency ? (tot.value | number:'1.2-2') : tot.value }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Document Sign-off / Verification Strip (For Physical Print) -->
+  @if (showSignOff) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-800 text-[11px] text-slate-500">
+      <div>
+        <div class="border-b border-slate-400 dark:border-slate-600 mb-1 h-8"></div>
+        <div class="font-bold text-slate-700 dark:text-slate-300">Prepared By:</div>
+        <div>{{ preparedBy }}</div>
+      </div>
+      <div>
+        <div class="border-b border-slate-400 dark:border-slate-600 mb-1 h-8"></div>
+        <div class="font-bold text-slate-700 dark:text-slate-300">Verified By Registrar:</div>
+        <div>{{ institutionName }}</div>
+      </div>
+      <div class="hidden sm:block">
+        <div class="border-b border-slate-400 dark:border-slate-600 mb-1 h-8"></div>
+        <div class="font-bold text-slate-700 dark:text-slate-300">Official Stamp / Seal:</div>
+        <div>Quality Assurance Directorate</div>
+      </div>
+    </div>
+  }
+
+  <!-- Bottom Confidentiality Notice & Page Information with Printed DateTime -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 text-[10px] text-slate-500 dark:text-slate-400">
+    <div class="flex flex-wrap items-center gap-2">
+      <span>🔒 <strong>CONFIDENTIALITY NOTICE:</strong> This document is generated for institutional administrative purposes only.</span>
+      <span class="font-mono text-blue-900 dark:text-blue-300 font-bold bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded-sm">
+        Printed on: {{ printedDateTime | date:'medium' }}
+      </span>
+    </div>
+    <div class="shrink-0 font-medium font-mono text-right">
+      {{ systemInfo }}
+    </div>
+  </div>
+</footer>

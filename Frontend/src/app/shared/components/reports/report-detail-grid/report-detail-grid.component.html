@@ -1,0 +1,243 @@
+<div class="w-full space-y-2">
+  <!-- Active Column Filter Notification Pill (Print Hidden) -->
+  @if (totalActiveFiltersCount > 0) {
+    <div class="flex items-center justify-between px-3 py-1.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg text-xs print:hidden">
+      <div class="flex items-center gap-1.5 text-blue-800 dark:text-blue-300 font-medium">
+        <span>⚡</span>
+        <span>Excel Column Filter active: Showing <strong>{{ displayedItems.length }}</strong> of <strong>{{ items.length }}</strong> rows</span>
+      </div>
+      <button
+        type="button"
+        (click)="clearAllColumnFilters()"
+        class="text-blue-600 dark:text-blue-400 hover:underline font-bold text-xs cursor-pointer"
+      >
+        Clear All Column Filters
+      </button>
+    </div>
+  }
+
+  <div class="overflow-x-auto w-full">
+    <table class="w-full border-collapse text-xs">
+      <!-- Page / Grid Column Headers Band -->
+      <thead>
+        <tr class="bg-slate-100 dark:bg-slate-800 border-b-2 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200">
+          @if (showRowNumbers) {
+            <th class="py-2 px-2.5 text-center font-bold text-[11px] uppercase tracking-wider w-10 border-r border-slate-200 dark:border-slate-700">
+              #
+            </th>
+          }
+          @for (col of columns; track col.field) {
+            <th
+              [style.width]="col.width || 'auto'"
+              [class.text-left]="!col.align || col.align === 'left'"
+              [class.text-center]="col.align === 'center'"
+              [class.text-right]="col.align === 'right'"
+              class="py-2 px-2 font-bold text-[11px] uppercase tracking-wider border-r border-slate-200 dark:border-slate-700 last:border-r-0 select-none relative group"
+            >
+              <div class="inline-flex items-center gap-1.5 w-full" [class.justify-end]="col.align === 'right'" [class.justify-center]="col.align === 'center'">
+                <span class="truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors" (click)="onSort(col)">
+                  {{ col.header }}
+                </span>
+                
+                <!-- Sort Indicator -->
+                @if (col.sortable && sortBy === col.field) {
+                  <span class="text-blue-600 dark:text-blue-400 font-black text-xs cursor-pointer shrink-0" (click)="onSort(col)">
+                    {{ sortDirection === 'desc' ? '▼' : '▲' }}
+                  </span>
+                }
+
+                <!-- Active Filter Dot -->
+                @if (hasActiveFilter(col)) {
+                  <span class="w-2 h-2 rounded-full bg-blue-500 shrink-0" title="Active Filter Applied"></span>
+                }
+
+                <!-- Excel-like Dropdown Trigger Button -->
+                <button
+                  type="button"
+                  (click)="toggleMenu(col, $event)"
+                  class="p-0.5 rounded-sm hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 transition-colors ml-auto print:hidden cursor-pointer"
+                  [class.text-blue-600]="hasActiveFilter(col)"
+                  title="Excel Filter & Sort for {{ col.header }}"
+                >
+                  <span class="text-[10px] leading-none">{{ hasActiveFilter(col) ? '🔽' : '▾' }}</span>
+                </button>
+              </div>
+
+              <!-- Excel-style Floating Filter & Sort Dropdown Popover Card -->
+              @if (activeMenuCol?.field === col.field) {
+                <div
+                  class="absolute top-full left-0 z-50 mt-1 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 p-3 text-left font-normal normal-case animate-fadeIn print:hidden"
+                  (click)="$event.stopPropagation()"
+                >
+                  <!-- Header -->
+                  <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <span class="truncate">📊 {{ col.header }} Options</span>
+                    <button
+                      type="button"
+                      (click)="closeMenu()"
+                      class="text-slate-400 hover:text-slate-600 dark:hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <!-- Sort Options -->
+                  <div class="space-y-1 pb-2 mb-2 border-b border-slate-100 dark:border-slate-800 text-xs">
+                    <button
+                      type="button"
+                      (click)="applySort(col, 'asc')"
+                      class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium cursor-pointer transition-colors"
+                      [class.font-bold]="sortBy === col.field && sortDirection === 'asc'"
+                      [class.text-blue-600]="sortBy === col.field && sortDirection === 'asc'"
+                    >
+                      <span>🔼</span> Sort A to Z (Ascending)
+                    </button>
+                    <button
+                      type="button"
+                      (click)="applySort(col, 'desc')"
+                      class="w-full text-left px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-700 dark:text-slate-300 font-medium cursor-pointer transition-colors"
+                      [class.font-bold]="sortBy === col.field && sortDirection === 'desc'"
+                      [class.text-blue-600]="sortBy === col.field && sortDirection === 'desc'"
+                    >
+                      <span>🔽</span> Sort Z to A (Descending)
+                    </button>
+                  </div>
+
+                  <!-- Search Filter Values -->
+                  <div class="space-y-2">
+                    <div class="relative">
+                      <input
+                        type="text"
+                        [(ngModel)]="columnSearchText"
+                        placeholder="Search values..."
+                        class="w-full px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <!-- Distinct Values Checklist Box -->
+                    <div class="max-h-36 overflow-y-auto border border-slate-100 dark:border-slate-800 rounded-lg p-1.5 space-y-1 bg-slate-50/50 dark:bg-slate-950/40 text-xs">
+                      <!-- Select All -->
+                      <label class="flex items-center gap-2 px-1.5 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer select-none font-semibold text-slate-700 dark:text-slate-300">
+                        <input
+                          type="checkbox"
+                          [checked]="isAllSelected(col)"
+                          (change)="toggleSelectAll(col)"
+                          class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                        />
+                        <span>(Select All)</span>
+                      </label>
+
+                      <!-- Value Items -->
+                      @for (val of getFilteredDistinctValues(col); track val) {
+                        <label class="flex items-center gap-2 px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800/80 cursor-pointer select-none text-slate-600 dark:text-slate-400">
+                          <input
+                            type="checkbox"
+                            [checked]="tempSelectedValues.has(val)"
+                            (change)="toggleValue(val)"
+                            class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5"
+                          />
+                          <span class="truncate" [title]="val">{{ val }}</span>
+                        </label>
+                      } @empty {
+                        <div class="text-[11px] text-slate-400 text-center py-2">No matching values</div>
+                      }
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="flex items-center justify-between gap-1 pt-1">
+                      <button
+                        type="button"
+                        (click)="clearColumnFilter(col)"
+                        class="px-2 py-1 rounded-md text-[11px] text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                      <div class="flex items-center gap-1">
+                        <button
+                          type="button"
+                          (click)="closeMenu()"
+                          class="px-2.5 py-1 rounded-md text-[11px] border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          (click)="applyColumnFilter(col)"
+                          class="px-3 py-1 rounded-md text-[11px] bg-blue-600 hover:bg-blue-500 text-white font-bold cursor-pointer shadow-xs"
+                        >
+                          Apply
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </th>
+          }
+          @if (showDrilldown) {
+            <th class="py-2 px-2.5 text-center font-bold text-[11px] uppercase tracking-wider w-20">
+              Actions
+            </th>
+          }
+        </tr>
+      </thead>
+
+      <!-- Detail Data Rows Band -->
+      <tbody>
+        @for (row of displayedItems; track trackByFn($index, row); let idx = $index) {
+          <tr
+            class="border-b border-slate-200 dark:border-slate-800/80 hover:bg-blue-50/60 dark:hover:bg-blue-900/20 transition-colors"
+            [class.bg-white]="idx % 2 === 0"
+            [class.dark:bg-slate-900]="idx % 2 === 0"
+            [class.bg-slate-50]="idx % 2 !== 0"
+            [class.dark:bg-slate-850]="idx % 2 !== 0"
+          >
+            @if (showRowNumbers) {
+              <td class="py-1.5 px-2 text-center text-slate-400 border-r border-slate-200 dark:border-slate-800 font-mono text-[11px]">
+                {{ (startIndex || 1) + idx }}
+              </td>
+            }
+
+            @for (col of columns; track col.field) {
+              <td
+                [class.text-left]="!col.align || col.align === 'left'"
+                [class.text-center]="col.align === 'center'"
+                [class.text-right]="col.align === 'right'"
+                class="py-1.5 px-2.5 text-slate-700 dark:text-slate-300 border-r border-slate-200 dark:border-slate-800 last:border-r-0"
+              >
+                @if (col.badgeClass) {
+                  <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold" [ngClass]="col.badgeClass(row[col.field], row)">
+                    {{ col.formatter ? col.formatter(row[col.field], row) : row[col.field] }}
+                  </span>
+                } @else {
+                  <span>{{ col.formatter ? col.formatter(row[col.field], row) : (row[col.field] !== null && row[col.field] !== undefined ? row[col.field] : '-') }}</span>
+                }
+              </td>
+            }
+
+            @if (showDrilldown) {
+              <td class="py-1.5 px-2 text-center">
+                <button
+                  type="button"
+                  (click)="drilldown.emit(row)"
+                  class="px-2 py-0.5 rounded-md bg-blue-100 hover:bg-blue-200 text-blue-800 dark:bg-blue-900/50 dark:hover:bg-blue-800 dark:text-blue-300 font-bold text-[11px] transition-colors cursor-pointer"
+                >
+                  {{ drilldownButtonLabel }}
+                </button>
+              </td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="totalColumns" class="py-8 text-center text-slate-400 dark:text-slate-500">
+              <div class="flex flex-col items-center gap-1">
+                <span class="text-xl">📄</span>
+                <span class="text-xs font-medium">{{ emptyMessage }}</span>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

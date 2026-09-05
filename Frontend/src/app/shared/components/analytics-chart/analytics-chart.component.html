@@ -1,0 +1,260 @@
+﻿<!-- analytics-chart.component.html -->
+<!-- Reusable chart card: type="bar"|"line"|"donut" -->
+<!-- Angular 22+ / native SVG / zero third-party libs -->
+
+<div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm overflow-hidden h-full">
+
+  <!-- ── Card Header ─────────────────────────────────────────────────── -->
+  <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 shrink-0">
+    <span class="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
+      @if (config().icon) { <span>{{ config().icon }}</span> }
+      {{ config().title }}
+    </span>
+    @if (config().type === 'donut' && config().gaugePercent !== undefined) {
+      <span class="text-[10px] font-bold" [style.color]="config().primaryColor">
+        {{ config().gaugePercent }}%
+        @if (config().centerSub) { {{ config().centerSub }} }
+      </span>
+    }
+  </div>
+
+  <!-- ── Card Body ───────────────────────────────────────────────────── -->
+  <div class="p-4 flex-1 flex flex-col gap-3">
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!--  DONUT / GAUGE                                                  -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    @if (config().type === 'donut') {
+      <div class="flex flex-col items-center gap-3">
+
+        <!-- Donut SVG -->
+        <div class="relative w-32 h-32 shrink-0">
+          <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            <!-- Track ring -->
+            <circle cx="50" cy="50" r="38" stroke="#e2e8f0" stroke-width="13" fill="none"
+              class="dark:stroke-slate-700"/>
+            <!-- Segments / gauge arc -->
+            @for (seg of donutSegments(); track $index) {
+              <circle
+                cx="50" cy="50" r="38"
+                [attr.stroke]="seg.color"
+                stroke-width="13"
+                fill="none"
+                stroke-linecap="round"
+                [attr.stroke-dasharray]="seg.strokeDasharray"
+                [attr.stroke-dashoffset]="seg.strokeDashoffset">
+                <title>{{ seg.label }}: {{ seg.percentage }}%</title>
+              </circle>
+            }
+          </svg>
+          <!-- Center text -->
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+            <span class="text-lg font-black leading-none" [style.color]="config().primaryColor">
+              {{ donutCenterLabel() }}
+            </span>
+            @if (donutCenterSub()) {
+              <span class="text-[8px] font-bold text-slate-400 uppercase mt-0.5">{{ donutCenterSub() }}</span>
+            }
+          </div>
+        </div>
+
+        <!-- Segment legend / progress bars -->
+        @if (data().length > 1) {
+          <div class="w-full space-y-1.5 max-h-32 overflow-y-auto">
+            @for (seg of donutSegments(); track $index) {
+              <div class="flex items-center gap-2">
+                <span class="text-[9px] text-slate-500 dark:text-slate-400 w-24 truncate shrink-0"
+                  [title]="seg.label">{{ seg.label }}</span>
+                <div class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-500"
+                    [style.width.%]="seg.percentage"
+                    [style.backgroundColor]="seg.color">
+                  </div>
+                </div>
+                <span class="text-[9px] font-bold text-slate-700 dark:text-slate-300 shrink-0">
+                  {{ seg.percentage }}%
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Single gauge: show value detail -->
+          <div class="w-full space-y-1">
+            @for (item of data(); track $index) {
+              <div class="flex items-center justify-between text-[10px]">
+                <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+                  <span class="w-2 h-2 rounded-full shrink-0" [style.backgroundColor]="config().primaryColor"></span>
+                  {{ item.label }}
+                </span>
+                <span class="font-black" [style.color]="config().primaryColor">
+                  {{ config().valuePrefix ?? '' }}{{ item.value }}{{ config().valueSuffix ?? '' }}
+                </span>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!--  BAR CHART                                                      -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    @if (config().type === 'bar') {
+
+      <!-- Legend -->
+      @if (legendItems().length) {
+        <div class="flex items-center gap-3 flex-wrap">
+          @for (leg of legendItems(); track leg.label) {
+            <span class="flex items-center gap-1 text-[9px] text-slate-500 dark:text-slate-400">
+              <span class="w-2.5 h-2.5 rounded-sm shrink-0" [style.backgroundColor]="leg.color"></span>
+              {{ leg.label }}
+            </span>
+          }
+        </div>
+      }
+
+      <!-- Bars area -->
+      <div class="relative flex items-end justify-around gap-1 pt-5 pb-1 border-b border-slate-100 dark:border-slate-800 flex-1 min-h-[9rem]">
+        <!-- Y-axis grid lines -->
+        <div class="pointer-events-none absolute inset-x-0 top-5 bottom-1 flex flex-col justify-between">
+          <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+          <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+          <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+          <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+        </div>
+
+        @for (b of barItems(); track $index) {
+          <div class="flex-1 flex flex-col items-center h-full justify-end relative z-10">
+            <!-- Top value label -->
+            <span class="text-[8px] font-bold text-slate-500 dark:text-slate-400 mb-0.5 leading-none text-center">
+              {{ config().valuePrefix ?? '' }}{{ b.value }}{{ config().valueSuffix ?? '' }}
+            </span>
+
+            @if (config().stacked) {
+              <!-- Stacked: one bar, value2 fills from bottom -->
+              <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-t overflow-hidden flex flex-col justify-end transition-all duration-500"
+                [style.height.%]="b.primaryHeight">
+                <div class="w-full rounded-t transition-all duration-500"
+                  [style.height.%]="b.secondaryHeight"
+                  [style.backgroundColor]="config().secondaryColor ?? config().primaryColor">
+                </div>
+              </div>
+            } @else {
+              <!-- Dual side-by-side bars -->
+              <div class="w-full flex items-end justify-center gap-px h-full">
+                <div class="flex-1 rounded-t transition-all duration-500"
+                  [style.height.%]="b.primaryHeight"
+                  [style.backgroundColor]="config().primaryColor"
+                  [title]="b.tooltip">
+                </div>
+                @if (config().secondaryColor) {
+                  <div class="flex-1 rounded-t transition-all duration-500"
+                    [style.height.%]="b.secondaryHeight"
+                    [style.backgroundColor]="config().secondaryColor"
+                    [title]="b.label + ' secondary: ' + b.value2">
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- X-axis label -->
+            <span class="text-[7px] text-slate-400 dark:text-slate-500 mt-0.5 truncate w-full text-center leading-none"
+              [title]="b.label">
+              {{ b.label }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Subtitle -->
+      @if (config().subtitle) {
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center">{{ config().subtitle }}</p>
+      }
+    }
+
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    <!--  LINE CHART                                                     -->
+    <!-- ════════════════════════════════════════════════════════════════ -->
+    @if (config().type === 'line') {
+
+      <!-- Legend -->
+      @if (legendItems().length) {
+        <div class="flex items-center gap-3 flex-wrap">
+          @for (leg of legendItems(); track leg.label) {
+            <span class="flex items-center gap-1 text-[9px] text-slate-500 dark:text-slate-400">
+              <span class="w-4 h-0.5 rounded inline-block" [style.backgroundColor]="leg.color"></span>
+              {{ leg.label }}
+            </span>
+          }
+        </div>
+      }
+
+      <!-- SVG Line chart -->
+      <div class="flex-1 min-h-[9rem]">
+        <svg class="w-full h-full" [attr.viewBox]="'0 0 ' + svgW + ' ' + svgH" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient [attr.id]="lineGradId()" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" [attr.stop-color]="config().primaryColor" stop-opacity="0.32"/>
+              <stop offset="100%" [attr.stop-color]="config().primaryColor" stop-opacity="0.02"/>
+            </linearGradient>
+          </defs>
+
+          <!-- Y-axis grid -->
+          <line x1="44" [attr.y1]="svgH - 20" x2="480" [attr.y2]="svgH - 20"
+            stroke="#e2e8f0" stroke-width="0.8" class="dark:stroke-slate-700"/>
+          <line x1="44" y1="69" x2="480" y2="69"
+            stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="4 3" class="dark:stroke-slate-700"/>
+          <line x1="44" y1="43" x2="480" y2="43"
+            stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="4 3" class="dark:stroke-slate-700"/>
+          <line x1="44" y1="16" x2="480" y2="16"
+            stroke="#e2e8f0" stroke-width="0.8" stroke-dasharray="4 3" class="dark:stroke-slate-700"/>
+
+          <!-- Y-axis labels -->
+          <text x="40" [attr.y]="svgH - 17" text-anchor="end" font-size="8" fill="#94a3b8">0</text>
+          <text x="40" y="19" text-anchor="end" font-size="8" fill="#94a3b8">Max</text>
+
+          <!-- Area fill -->
+          <path [attr.d]="lineAreaPath()" [attr.fill]="'url(#' + lineGradId() + ')'"/>
+
+          <!-- Line stroke -->
+          <path [attr.d]="linePath()"
+            fill="none"
+            [attr.stroke]="config().primaryColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+
+          <!-- Data point circles + labels -->
+          @for (p of linePoints(); track $index) {
+            <circle
+              [attr.cx]="p.x"
+              [attr.cy]="p.y"
+              r="4"
+              fill="#ffffff"
+              [attr.stroke]="config().primaryColor"
+              stroke-width="2"
+              class="dark:fill-slate-900">
+              <title>{{ p.label }}: {{ p.displayValue }}</title>
+            </circle>
+            <text
+              [attr.x]="p.x"
+              [attr.y]="p.y - 7"
+              text-anchor="middle"
+              font-size="9"
+              font-weight="bold"
+              [attr.fill]="config().primaryColor">
+              {{ p.displayValue }}
+            </text>
+          }
+        </svg>
+      </div>
+
+      <!-- Subtitle -->
+      @if (config().subtitle) {
+        <p class="text-[10px] text-slate-400 dark:text-slate-500 text-center">{{ config().subtitle }}</p>
+      }
+    }
+
+  </div>
+</div>

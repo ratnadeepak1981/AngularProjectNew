@@ -1,0 +1,87 @@
+<div class="no-print report-pagination flex flex-wrap items-center justify-between gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs text-xs mt-4">
+  <!-- Record Summary Text -->
+  <div class="text-slate-600 dark:text-slate-400 font-medium">
+    @if (totalCount > 0) {
+      <span>Showing <strong class="text-slate-900 dark:text-white">{{ startRecord }}</strong> to <strong class="text-slate-900 dark:text-white">{{ endRecord }}</strong> of <strong class="text-slate-900 dark:text-white">{{ totalCount }}</strong> records</span>
+    } @else {
+      <span>0 records found</span>
+    }
+  </div>
+
+  <!-- Page Size Selector & Controls -->
+  <div class="flex items-center gap-4">
+    <!-- Page Size Selector -->
+    <div class="flex items-center gap-1.5">
+      <span class="text-slate-500 dark:text-slate-400">Rows per page:</span>
+      <select
+        [ngModel]="pageSize"
+        (ngModelChange)="onPageSizeChange($event)"
+        class="px-2 py-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+      >
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="25">25</option>
+        <option [ngValue]="50">50</option>
+        <option [ngValue]="100">100</option>
+      </select>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex items-center gap-1">
+      <!-- First Page -->
+      <button
+        type="button"
+        (click)="goToPage(1)"
+        [disabled]="pageNumber <= 1"
+        class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        title="First Page"
+      >
+        ⏮
+      </button>
+
+      <!-- Prev Page -->
+      <button
+        type="button"
+        (click)="goToPage(pageNumber - 1)"
+        [disabled]="!hasPreviousPage"
+        class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition-colors"
+      >
+        ◀ Prev
+      </button>
+
+      <!-- Current Page Info / Jump -->
+      <div class="flex items-center gap-1 px-2 font-semibold text-slate-800 dark:text-slate-200">
+        <span>Page</span>
+        <input
+          type="number"
+          min="1"
+          [max]="totalPages"
+          [ngModel]="pageNumber"
+          (change)="onPageInput($event)"
+          class="w-12 text-center py-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+        />
+        <span>of {{ totalPages || 1 }}</span>
+      </div>
+
+      <!-- Next Page -->
+      <button
+        type="button"
+        (click)="goToPage(pageNumber + 1)"
+        [disabled]="!hasNextPage"
+        class="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed font-medium transition-colors"
+      >
+        Next ▶
+      </button>
+
+      <!-- Last Page -->
+      <button
+        type="button"
+        (click)="goToPage(totalPages)"
+        [disabled]="pageNumber >= totalPages"
+        class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        title="Last Page"
+      >
+        ⏭
+      </button>
+    </div>
+  </div>
+</div>

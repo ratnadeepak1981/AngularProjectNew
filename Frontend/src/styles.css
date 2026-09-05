@@ -272,3 +272,72 @@ body {
 :root.dark .theme-table-row-hover td {
   color: #F8FAFC !important;
 }
+
+/* ==========================================================================
+   Crystal Reports & Document Print Rules (BRD Section 8)
+   ========================================================================== */
+@media print {
+  @page {
+    size: auto;
+    margin: 10mm 12mm;
+  }
+  body, html {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .no-print,
+  app-navbar-component,
+  app-header-component,
+  app-footer-component,
+  app-toast-container,
+  app-report-subreport,
+  button,
+  input,
+  select,
+  aside,
+  header,
+  nav {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+  .report-canvas-backdrop {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+  .crystal-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    transform: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  table {
+    page-break-inside: auto;
+    width: 100% !important;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
+  }
+}
