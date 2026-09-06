@@ -299,6 +299,7 @@
   [currentStep]="verificationStep()"
   [emailAddress]="registrationForm.get('email')?.value"
   [phoneNumber]="primaryMobileNumber()"
+  [validityMinutes]="otpValidityMinutes()"
   [isVerifying]="isVerifyingToken() || isVerifyingSms()"
   [isResending]="isResendingToken() || isResendingSms()"
   [canClose]="true"

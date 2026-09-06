@@ -17,12 +17,33 @@ namespace CampusServicesPortal.Repositories.Implementations
             _context = context;
         }
 
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email)) return null;
+            return await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.Trim().ToLower());
+        }
+
+        public async Task<User?> GetUserByIdAsync(int id)
+        {
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+        }
+
+        public async Task<Student?> GetStudentByUserIdAsync(int userId)
+        {
+            return await _context.Students
+                .Include(s => s.User)
+                .Include(s => s.Faculty)
+                .Include(s => s.PhoneNumbers)
+                .FirstOrDefaultAsync(s => s.UserId == userId);
+        }
+
         public async Task<Student?> GetStudentByEmailThroughUserAsync(string email)
         {
             return await _context.Students
                 .Include(s => s.User)
                 .Include(s => s.Faculty)
-                .FirstOrDefaultAsync(s => s.User.Email == email);
+                .Include(s => s.PhoneNumbers)
+                .FirstOrDefaultAsync(s => s.User.Email.ToLower() == email.Trim().ToLower());
         }
 
         public async Task InvalidateExistingResetTokensAsync(int studentId)

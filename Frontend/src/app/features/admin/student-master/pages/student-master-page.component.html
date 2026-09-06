@@ -123,29 +123,57 @@
       (pageSizeChange)="onAccountsPageSizeChange($event)"
     >
       <ng-template #cellActions let-row>
-        @if (row.isActive) {
+        <div class="flex items-center gap-1.5 justify-center">
           <app-action-button
-            label="Deactivate Account"
-            icon="trash"
-            variant="danger"
+            label="Reset Password"
+            icon="key"
+            variant="warning"
             size="sm"
-            tooltip="Execute cross-module safety deactivation audit"
-            (btnClick)="openSafetyModal(row)"
+            tooltip="Generate temporary credentials and force password update"
+            (btnClick)="openResetPasswordModal(row)"
           ></app-action-button>
-        } @else {
-          <app-action-button
-            label="Reactivate Account"
-            icon="refresh"
-            variant="success"
-            size="sm"
-            tooltip="Reactivate student account access"
-            (btnClick)="reactivateAccount(row)"
-          ></app-action-button>
-        }
+
+          @if (row.isActive) {
+            <app-action-button
+              label="Deactivate"
+              icon="trash"
+              variant="danger"
+              size="sm"
+              tooltip="Execute cross-module safety deactivation audit"
+              (btnClick)="openSafetyModal(row)"
+            ></app-action-button>
+          } @else {
+            <app-action-button
+              label="Reactivate"
+              icon="refresh"
+              variant="success"
+              size="sm"
+              tooltip="Reactivate student account access"
+              (btnClick)="reactivateAccount(row)"
+            ></app-action-button>
+          }
+        </div>
       </ng-template>
     </app-data-table>
   }
 </div>
+
+<!-- RESET PASSWORD CONFIRM MODAL -->
+<app-confirm-modal
+  [isOpen]="isResetPasswordModalOpen()"
+  [icon]="'🔑'"
+  [iconVariant]="'warning'"
+  [title]="'Confirm Student Password Reset'"
+  [message]="'Are you sure you want to reset the portal password for ' + selectedStudentForReset()?.name + ' (' + selectedStudentForReset()?.indexNumber + ')? A secure temporary password will be generated, set to expire in accordance with system policy, and dispatched via internal notification. The student will be forced to change their password upon next sign in.'"
+  [confirmIcon]="'key'"
+  [confirmText]="'Generate Temporary Credential'"
+  [confirmVariant]="'primary'"
+  [cancelIcon]="'✕'"
+  [cancelText]="'Cancel'"
+  [isLoading]="isResettingPassword()"
+  (confirm)="confirmResetPassword()"
+  (cancel)="closeResetPasswordModal()"
+></app-confirm-modal>
 
 <!-- 1. ALERT MODAL: Displayed when deactivation is BLOCKED by active dependencies -->
 <app-alert-modal

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Requests.Student;
+using CampusServicesPortal.DTOs.Requests.Student;
 using CampusServicesPortal.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,10 +11,12 @@ namespace CampusServicesPortal.Controllers
     public class StudentsController : BaseApiController
     {
         private readonly IStudentService _studentService;
+        private readonly IPasswordService _passwordService;
 
-        public StudentsController(IStudentService studentService)
+        public StudentsController(IStudentService studentService, IPasswordService passwordService)
         {
             _studentService = studentService;
+            _passwordService = passwordService;
         }
 
         // POST /api/students/register
@@ -58,6 +60,15 @@ namespace CampusServicesPortal.Controllers
             // Rule 11: Performs cross-turn module integrity checks before executing deactivation [Index 0.1.5, 0.1.19]
             var result = await _studentService.DeactivateStudentAsync(id);
             return ProcessServiceResult(result, "Student profile state deactivated successfully.");
+        }
+
+        // POST /api/students/{id}/reset-password
+        [Authorize(Roles = "Admin")]
+        [HttpPost("{id}/reset-password")]
+        public async Task<IActionResult> ResetStudentPassword(int id)
+        {
+            var result = await _passwordService.AdminResetStudentPasswordAsync(id);
+            return ProcessServiceResult(result, "Student account password reset initiated.");
         }
     }
 }

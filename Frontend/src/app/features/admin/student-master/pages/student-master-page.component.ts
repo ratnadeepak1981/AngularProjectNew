@@ -913,4 +913,39 @@ export class StudentMasterPageComponent implements OnInit {
       },
     });
   }
+
+  // Admin Reset Student Password State & Methods
+  public readonly isResetPasswordModalOpen = signal<boolean>(false);
+  public readonly selectedStudentForReset = signal<StudentProfile | null>(null);
+  public readonly isResettingPassword = signal<boolean>(false);
+
+  openResetPasswordModal(student: StudentProfile): void {
+    this.selectedStudentForReset.set(student);
+    this.isResetPasswordModalOpen.set(true);
+  }
+
+  closeResetPasswordModal(): void {
+    this.isResetPasswordModalOpen.set(false);
+    this.selectedStudentForReset.set(null);
+  }
+
+  confirmResetPassword(): void {
+    const student = this.selectedStudentForReset();
+    if (!student) return;
+
+    this.isResettingPassword.set(true);
+    this.studentMasterService.resetStudentPassword(student.id).subscribe({
+      next: (res) => {
+        this.isResettingPassword.set(false);
+        this.closeResetPasswordModal();
+        const data = res.data || res;
+        const tempPass = data?.temporaryPassword || data?.TemporaryPassword || '';
+        this.toast.success(`Password reset successfully for ${student.name}. Temporary credential: ${tempPass}`);
+      },
+      error: (err) => {
+        this.isResettingPassword.set(false);
+        this.toast.error(err.error?.message || 'Failed to reset student password.');
+      },
+    });
+  }
 }

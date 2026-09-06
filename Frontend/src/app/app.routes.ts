@@ -18,6 +18,20 @@ export const routes: Routes = [
     children: [
       { path: 'login', component: LoginComponent },
       { path: 'register', component: StudentRegistrationComponent },
+      {
+        path: 'forgot-password',
+        loadComponent: () =>
+          import('./features/auth/forgot-password/forgot-password.component').then(
+            (m) => m.ForgotPasswordComponent
+          ),
+      },
+      {
+        path: 'force-password-change',
+        loadComponent: () =>
+          import('./features/auth/forgot-password/forgot-password.component').then(
+            (m) => m.ForgotPasswordComponent
+          ),
+      },
       { path: '', redirectTo: 'login', pathMatch: 'full' },
     ],
   },
@@ -213,6 +227,19 @@ export const routes: Routes = [
         canActivate: [studentGuard],
       },
       {
+        path: 'student/security',
+        loadComponent: () =>
+          import('./features/student/security/pages/student-security-page.component').then(
+            (m) => m.StudentSecurityPageComponent
+          ),
+        canActivate: [studentGuard],
+      },
+      {
+        path: 'student/password',
+        redirectTo: 'student/security',
+        pathMatch: 'full',
+      },
+      {
         path: 'student/settings',
         loadComponent: () =>
           import('./features/student/settings/pages/student-settings-page.component').then(
@@ -319,8 +346,64 @@ export const routes: Routes = [
         redirectTo: 'student/lab-booking',
         pathMatch: 'full',
       },
+      {
+        path: 'unauthorized',
+        loadComponent: () =>
+          import('./shared/pages/unauthorized-page/unauthorized-page.component').then(
+            (m) => m.UnauthorizedPageComponent
+          ),
+      },
+      {
+        path: '403',
+        redirectTo: 'unauthorized',
+        pathMatch: 'full',
+      },
+      {
+        path: 'not-found',
+        loadComponent: () =>
+          import('./shared/pages/not-found-page/not-found-page.component').then(
+            (m) => m.NotFoundPageComponent
+          ),
+      },
+      {
+        path: '404',
+        redirectTo: 'not-found',
+        pathMatch: 'full',
+      },
     ],
   },
 
-  { path: '**', redirectTo: 'auth/login' },
+  {
+    path: 'unauthorized',
+    loadComponent: () =>
+      import('./shared/pages/unauthorized-page/unauthorized-page.component').then(
+        (m) => m.UnauthorizedPageComponent
+      ),
+  },
+  {
+    path: '403',
+    redirectTo: 'unauthorized',
+    pathMatch: 'full',
+  },
+  {
+    path: 'not-found',
+    loadComponent: () =>
+      import('./shared/pages/not-found-page/not-found-page.component').then(
+        (m) => m.NotFoundPageComponent
+      ),
+  },
+  {
+    path: '404',
+    redirectTo: 'not-found',
+    pathMatch: 'full',
+  },
+
+  // BRD Wildcard: ** -> 404 page, always the last entry
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./shared/pages/not-found-page/not-found-page.component').then(
+        (m) => m.NotFoundPageComponent
+      ),
+  },
 ];

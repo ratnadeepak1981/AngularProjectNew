@@ -18,6 +18,7 @@ import { ReportPaginationComponent } from '../../../../../shared/components/repo
 import { ReportSubreportComponent } from '../../../../../shared/components/reports/report-subreport/report-subreport.component';
 import { DashboardCardComponent } from '../../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { AmountCardComponent } from '../../../../../shared/components/cards/amount-card/amount-card.component';
+import { PageHeaderComponent } from '../../../../../shared/components/page-header/page-header.component';
 import { TabComponent, TabItem } from '../../../../../shared/components/tab-component/tab.component';
 import { AnalyticsChartComponent } from '../../../../../shared/components/analytics-chart/analytics-chart.component';
 import { ChartConfig, ChartDataPoint } from '../../../../../shared/components/analytics-chart/models/chart-data.model';
@@ -71,6 +72,7 @@ import {
     ReportSubreportComponent,
     DashboardCardComponent,
     AmountCardComponent,
+    PageHeaderComponent,
     TabComponent,
     AnalyticsChartComponent,
   ],
@@ -91,6 +93,7 @@ export class ReportsDashboardComponent implements OnInit {
   isSidebarCollapsed = signal<boolean>(false);
   isAnalyticsRoute = signal<boolean>(false);
   activeModuleSubTab = signal<'chart' | 'data'>('chart');
+  selectedModuleTab = signal<ReportDomainTab | null>(null);
   pageSizeOptions = [5, 10, 25, 50, 100];
   searchCatalogTerm = '';
   reportGeneratedDate = new Date();
@@ -1137,6 +1140,339 @@ export class ReportsDashboardComponent implements OnInit {
   // Returns ChartDataPoint[] and ChartConfig objects per domain.
   // ══════════════════════════════════════════════════════════════════════════
 
+
+  // ── 0. KPI DASHBOARD CHARTS ─────────────────────────────────────────────
+  get kpiDonutData(): ChartDataPoint[] {
+    if (!this.kpiData) return [];
+    return [
+      { label: 'Active Students', value: this.kpiData.activeStudents || 0, color: '#3b82f6' },
+      { label: 'Occupied Beds', value: this.kpiData.allocatedBeds || 0, color: '#10b981' },
+      { label: 'Confirmed Labs', value: this.kpiData.activeBookingsToday || 0, color: '#06b6d4' },
+      { label: 'Resolved Complaints', value: this.kpiData.resolvedComplaints || 0, color: '#f59e0b' },
+      { label: 'Approved Certs', value: this.kpiData.approvedCertificateRequests || 0, color: '#8b5cf6' },
+    ];
+  }
+  get kpiDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Institutional Activity Split', icon: '🏛️',
+      primaryColor: '#3b82f6', centerLabel: `${this.kpiData?.totalStudents || 0}`, centerSub: 'Total Students',
+      subtitle: 'Relative proportion of campus operational workloads' };
+  }
+  get kpiBarData(): ChartDataPoint[] {
+    if (!this.kpiData) return [];
+    return [
+      { label: 'Enrolled', value: this.kpiData.totalStudents || 0, value2: this.kpiData.activeStudents || 0 },
+      { label: 'Hostel Beds', value: this.kpiData.totalBedsCapacity || 0, value2: this.kpiData.allocatedBeds || 0 },
+      { label: 'Lab Seats', value: this.kpiData.totalWorkstations || 0, value2: this.kpiData.activeBookingsToday || 0 },
+      { label: 'Complaints', value: this.kpiData.totalComplaints || 0, value2: this.kpiData.resolvedComplaints || 0 },
+      { label: 'Certificates', value: this.kpiData.totalCertificateRequests || 0, value2: this.kpiData.approvedCertificateRequests || 0 },
+    ];
+  }
+  get kpiBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Capacity vs Active Realization', icon: '📊',
+      primaryColor: '#94a3b8', secondaryColor: '#3b82f6', stacked: true,
+      legendItems: [{ label: 'Total Capacity', color: '#94a3b8' }, { label: 'Active / Resolved', color: '#3b82f6' }],
+      subtitle: 'System-wide operational capacity versus fulfilled service requests' };
+  }
+  get kpiLineData(): ChartDataPoint[] {
+    if (!this.kpiData) return [];
+    const occ = Number(this.kpiData.occupancyRate || 0);
+    const coll = Number(this.kpiData.collectionRate || 0);
+    const resRate = this.kpiData.totalComplaints > 0 ? Math.round(((this.kpiData.resolvedComplaints || 0) / this.kpiData.totalComplaints) * 100) : 100;
+    const certRate = this.kpiData.totalCertificateRequests > 0 ? Math.round(((this.kpiData.approvedCertificateRequests || 0) / this.kpiData.totalCertificateRequests) * 100) : 100;
+    return [
+      { label: 'Hostel Occ %', value: occ },
+      { label: 'Fee Collect %', value: coll },
+      { label: 'Grievance SLA %', value: resRate },
+      { label: 'Cert Issuance %', value: certRate },
+    ];
+  }
+  get kpiLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Institutional Efficiency Index', icon: '📈',
+      primaryColor: '#10b981', valueSuffix: '%',
+      legendItems: [{ label: 'Settlement Efficiency %', color: '#10b981' }],
+      subtitle: 'Key settlement & fulfillment percentages across operational domains' };
+  }
+
+  // ── 1b. PENDING STUDENT REGISTRATIONS ────────────────────────────────────
+  get pendingStudentDonutData(): ChartDataPoint[] {
+    const unverified = this.pendingStudentItems.filter(x => String(x.verificationStatus || '').includes('Unverified')).length;
+    const missingDocs = this.pendingStudentItems.filter(x => x.missingDocuments && x.missingDocuments !== 'None').length;
+    const verified = Math.max(0, this.pendingStudentItems.length - unverified);
+    return [
+      { label: 'Unverified Email', value: unverified, color: '#f59e0b' },
+      { label: 'Missing Docs', value: missingDocs, color: '#ef4444' },
+      { label: 'Awaiting Audit', value: verified, color: '#3b82f6' },
+    ];
+  }
+  get pendingStudentDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Intake Queue Composition', icon: '📋',
+      primaryColor: '#f59e0b', centerLabel: `${this.pendingStudentItems.length}`, centerSub: 'Pending',
+      subtitle: 'Document and verification bottleneck distribution' };
+  }
+  get pendingStudentBarData(): ChartDataPoint[] {
+    const facCounts: Record<string, number> = {};
+    for (const item of this.pendingStudentItems) {
+      const fac = item.facultyName || 'General';
+      facCounts[fac] = (facCounts[fac] || 0) + 1;
+    }
+    return Object.entries(facCounts).map(([label, value]) => ({ label, value }));
+  }
+  get pendingStudentBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Pending Queue by Faculty', icon: '📊',
+      primaryColor: '#f59e0b',
+      legendItems: [{ label: 'Pending Registrations', color: '#f59e0b' }],
+      subtitle: 'Admissions clearance backlog across faculties' };
+  }
+  get pendingStudentLineData(): ChartDataPoint[] {
+    return this.pendingStudentBarData;
+  }
+  get pendingStudentLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Faculty Backlog Curve', icon: '📈',
+      primaryColor: '#f59e0b',
+      legendItems: [{ label: 'Pending Applications', color: '#f59e0b' }],
+      subtitle: 'Relative volume of unverified admissions' };
+  }
+
+  // ── 2b. HOSTEL ROOMS INVENTORY ───────────────────────────────────────────
+  get hostelRoomsDonutData(): ChartDataPoint[] {
+    const typeCounts: Record<string, number> = {};
+    for (const r of this.hostelRoomItems) {
+      const t = r.roomType || 'Standard';
+      typeCounts[t] = (typeCounts[t] || 0) + (r.capacity || 1);
+    }
+    return Object.entries(typeCounts).map(([label, value]) => ({ label, value }));
+  }
+  get hostelRoomsDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Bed Configuration Split', icon: '🛏️',
+      primaryColor: '#10b981', centerLabel: `${this.hostelRoomItems.length}`, centerSub: 'Rooms',
+      subtitle: 'Bed accommodation capacity by room type' };
+  }
+  get hostelRoomsBarData(): ChartDataPoint[] {
+    return this.hostelRoomItems.slice(0, 10).map(r => ({
+      label: `R ${r.roomNumber || r.id}`,
+      value: r.capacity || 0,
+      value2: r.occupiedBeds || 0,
+      tooltip: `${r.hostelName} Room ${r.roomNumber}: ${r.occupiedBeds}/${r.capacity} beds`,
+    }));
+  }
+  get hostelRoomsBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Room Bed Occupancy Sample', icon: '📊',
+      primaryColor: '#94a3b8', secondaryColor: '#10b981', stacked: true,
+      legendItems: [{ label: 'Capacity', color: '#94a3b8' }, { label: 'Occupied', color: '#10b981' }],
+      subtitle: 'Occupied vs vacant beds per room inventory unit' };
+  }
+  get hostelRoomsLineData(): ChartDataPoint[] {
+    return this.hostelRoomItems.slice(0, 12).map(r => ({
+      label: `R ${r.roomNumber || r.id}`,
+      value: r.capacity > 0 ? Math.round(((r.occupiedBeds || 0) / r.capacity) * 100) : 0,
+    }));
+  }
+  get hostelRoomsLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Room Utilization %', icon: '📈',
+      primaryColor: '#10b981', valueSuffix: '%',
+      legendItems: [{ label: 'Occupancy %', color: '#10b981' }],
+      subtitle: 'Per-room occupancy rate curve' };
+  }
+
+  // ── 2c. PENDING HOSTEL APPLICATIONS ──────────────────────────────────────
+  get pendingHostelDonutData(): ChartDataPoint[] {
+    const verified = this.pendingHostelItems.filter(x => x.paymentVerificationStatus === 'Verified').length;
+    const pending = Math.max(0, this.pendingHostelItems.length - verified);
+    return [
+      { label: 'Payment Verified', value: verified, color: '#10b981' },
+      { label: 'Pending Payment', value: pending, color: '#f59e0b' },
+    ];
+  }
+  get pendingHostelDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Payment Verification Split', icon: '⏳',
+      primaryColor: '#f59e0b', centerLabel: `${this.pendingHostelItems.length}`, centerSub: 'Requests',
+      subtitle: 'Applications ready for room allocation' };
+  }
+  get pendingHostelBarData(): ChartDataPoint[] {
+    const hCounts: Record<string, number> = {};
+    for (const item of this.pendingHostelItems) {
+      const h = item.preferredHostelName || 'General';
+      hCounts[h] = (hCounts[h] || 0) + 1;
+    }
+    return Object.entries(hCounts).map(([label, value]) => ({ label, value }));
+  }
+  get pendingHostelBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Applications by Hostel', icon: '📊',
+      primaryColor: '#f59e0b',
+      legendItems: [{ label: 'Applications', color: '#f59e0b' }],
+      subtitle: 'Preference demand across residential halls' };
+  }
+  get pendingHostelLineData(): ChartDataPoint[] {
+    return this.pendingHostelBarData;
+  }
+  get pendingHostelLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Hostel Demand Curve', icon: '📈',
+      primaryColor: '#f59e0b',
+      legendItems: [{ label: 'Pending Requests', color: '#f59e0b' }],
+      subtitle: 'Relative application volume by residential hall' };
+  }
+
+  // ── 3b. LAB DIRECTORY & CONFIGURATIONS ───────────────────────────────────
+  get labDirectoryDonutData(): ChartDataPoint[] {
+    const op = this.labDirectoryItems.reduce((s, l) => s + (l.activeOperationalSeats || 0), 0);
+    const maint = this.labDirectoryItems.reduce((s, l) => s + (l.maintenanceSeats || 0), 0);
+    return [
+      { label: 'Operational', value: op, color: '#06b6d4' },
+      { label: 'Maintenance', value: maint, color: '#ef4444' },
+    ];
+  }
+  get labDirectoryDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Workstation Operational Status', icon: '🖥️',
+      primaryColor: '#06b6d4', centerLabel: `${this.labDirectoryItems.length}`, centerSub: 'Labs',
+      subtitle: 'Active vs broken workstation hardware ratio' };
+  }
+  get labDirectoryBarData(): ChartDataPoint[] {
+    return this.labDirectoryItems.map(l => ({
+      label: l.labCode || l.labName,
+      value: l.totalCapacity || 0,
+      value2: l.activeOperationalSeats || 0,
+    }));
+  }
+  get labDirectoryBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Workstations by Lab Facility', icon: '📊',
+      primaryColor: '#94a3b8', secondaryColor: '#06b6d4', stacked: true,
+      legendItems: [{ label: 'Total Workstations', color: '#94a3b8' }, { label: 'Operational', color: '#06b6d4' }],
+      subtitle: 'Hardware capacity deployed per computer laboratory' };
+  }
+  get labDirectoryLineData(): ChartDataPoint[] {
+    return this.labDirectoryItems.map(l => ({
+      label: l.labCode || l.labName,
+      value: l.totalCapacity > 0 ? Math.round(((l.activeOperationalSeats || 0) / l.totalCapacity) * 100) : 100,
+    }));
+  }
+  get labDirectoryLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Operational Availability %', icon: '📈',
+      primaryColor: '#06b6d4', valueSuffix: '%',
+      legendItems: [{ label: 'Availability %', color: '#06b6d4' }],
+      subtitle: 'Functional workstation uptime percentage per lab' };
+  }
+
+  // ── 5b. COMPLAINT CATEGORIES SLA ─────────────────────────────────────────
+  get complaintSlaDonutData(): ChartDataPoint[] {
+    const comp = this.complaintCategorySlaItems.reduce((s, c) => s + (c.resolvedOnTime || 0), 0);
+    const total = this.complaintCategorySlaItems.reduce((s, c) => s + (c.totalFiled || 0), 0);
+    const overdue = Math.max(0, total - comp);
+    return [
+      { label: 'On Time (SLA Met)', value: comp, color: '#10b981' },
+      { label: 'Overdue / Pending', value: overdue, color: '#f59e0b' },
+    ];
+  }
+  get complaintSlaDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'SLA Fulfillment Rate', icon: '⏱️',
+      primaryColor: '#10b981', centerLabel: `${this.complaintCategorySlaItems.length}`, centerSub: 'Categories',
+      subtitle: 'Overall student grievance SLA compliance' };
+  }
+  get complaintSlaBarData(): ChartDataPoint[] {
+    return this.complaintCategorySlaItems.map(c => ({
+      label: c.categoryName,
+      value: c.totalFiled || 0,
+      value2: c.resolvedOnTime || 0,
+    }));
+  }
+  get complaintSlaBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Filed vs Resolved On-Time', icon: '📊',
+      primaryColor: '#94a3b8', secondaryColor: '#10b981', stacked: true,
+      legendItems: [{ label: 'Total Filed', color: '#94a3b8' }, { label: 'On-Time', color: '#10b981' }],
+      subtitle: 'Category complaint volume vs SLA resolution count' };
+  }
+  get complaintSlaLineData(): ChartDataPoint[] {
+    return this.complaintCategorySlaItems.map(c => ({
+      label: c.categoryName,
+      value: Math.min(100, Number(c.slaComplianceRate || 0)),
+    }));
+  }
+  get complaintSlaLineConfig(): ChartConfig {
+    return { type: 'line', title: 'SLA Compliance Curve', icon: '📈',
+      primaryColor: '#10b981', valueSuffix: '%',
+      legendItems: [{ label: 'Compliance %', color: '#10b981' }],
+      subtitle: 'Resolution timeliness rate per grievance category' };
+  }
+
+  // ── 6b. CERTIFICATE TYPES CATALOG ────────────────────────────────────────
+  get certTypesDonutData(): ChartDataPoint[] {
+    const act = this.certificateTypeItems.filter(c => c.isActive).length;
+    const dep = Math.max(0, this.certificateTypeItems.length - act);
+    return [
+      { label: 'Active Types', value: act, color: '#8b5cf6' },
+      { label: 'Deprecated', value: dep, color: '#94a3b8' },
+    ];
+  }
+  get certTypesDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Catalog Status', icon: '🏷️',
+      primaryColor: '#8b5cf6', centerLabel: `${this.certificateTypeItems.length}`, centerSub: 'Types',
+      subtitle: 'Official academic document clearance catalog' };
+  }
+  get certTypesBarData(): ChartDataPoint[] {
+    return this.certificateTypeItems.map(c => ({
+      label: c.name,
+      value: c.totalRequestsAllTime || 0,
+      value2: c.approvedRequestsCount || 0,
+    }));
+  }
+  get certTypesBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Requests by Certificate Type', icon: '📊',
+      primaryColor: '#8b5cf6', secondaryColor: '#10b981',
+      legendItems: [{ label: 'Total Inquiries', color: '#8b5cf6' }, { label: 'Approved', color: '#10b981' }],
+      subtitle: 'Document requisition volume across service types' };
+  }
+  get certTypesLineData(): ChartDataPoint[] {
+    return this.certificateTypeItems.map(c => ({
+      label: c.name,
+      value: c.processingSlaDays || 1,
+    }));
+  }
+  get certTypesLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Processing SLA (Days)', icon: '📈',
+      primaryColor: '#8b5cf6', valueSuffix: 'd',
+      legendItems: [{ label: 'Target Turnaround (Days)', color: '#8b5cf6' }],
+      subtitle: 'Turnaround commitment timeframe per certificate tier' };
+  }
+
+  // ── 7b. EVENT VENUES & FACILITY UTILIZATION ──────────────────────────────
+  get venuesDonutData(): ChartDataPoint[] {
+    const act = this.venueItems.filter(v => v.isActive).length;
+    const maint = Math.max(0, this.venueItems.length - act);
+    return [
+      { label: 'Operational', value: act, color: '#14b8a6' },
+      { label: 'Maintenance', value: maint, color: '#ef4444' },
+    ];
+  }
+  get venuesDonutConfig(): ChartConfig {
+    return { type: 'donut', title: 'Venue Readiness Status', icon: '🏛️',
+      primaryColor: '#14b8a6', centerLabel: `${this.venueItems.length}`, centerSub: 'Venues',
+      subtitle: 'Auditoriums and seminar halls operational availability' };
+  }
+  get venuesBarData(): ChartDataPoint[] {
+    return this.venueItems.map(v => ({
+      label: v.venueName || v.venueCode,
+      value: v.capacity || 0,
+      value2: (v.totalEventsHosted || 0) * 10,
+    }));
+  }
+  get venuesBarConfig(): ChartConfig {
+    return { type: 'bar', title: 'Venue Seating Capacity', icon: '📊',
+      primaryColor: '#14b8a6',
+      legendItems: [{ label: 'Seating Capacity', color: '#14b8a6' }],
+      subtitle: 'Maximum attendee seating across university halls' };
+  }
+  get venuesLineData(): ChartDataPoint[] {
+    return this.venueItems.map(v => ({
+      label: v.venueName || v.venueCode,
+      value: v.totalEventsHosted || 0,
+    }));
+  }
+  get venuesLineConfig(): ChartConfig {
+    return { type: 'line', title: 'Events Hosted (YTD)', icon: '📈',
+      primaryColor: '#14b8a6',
+      legendItems: [{ label: 'Events Hosted', color: '#14b8a6' }],
+      subtitle: 'Total academic and cultural events hosted per venue' };
+  }
+
   // ── 1. STUDENTS ──────────────────────────────────────────────────────────
   get studentDonutData(): ChartDataPoint[] {
     return this.facultySummaries.map((f, idx) => ({
@@ -1642,10 +1978,14 @@ export class ReportsDashboardComponent implements OnInit {
       const tabParam = params['tab'] as ReportDomainTab;
       if (tabParam && this.tabs.some((t) => t.id === tabParam)) {
         this.activeTab = tabParam;
+        this.selectedModuleTab.set(tabParam);
         this.isReportModalOpen.set(true);
-      } else if (this.isAnalyticsRoute()) {
-        this.activeTab = 'kpi';
-        this.isReportModalOpen.set(true);
+      } else {
+        if (this.isAnalyticsRoute()) {
+          this.selectedModuleTab.set(null);
+        } else {
+          this.activeTab = 'kpi';
+        }
       }
       this.loadReportData();
     });
@@ -1746,6 +2086,32 @@ export class ReportsDashboardComponent implements OnInit {
       },
       error: () => {},
     });
+  }
+
+  
+  openModuleReport(tabId: ReportDomainTab): void {
+    this.activeTab = tabId;
+    this.selectedModuleTab.set(tabId);
+    this.filter.pageNumber = 1;
+    this.filter.drilldownKey = undefined;
+    this.filter.drilldownId = undefined;
+    if (this.isAnalyticsRoute()) {
+      this.router.navigate(['/admin/analytics', tabId]);
+    } else {
+      this.isReportModalOpen.set(true);
+      this.router.navigate(['/admin/reports', tabId]);
+    }
+    this.loadReportData();
+  }
+
+  backToModuleHub(): void {
+    this.selectedModuleTab.set(null);
+    if (this.isAnalyticsRoute()) {
+      this.router.navigate(['/admin/analytics']);
+    } else {
+      this.isReportModalOpen.set(false);
+      this.router.navigate(['/admin/reports']);
+    }
   }
 
   selectTab(tab: string | ReportDomainTab): void {

@@ -32,8 +32,11 @@ export class ApiService {
       revokeToken: '/auth/revoke-token',
     },
     password: {
+      policy: '/password/policy',
       forgotPassword: '/password/forgot-password',
+      verifyResetOtp: '/password/verify-reset-otp',
       resetPassword: '/password/reset-password',
+      changePassword: '/password/change-password',
     },
     account: {
       verifyEmail: '/account/verify-email',
@@ -50,6 +53,7 @@ export class ApiService {
       updateProfile: (id: number) => `/students/${id}`,
       directory: '/students',
       delete: (id: number) => `/students/${id}`,
+      resetPassword: (id: number) => `/students/${id}/reset-password`,
       masterByIndex: (idx: string) => `/student-master/${encodeURIComponent(idx)}`,
       masterList: '/student-master',
       masterImport: '/student-master/import',

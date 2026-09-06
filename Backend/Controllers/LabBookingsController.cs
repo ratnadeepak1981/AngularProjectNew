@@ -56,7 +56,7 @@ public class LabBookingsController : BaseApiController
             return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(holdResult, 201), "Lab seat hold placed successfully.");
         }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
-        catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
+        catch (InvalidOperationException ex) { return StatusCode(409, new { message = ex.Message, isConflict = true }); }
         catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
     }
 
@@ -64,7 +64,7 @@ public class LabBookingsController : BaseApiController
     public async Task<IActionResult> ConfirmHold(int id)
     {
         var success = await _bookingService.ConfirmBookingAsync(id);
-        if (!success) return BadRequest("Lock window expired or hold reservation context missing.");
+        if (!success) return StatusCode(409, new { message = "Lock window expired or hold reservation context missing.", isConflict = true });
         return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(new { Message = "Booking confirmed." }, 200), "Lab booking confirmed.");
     }
 

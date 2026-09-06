@@ -71,6 +71,7 @@ export class LabBookingPageComponent implements OnInit {
   public readonly isMatrixModalOpen = signal<boolean>(false);
 
   // Active Hold & Confirmation State
+  public readonly maxDailySlots = signal<number>(2);
   public readonly systemHoldMinutes = signal<number>(15);
   public readonly activeHoldBooking = signal<LabBooking | null>(null);
   public readonly myBookingsHistory = signal<LabBooking[]>([]);
@@ -90,16 +91,16 @@ export class LabBookingPageComponent implements OnInit {
   public targetBookingIdToCancel: number | null = null;
 
   // Computed Helpers
-  public readonly selectedLab = computed<Lab | null>(() => {
-    return this.labs().find((l) => l.id === this.selectedLabId()) || null;
+  public readonly selectedLab = computed<Lab | undefined>(() => {
+    return this.labs().find((l) => l.id === this.selectedLabId());
   });
 
-  public readonly totalBuiltSeatsCount = computed<number>(() => {
+  public readonly totalSeatsCount = computed<number>(() => {
     return this.layoutSeats().length;
   });
 
   public readonly availableSeatsCount = computed<number>(() => {
-    return this.layoutSeats().filter((s) => s.status === 'Available' && !s.isBroken).length;
+    return this.layoutSeats().filter((s) => s.status === 'Available').length;
   });
 
   public readonly heldSeatsCount = computed<number>(() => {
@@ -117,10 +118,7 @@ export class LabBookingPageComponent implements OnInit {
   public readonly effectiveTotalCapacity = computed<number>(() => {
     const lab = this.selectedLab();
     if (!lab) return 0;
-    if (this.isComputerLab()) {
-      return this.totalBuiltSeatsCount() || lab.capacity;
-    }
-    return lab.capacity;
+    return lab.capacity || this.totalSeatsCount();
   });
 
   public readonly effectiveAvailableCount = computed<number>(() => {
@@ -170,6 +168,16 @@ export class LabBookingPageComponent implements OnInit {
   private loadSystemSettings(): void {
     this.labBookingService.getSystemHoldMinutes().subscribe((mins) => {
       this.systemHoldMinutes.set(mins || 15);
+    });
+    this.labBookingService.getSystemSettings().subscribe((dict) => {
+      if (dict['MaxDailySlots']) {
+        const slots = parseInt(dict['MaxDailySlots'], 10);
+        if (slots > 0) this.maxDailySlots.set(slots);
+      }
+      if (dict['LabBookingHoldMinutes']) {
+        const mins = parseInt(dict['LabBookingHoldMinutes'], 10);
+        if (mins > 0) this.systemHoldMinutes.set(mins);
+      }
     });
   }
 
@@ -248,6 +256,10 @@ export class LabBookingPageComponent implements OnInit {
         });
 
         if (activeHold) {
+          if (!activeHold.seatNumber || activeHold.seatNumber === 'N/A') {
+            const current = this.selectedSeat()?.seatNumber;
+            if (current) activeHold.seatNumber = current;
+          }
           this.activeHoldBooking.set(activeHold);
         } else {
           this.activeHoldBooking.set(null);
@@ -292,13 +304,13 @@ export class LabBookingPageComponent implements OnInit {
       return;
     }
 
-    // Daily Limit Check: Max 2 slots (4 hrs) per day
+    // Daily Limit Check: Dynamically bound from System Settings
     const sameDateBookings = this.myBookingsHistory().filter(
       (b) => b.bookingDate === this.selectedDate() && (b.status === 'Confirmed' || b.status === 'Held')
     );
-    if (sameDateBookings.length >= 2) {
+    if (sameDateBookings.length >= this.maxDailySlots()) {
       this.toast.warning(
-        `Daily Limit Reached: Maximum 2 slots (4 hours total) allowed per student on ${this.selectedDate()}.`
+        `Daily Limit Reached: Maximum ${this.maxDailySlots()} slots (${this.maxDailySlots() * 2} hours total) allowed per student on ${this.selectedDate()}.`
       );
       return;
     }
@@ -372,6 +384,7 @@ export class LabBookingPageComponent implements OnInit {
 
   // Execute Modal Confirmation
   public onModalConfirm(): void {
+    if (this.isSubmitting()) return;
     this.isConfirmModalOpen.set(false);
 
     if (this.modalActionType === 'hold') {
@@ -427,7 +440,11 @@ export class LabBookingPageComponent implements OnInit {
             this.toast.error(res.message || 'Failed to place reservation hold.');
           }
         },
-        error: () => this.isSubmitting.set(false),
+        error: (err) => {
+          this.isSubmitting.set(false);
+          this.loadLayout();
+          this.loadMyBookings();
+        },
       });
   }
 
@@ -447,9 +464,15 @@ export class LabBookingPageComponent implements OnInit {
           this.loadMyBookings();
         } else {
           this.toast.error(res.message || 'Confirmation failed or lock window expired.');
+          this.loadLayout();
+          this.loadMyBookings();
         }
       },
-      error: () => this.isSubmitting.set(false),
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.loadLayout();
+        this.loadMyBookings();
+      },
     });
   }
 
@@ -496,13 +519,13 @@ export class LabBookingPageComponent implements OnInit {
 
   // Science Lab Direct Slot Confirmation (No 15-Minute Hold Timer Required)
   public onScienceSlotSelect(slotIndex: number): void {
-    // Daily Limit Check
+    // Daily Limit Check: Dynamically bound from System Settings
     const sameDateBookings = this.myBookingsHistory().filter(
       (b) => b.bookingDate === this.selectedDate() && (b.status === 'Confirmed' || b.status === 'Held')
     );
-    if (sameDateBookings.length >= 2) {
+    if (sameDateBookings.length >= this.maxDailySlots()) {
       this.toast.warning(
-        `Daily Limit Reached: Maximum 2 slots (4 hours total) allowed per student on ${this.selectedDate()}.`
+        `Daily Limit Reached: Maximum ${this.maxDailySlots()} slots (${this.maxDailySlots() * 2} hours total) allowed per student on ${this.selectedDate()}.`
       );
       return;
     }

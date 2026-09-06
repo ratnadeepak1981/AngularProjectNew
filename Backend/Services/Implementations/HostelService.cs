@@ -104,7 +104,6 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<HostelApplicationResponseDto>> AssignRoomAsync(int applicationId, AssignRoomDto request)
         {
-            using var transaction = await _hostelRepository.BeginTransactionAsync();
             try
             {
                 var application = await _hostelRepository.GetApplicationByIdAsync(applicationId);
@@ -153,9 +152,8 @@ namespace CampusServicesPortal.Services.Implementations
                     Message = $"Your dynamic accommodation keys have been verified. You are assigned to Room Number: {room.RoomNumber}."
                 });
 
-                // 3. ACID ATOMIC TRANSACTION COMMIT: Commits room assignment AND notification atomically
+                // 3. ACID ATOMIC COMMIT: Commits room assignment AND notification atomically
                 await _hostelRepository.SaveChangesAsync();
-                await transaction.CommitAsync();
 
                 // Fetch updated state graph to load fresh room details
                 var completeRecord = await _hostelRepository.GetApplicationByIdAsync(applicationId);
@@ -163,8 +161,7 @@ namespace CampusServicesPortal.Services.Implementations
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return ServiceResult<HostelApplicationResponseDto>.Failure($"ACID Transaction Aborted: {ex.Message}", 500);
+                return ServiceResult<HostelApplicationResponseDto>.Failure($"Operation Failed: {ex.Message}", 500);
             }
         }
 

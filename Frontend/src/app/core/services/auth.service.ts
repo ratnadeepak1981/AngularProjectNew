@@ -22,12 +22,16 @@ export class AuthService {
   private readonly refreshTokenKey = 'portal_refresh_token';
   private readonly roleKey = 'portal_user_role';
   private readonly profileKey = 'portal_user_profile';
+  private readonly mustChangePasswordKey = 'portal_must_change_password';
+  private readonly forceReasonKey = 'portal_force_change_reason';
 
   // Reactive State Signals
   public readonly token = signal<string | null>(this.getStoredToken());
   public readonly refreshToken = signal<string | null>(this.getStoredRefreshToken());
   public readonly role = signal<'Admin' | 'Student' | null>(this.getStoredRole());
   public readonly userProfile = signal<StudentProfile | null>(this.getStoredProfile());
+  public readonly mustChangePassword = signal<boolean>(this.getStoredMustChangePassword());
+  public readonly forceChangeReason = signal<string | null>(this.getStoredForceReason());
 
   public readonly isAuthenticated = computed(() => !!this.token());
   public readonly isAdmin = computed(() => this.role() === 'Admin');
@@ -43,6 +47,14 @@ export class AuthService {
 
   private getStoredRole(): 'Admin' | 'Student' | null {
     return localStorage.getItem(this.roleKey) as 'Admin' | 'Student' | null;
+  }
+
+  private getStoredMustChangePassword(): boolean {
+    return localStorage.getItem(this.mustChangePasswordKey) === 'true';
+  }
+
+  private getStoredForceReason(): string | null {
+    return localStorage.getItem(this.forceReasonKey);
   }
 
   private getStoredProfile(): StudentProfile | null {
@@ -100,6 +112,13 @@ export class AuthService {
     }
   }
 
+  public clearMustChangePassword(): void {
+    localStorage.removeItem(this.mustChangePasswordKey);
+    localStorage.removeItem(this.forceReasonKey);
+    this.mustChangePassword.set(false);
+    this.forceChangeReason.set(null);
+  }
+
   private setSession(auth: AuthResponse): void {
     localStorage.setItem(this.tokenKey, auth.token);
     this.token.set(auth.token);
@@ -115,6 +134,20 @@ export class AuthService {
       this.role.set(normalizedRole);
     }
 
+    if (auth.mustChangePassword) {
+      localStorage.setItem(this.mustChangePasswordKey, 'true');
+      this.mustChangePassword.set(true);
+      if (auth.forceChangeReason) {
+        localStorage.setItem(this.forceReasonKey, auth.forceChangeReason);
+        this.forceChangeReason.set(auth.forceChangeReason);
+      }
+    } else {
+      localStorage.removeItem(this.mustChangePasswordKey);
+      localStorage.removeItem(this.forceReasonKey);
+      this.mustChangePassword.set(false);
+      this.forceChangeReason.set(null);
+    }
+
     if (auth.profile) {
       localStorage.setItem(this.profileKey, JSON.stringify(auth.profile));
       this.userProfile.set(auth.profile);
@@ -122,6 +155,10 @@ export class AuthService {
       localStorage.removeItem(this.profileKey);
       this.userProfile.set(null);
     }
+  }
+
+  getPasswordPolicy(): Observable<ApiResponse<any>> {
+    return this.api.get<ApiResponse<any>>(this.api.routes.password.policy, { _t: Date.now() });
   }
 
   requestPasswordReset(email: string): Observable<ApiResponse<any>> {
@@ -132,9 +169,25 @@ export class AuthService {
     );
   }
 
-  resetPassword(payload: { email?: string; token: string; newPassword: string }): Observable<ApiResponse<any>> {
+  verifyResetOtp(email: string, otpCode: string): Observable<ApiResponse<any>> {
+    return this.api.post<ApiResponse<any>>(
+      this.api.routes.password.verifyResetOtp,
+      { email, otpCode },
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
+  }
+
+  resetPassword(payload: { token: string; newPassword: string; confirmPassword?: string }): Observable<ApiResponse<any>> {
     return this.api.post<ApiResponse<any>>(
       this.api.routes.password.resetPassword,
+      payload,
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
+  }
+
+  changePassword(payload: { currentPassword: string; newPassword: string; confirmPassword: string }): Observable<ApiResponse<any>> {
+    return this.api.post<ApiResponse<any>>(
+      this.api.routes.password.changePassword,
       payload,
       { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
     );
@@ -145,11 +198,15 @@ export class AuthService {
     localStorage.removeItem(this.refreshTokenKey);
     localStorage.removeItem(this.roleKey);
     localStorage.removeItem(this.profileKey);
+    localStorage.removeItem(this.mustChangePasswordKey);
+    localStorage.removeItem(this.forceReasonKey);
 
     this.token.set(null);
     this.refreshToken.set(null);
     this.role.set(null);
     this.userProfile.set(null);
+    this.mustChangePassword.set(false);
+    this.forceChangeReason.set(null);
 
     this.toast.info('You have been logged out of the portal.');
     this.router.navigate(['/auth/login']);

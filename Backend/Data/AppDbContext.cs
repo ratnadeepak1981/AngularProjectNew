@@ -64,6 +64,7 @@ namespace CampusServicesPortal.Data
             modelBuilder.Entity<AuditLog>().HasIndex(a => a.Timestamp);
             modelBuilder.Entity<AuditLog>().HasIndex(a => new { a.Module, a.Action });
             modelBuilder.Entity<AuditLog>().HasIndex(a => a.UserId);
+            modelBuilder.Entity<AuditLog>().HasIndex(a => new { a.IsReviewed, a.IsSuccess });
 
 
             // --- MODULE 1 RULES (Student Profile & Unified Auth) ---

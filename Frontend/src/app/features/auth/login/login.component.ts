@@ -80,9 +80,18 @@ export class LoginComponent {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (res) => {
         this.isLoading.set(false);
+        const data = res.data;
+
+        if (data?.mustChangePassword) {
+          const reason = data.forceChangeReason || (data.passwordExpired ? 'ExpiredPassword' : 'TemporaryPassword');
+          this.toast.info('Password update is required before continuing.');
+          this.router.navigate(['/auth/forgot-password'], { queryParams: { mode: reason } });
+          return;
+        }
+
         this.toast.success('Authentication Successful! Redirecting...');
         
-        const role = res.data?.role;
+        const role = data?.role;
         setTimeout(() => {
           if (role === 'Admin') {
             this.router.navigate(['/admin/dashboard']);
@@ -100,11 +109,7 @@ export class LoginComponent {
   }
 
   openForgotPassword(): void {
-    this.resetStep.set(1);
-    this.resetForm.reset();
-    this.resetErrorMessage.set(null);
-    this.showResetPassword.set(false);
-    this.isForgotPasswordOpen.set(true);
+    this.router.navigate(['/auth/forgot-password']);
   }
 
   closeForgotPassword(): void {

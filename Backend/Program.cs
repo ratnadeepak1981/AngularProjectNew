@@ -81,7 +81,14 @@ namespace CampusServicesPortal
                 var interceptor = serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>();
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("CampusServicesPortalConnection"),
-                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+                    sqlOptions =>
+                    {
+                        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(5),
+                            errorNumbersToAdd: null);
+                    })
                 .AddInterceptors(interceptor);
             });
 

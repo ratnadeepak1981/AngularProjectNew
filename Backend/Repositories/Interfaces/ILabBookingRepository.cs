@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Models;
+using CampusServicesPortal.Models;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace CampusServicesPortal.Repositories.Interfaces;
@@ -16,7 +16,7 @@ public interface ILabBookingRepository
     Task<IDbContextTransaction> BeginSerializableTransactionAsync();
     Task<bool> SaveChangesAsync();
 
-    // ADD THIS MISSING LINE:
+    Task<IEnumerable<LabBooking>> GetActiveBookingsForLabSlotAsync(int labId, DateTime date, string timeSlot);
     Task<IEnumerable<LabBooking>> GetExpiredHeldBookingsAsync();
 }
 

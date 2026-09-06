@@ -6,4 +6,7 @@ export interface AuthResponse {
   refreshTokenExpiresAt?: string;
   role: 'Admin' | 'Student' | string;
   profile?: StudentProfile;
+  mustChangePassword?: boolean;
+  passwordExpired?: boolean;
+  forceChangeReason?: string;
 }

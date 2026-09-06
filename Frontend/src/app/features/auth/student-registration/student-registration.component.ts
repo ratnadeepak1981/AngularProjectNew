@@ -1,8 +1,9 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { StudentMaster } from '../../../core/models/student/student-master.model';
 import { RegisterStudentRequest } from '../../../core/models/student/student-registration.model';
@@ -32,11 +33,15 @@ import { SKIP_GLOBAL_ERROR_TOAST } from '../../../core/interceptors/error-interc
   templateUrl: './student-registration.component.html',
   styleUrl: './student-registration.component.css',
 })
-export class StudentRegistrationComponent {
+export class StudentRegistrationComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly apiService = inject(ApiService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+
+  // System Settings OTP Expiration
+  public readonly otpValidityMinutes = signal<number>(3);
 
   // Enterprise Dual Verification Signals
   public readonly isMasterVerified = signal<boolean>(false);
@@ -66,6 +71,19 @@ export class StudentRegistrationComponent {
 
   toggleShowConfirmPassword(): void {
     this.showConfirmPassword.update((val) => !val);
+  }
+
+  ngOnInit(): void {
+    this.authService.getPasswordPolicy().subscribe({
+      next: (res) => {
+        const data = res?.data || res;
+        const mins = data?.otpValidityMinutes ?? data?.OtpValidityMinutes ?? 3;
+        if (mins > 0) {
+          this.otpValidityMinutes.set(mins);
+        }
+      },
+      error: () => {},
+    });
   }
 
   // Forms

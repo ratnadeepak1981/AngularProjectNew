@@ -164,7 +164,6 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
       },
     },
     { key: 'formattedDate', header: 'Dispatched Date & Time', sortable: true, filterable: true },
-    { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions', align: 'right' },
   ];
 
   // Computed Formatted Table Records
@@ -331,19 +330,6 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
         this.isDispatching.set(false);
         this.toast.error(err.error?.message || 'Failed to dispatch internal notification alert.');
       },
-    });
-  }
-
-  markNotificationAsRead(notif: any): void {
-    if (!notif?.id) return;
-    this.monitorService.markAsRead(notif.id).subscribe({
-      next: () => {
-        this.toast.success('Notification marked as read.');
-        this.auditNotifications.update((list) =>
-          list.map((n) => (n.id === notif.id ? { ...n, isRead: true } : n))
-        );
-      },
-      error: () => this.toast.error('Failed to mark notification as read.'),
     });
   }
 

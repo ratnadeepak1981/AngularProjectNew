@@ -5,12 +5,14 @@ import { RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { ApiService } from '../../../core/services/api.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { ThemeOption } from '../../../core/models/system/theme-option.model';
+import { PasswordChangeComponent } from '../../components/password-change/password-change.component';
 
 @Component({
   selector: 'app-header-component',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PasswordChangeComponent],
   templateUrl: './header-component.component.html',
   styleUrl: './header-component.component.css',
 })
@@ -18,7 +20,9 @@ export class HeaderComponentComponent implements OnInit, OnDestroy {
   public readonly authService = inject(AuthService);
   public readonly themeService = inject(ThemeService);
   private readonly apiService = inject(ApiService);
+  private readonly toast = inject(ToastService);
 
+  public readonly isPasswordModalOpen = signal<boolean>(false);
   public readonly unreadAlertsCount = signal<number>(0);
   public readonly isConnected = signal<boolean>(true);
   public readonly themes: ThemeOption[] = ThemeService.THEMES;
@@ -96,6 +100,19 @@ export class HeaderComponentComponent implements OnInit, OnDestroy {
 
   onToggleDarkMode(): void {
     this.themeService.toggleDarkMode();
+  }
+
+  openPasswordModal(): void {
+    this.isPasswordModalOpen.set(true);
+  }
+
+  closePasswordModal(): void {
+    this.isPasswordModalOpen.set(false);
+  }
+
+  onPasswordChangeSuccess(): void {
+    this.toast.success('Your password has been changed successfully!');
+    this.isPasswordModalOpen.set(false);
   }
 
   onLogout(): void {

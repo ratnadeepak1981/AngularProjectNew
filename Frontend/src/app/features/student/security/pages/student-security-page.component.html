@@ -1,0 +1,46 @@
+<div class="w-full space-y-6">
+  <!-- Page Header -->
+  <app-page-header
+    title="Account Security & Password Management"
+    subtitle="Manage your portal login password, review system security policies, and ensure your account remains protected."
+    icon="🔒"
+  ></app-page-header>
+
+  <!-- Security Policy Notice Banner -->
+  <div class="bg-blue-50/90 dark:bg-blue-950/50 backdrop-blur-md rounded-2xl p-4 border border-blue-200 dark:border-blue-800/80 flex items-center justify-between gap-4 text-xs font-semibold text-blue-900 dark:text-blue-200">
+    <div class="flex items-center gap-2.5">
+      <span class="text-xl">🛡️</span>
+      <div>
+        <p class="font-bold">Enterprise Password Security Active</p>
+        <p class="text-2xs text-blue-700 dark:text-blue-300">
+          Your account password is governed by university security policy parameters configured by Campus Administration.
+        </p>
+      </div>
+    </div>
+    <span class="px-2.5 py-1 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 text-2xs font-bold border border-blue-300 dark:border-blue-700 shrink-0">
+      Self-Service Security
+    </span>
+  </div>
+
+  <!-- Security & Password Management Card -->
+  <div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+    <div class="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+      <span class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 flex items-center justify-center text-lg border border-blue-200 dark:border-blue-800">
+        🔑
+      </span>
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Change Account Password</h3>
+        <p class="text-2xs text-slate-500 dark:text-slate-400">
+          Enter your existing password and establish a new secure password adhering to university policy requirements.
+        </p>
+      </div>
+    </div>
+
+    <div class="max-w-xl">
+      <app-password-change mode="NormalChange"></app-password-change>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <app-toast-container></app-toast-container>
+</div>

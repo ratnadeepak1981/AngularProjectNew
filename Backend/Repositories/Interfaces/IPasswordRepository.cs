@@ -5,6 +5,9 @@ namespace CampusServicesPortal.Repositories.Interfaces
 {
     public interface IPasswordRepository
     {
+        Task<User?> GetUserByEmailAsync(string email);
+        Task<User?> GetUserByIdAsync(int id);
+        Task<Student?> GetStudentByUserIdAsync(int userId);
         Task<Student?> GetStudentByEmailThroughUserAsync(string email);
         Task InvalidateExistingResetTokensAsync(int studentId);
         Task SavePasswordResetTokenAsync(PasswordResetToken token);

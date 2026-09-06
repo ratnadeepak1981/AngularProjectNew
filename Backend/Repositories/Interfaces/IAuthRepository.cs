@@ -8,6 +8,8 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetUserByIdAsync(int id);
         Task<Student?> GetStudentByUserIdWithFacultyAsync(int userId);
+        Task UpdateUserAsync(User user);
+        Task<SystemSetting?> GetSystemSettingAsync(string key);
 
         // Refresh Token operations
         Task SaveRefreshTokenAsync(RefreshToken token);

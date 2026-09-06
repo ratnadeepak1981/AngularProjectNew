@@ -46,15 +46,10 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<object>> MarkNotificationAsReadAsync(int notificationId, int studentId)
         {
-            Notification? notification;
-            if (studentId > 0)
-            {
-                notification = await _repository.GetByIdAndStudentIdAsync(notificationId, studentId);
-            }
-            else
-            {
-                notification = await _repository.GetByIdAsync(notificationId);
-            }
+            if (studentId <= 0)
+                return ServiceResult<object>.Failure("Access Denied. Only the target student recipient can mark notifications as read.", 403);
+
+            var notification = await _repository.GetByIdAndStudentIdAsync(notificationId, studentId);
 
             if (notification == null)
                 return ServiceResult<object>.Failure("Notification record not found or access denied.", 404);

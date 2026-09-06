@@ -39,11 +39,11 @@ namespace CampusServicesPortal.Controllers
             return Content(result.Data ?? string.Empty, "text/html");
         }
 
-        // GET /api/sms/preview/payment-otp?email=...&amount=5000 — Render HTML SMS simulation preview for Payment Verification OTP with real amount
+        // GET /api/sms/preview/payment-otp?phoneNumber=... — Render HTML SMS simulation preview for Payment Verification OTP
         [HttpGet("preview/payment-otp")]
-        public async Task<IActionResult> PreviewPaymentOtpSms([FromQuery] string email, [FromQuery] decimal? amount, [FromQuery] string? transactionId)
+        public async Task<IActionResult> PreviewPaymentOtpSms([FromQuery] string? phoneNumber = null)
         {
-            var result = await _smsService.GeneratePaymentOtpSmsPreviewAsync(email, amount, transactionId);
+            var result = await _smsService.GeneratePaymentOtpSmsPreviewAsync(phoneNumber);
             if (!result.IsSuccess)
             {
                 return ProcessServiceResult(result, "Payment OTP SMS preview generation failed.");
@@ -65,12 +65,11 @@ namespace CampusServicesPortal.Controllers
             return Content(result.Data ?? string.Empty, "text/html");
         }
 
-        // GET /api/sms/preview/phone-otp?phoneNumber=...&emailOrIndex=... — Render HTML SMS simulation preview for Mobile Phone OTP
+        // GET /api/sms/preview/phone-otp?phoneNumber=... — Render HTML SMS simulation preview for Mobile Phone OTP
         [HttpGet("preview/phone-otp")]
-        public async Task<IActionResult> PreviewPhoneOtpSms([FromQuery] string? phoneNumber, [FromQuery] string? emailOrIndex, [FromQuery] string? purpose)
+        public async Task<IActionResult> PreviewPhoneOtpSms([FromQuery] string? phoneNumber = null)
         {
-            string identifier = !string.IsNullOrWhiteSpace(phoneNumber) ? phoneNumber : (emailOrIndex ?? string.Empty);
-            var result = await _smsService.GeneratePhoneOtpSmsPreviewAsync(identifier, null, purpose ?? "Verification");
+            var result = await _smsService.GeneratePhoneOtpSmsPreviewAsync(phoneNumber);
             if (!result.IsSuccess)
             {
                 return ProcessServiceResult(result, "Phone OTP SMS preview generation failed.");

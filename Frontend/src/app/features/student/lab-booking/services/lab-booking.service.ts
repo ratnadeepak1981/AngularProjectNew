@@ -173,9 +173,17 @@ export class LabBookingService {
       map((res) => {
         const payload = res?.data || res || {};
         const mins = payload.holdMinutes ?? payload.HoldMinutes ?? res?.holdMinutes ?? res?.HoldMinutes;
-        return mins ? Number(mins) : 10;
+        return mins ? Number(mins) : 15;
       }),
-      catchError(() => of(10))
+      catchError(() => of(15))
+    );
+  }
+
+  getSystemSettings(): Observable<Record<string, string>> {
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.api.get<any>('/admin/system-settings/all', undefined, { context }).pipe(
+      map((res) => (res?.data || res || {}) as Record<string, string>),
+      catchError(() => of({}))
     );
   }
 }

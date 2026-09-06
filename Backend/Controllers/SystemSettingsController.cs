@@ -142,11 +142,13 @@ namespace CampusServicesPortal.Controllers
                     // Security & Authentication Policies
                     ["MinPasswordLength"] = "8",
                     ["MaxFailedLogins"] = "5",
+                    ["AccountLockoutDurationMinutes"] = "15",
                     ["RequirePasswordComplexity"] = "strong",
                     ["PasswordExpiryDays"] = "90",
                     ["PasswordReuseHistoryLimit"] = "5",
                     ["OtpValidityMinutes"] = "3",
                     ["MaxOtpResendAttempts"] = "5",
+                    ["TemporaryPasswordValidityHours"] = "24",
                     // Notifications & Templates
                     ["EnableEmailNotifications"] = "true",
                     ["EnableSmsNotifications"] = "false",

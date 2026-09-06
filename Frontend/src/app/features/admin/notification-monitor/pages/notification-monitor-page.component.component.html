@@ -60,25 +60,7 @@
     [sortIconStyle]="'svg-arrows'"
     [emptyMessage]="'No dispatched notifications recorded matching criteria.'"
     (sortChange)="onSortChange($event)"
-  >
-    <ng-template #cellActions let-row>
-      <div class="flex items-center justify-end gap-2">
-        @if (!row.isRead) {
-          <button
-            type="button"
-            (click)="markNotificationAsRead(row)"
-            class="px-2.5 py-1 text-xs font-bold bg-emerald-50 dark:bg-emerald-950/80 hover:bg-emerald-100 dark:hover:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-300 dark:border-emerald-700 transition-colors shadow-2xs cursor-pointer flex items-center gap-1"
-            title="Mark alert as read"
-          >
-            <span>✓</span>
-            <span>Mark Read</span>
-          </button>
-        } @else {
-          <span class="text-[11px] text-slate-400 dark:text-slate-500 font-medium italic">Read</span>
-        }
-      </div>
-    </ng-template>
-  </app-data-table>
+  />
 </div>
 
 <!-- DUAL-MODE DISPATCH SYSTEM INTERNAL NOTIFICATION MODAL -->

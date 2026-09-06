@@ -100,6 +100,13 @@ export class StudentMasterService {
     );
   }
 
+  resetStudentPassword(studentId: number): Observable<ApiResponse<any>> {
+    return this.apiService.post<ApiResponse<any>>(
+      this.apiService.routes.students.resetPassword(studentId),
+      {}
+    );
+  }
+
   uploadMasterCsv(file: File): Observable<ApiResponse<number>> {
     const formData = new FormData();
     formData.append('file', file);

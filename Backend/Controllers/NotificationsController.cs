@@ -17,6 +17,8 @@ namespace CampusServicesPortal.Controllers
             _notificationService = notificationService;
         }
 
+        // GET /api/notifications/admin-audit-log — Admin-only system notifications audit log
+        [Authorize(Roles = "Admin")]
         [HttpGet("admin-audit-log")]
         public async Task<IActionResult> GetAllNotifications()
         {
@@ -47,15 +49,12 @@ namespace CampusServicesPortal.Controllers
             return ProcessServiceResult(result, "Notifications collection compiled and retrieved successfully.");
         }
 
-        // PUT /api/notifications/{id}/read — Mark a notification as read
+        // PUT /api/notifications/{id}/read — Mark a notification as read (Student recipient only)
+        [Authorize(Roles = "Student")]
         [HttpPut("{id}/read")]
         public async Task<IActionResult> MarkAsRead(int id)
         {
-            int studentId = 0;
-            if (User.IsInRole("Student"))
-            {
-                studentId = GetCurrentStudentId();
-            }
+            int studentId = GetCurrentStudentId();
             var result = await _notificationService.MarkNotificationAsReadAsync(id, studentId);
             return ProcessServiceResult(result, "Notification status flag flipped to read successfully.");
         }

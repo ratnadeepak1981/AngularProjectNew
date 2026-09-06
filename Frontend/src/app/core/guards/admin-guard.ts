@@ -15,9 +15,9 @@ export const adminGuard: CanActivateFn = (route, state) => {
   toast.error('Access Denied. You do not have permission to view this resource.');
   
   if (authService.isAuthenticated()) {
-    router.navigate(['/student/dashboard']);
+    router.navigate(['/unauthorized']);
   } else {
-    router.navigate(['/auth/login']);
+    router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
   }
   
   return false;

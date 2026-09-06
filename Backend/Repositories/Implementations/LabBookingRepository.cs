@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using CampusServicesPortal.Data;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
@@ -17,11 +17,12 @@ public class LabBookingRepository : ILabBookingRepository
     }
 
     public async Task<LabBooking?> GetByIdAsync(int id) => 
-        await _context.LabBookings.Include(b => b.Lab).FirstOrDefaultAsync(b => b.Id == id);
+        await _context.LabBookings.Include(b => b.Lab).Include(b => b.Seat).FirstOrDefaultAsync(b => b.Id == id);
 
     public async Task<IEnumerable<LabBooking>> GetStudentBookingsAsync(int studentId) =>
         await _context.LabBookings
             .Include(b => b.Lab)
+            .Include(b => b.Seat)
             .Where(b => b.StudentId == studentId)
             .OrderByDescending(b => b.BookingDate)
             .ToListAsync();
@@ -31,7 +32,7 @@ public class LabBookingRepository : ILabBookingRepository
         await _context.LabBookings.CountAsync(b => b.LabId == labId 
             && b.BookingDate.Date == date.Date 
             && b.TimeSlot == timeSlot 
-            && (b.Status == "Confirmed" || b.Status == "Held"));
+            && (b.Status == "Confirmed" || (b.Status == "Held" && b.ExpiresAt > DateTime.UtcNow)));
 
     // Checks specific seat layout maps (Computer Labs)
     public async Task<bool> IsSeatOccupiedOrHeldAsync(int labId, int seatId, DateTime date, string timeSlot) =>
@@ -39,7 +40,7 @@ public class LabBookingRepository : ILabBookingRepository
             && b.SeatId == seatId 
             && b.BookingDate.Date == date.Date 
             && b.TimeSlot == timeSlot 
-            && (b.Status == "Confirmed" || b.Status == "Held"));
+            && (b.Status == "Confirmed" || (b.Status == "Held" && b.ExpiresAt > DateTime.UtcNow)));
 
     public async Task AddBookingAsync(LabBooking booking) => 
         await _context.LabBookings.AddAsync(booking);
@@ -58,7 +59,17 @@ public class LabBookingRepository : ILabBookingRepository
                 && b.SeatId == seatId
                 && b.BookingDate.Date == date.Date
                 && b.TimeSlot == timeSlot
-                && (b.Status == "Confirmed" || b.Status == "Held"));
+                && (b.Status == "Confirmed" || (b.Status == "Held" && b.ExpiresAt > DateTime.UtcNow)));
+    }
+
+    public async Task<IEnumerable<LabBooking>> GetActiveBookingsForLabSlotAsync(int labId, DateTime date, string timeSlot)
+    {
+        return await _context.LabBookings
+            .Where(b => b.LabId == labId
+                && b.BookingDate.Date == date.Date
+                && b.TimeSlot == timeSlot
+                && (b.Status == "Confirmed" || (b.Status == "Held" && b.ExpiresAt > DateTime.UtcNow)))
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<LabBooking>> GetExpiredHeldBookingsAsync()
@@ -67,6 +78,4 @@ public class LabBookingRepository : ILabBookingRepository
             .Where(b => b.Status == "Held" && b.ExpiresAt < DateTime.UtcNow)
             .ToListAsync();
     }
-
-
 }

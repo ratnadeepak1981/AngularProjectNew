@@ -23,4 +23,8 @@ public class User
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastPasswordChangedAt { get; set; } = DateTime.UtcNow;
+    public bool MustChangePassword { get; set; } = false;
+    public DateTime? TemporaryPasswordExpiresAt { get; set; }
+    public int FailedLoginAttempts { get; set; } = 0;
+    public DateTime? LockoutEndUtc { get; set; }
 }

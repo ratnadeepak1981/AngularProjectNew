@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CampusServicesPortal.Data;
 using CampusServicesPortal.DTOs.Requests.Events;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Events;
@@ -9,6 +10,7 @@ using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
 using CampusServicesPortal.Services.Interfaces;
 using CampusServicesPortal.Wrappers;
+using Microsoft.EntityFrameworkCore;
 
 namespace CampusServicesPortal.Services.Implementations
 {
@@ -16,11 +18,13 @@ namespace CampusServicesPortal.Services.Implementations
     {
         private readonly IEventRepository _eventRepository;
         private readonly INotificationService _notificationService;
+        private readonly AppDbContext _context;
 
-        public EventService(IEventRepository eventRepository, INotificationService notificationService)
+        public EventService(IEventRepository eventRepository, INotificationService notificationService, AppDbContext context)
         {
             _eventRepository = eventRepository;
             _notificationService = notificationService;
+            _context = context;
         }
 
         public async Task<ServiceResult<EventResponseDto>> CreateEventAsync(CreateEventDto request)
@@ -38,12 +42,12 @@ namespace CampusServicesPortal.Services.Implementations
             if (request.StartDateTime >= request.EndDateTime)
                 return ServiceResult<EventResponseDto>.Failure("Scheduling Error. Start time must occur before the end time.", 400);
 
-            // 4. Rule #6: Prevent venue schedule overlaps [PDF: 0.1.11, 0.1.20]
+            // 4. Rule #6: Prevent venue schedule clashes on concurrent calendar bookings [PDF: 0.1.10, 0.1.20]
             bool isOverlapping = await _eventRepository.IsVenueDoubleBookedAsync(request.VenueId, request.StartDateTime, request.EndDateTime);
             if (isOverlapping)
                 return ServiceResult<EventResponseDto>.Failure("Scheduling Conflict. The selected venue is already booked for an overlapping time window.", 409);
 
-            // 5. Build and save the entity state mapping
+            // 5. Build entity and commit
             var newEvent = new Event
             {
                 VenueId = request.VenueId,
@@ -81,8 +85,10 @@ namespace CampusServicesPortal.Services.Implementations
             if (currentRegisteredCount >= targetEvent.Capacity)
                 return ServiceResult<EventResponseDto>.Failure("Registration Full. This event has reached its maximum capacity limit.", 409);
 
-            // 4. Calculate time-bound temporary hold expiration window (BRD Rule #12 - 15 minute baseline window) [PDF: 0.1.12]
-            int holdMinutes = 15;
+            // 4. Calculate time-bound temporary hold expiration window from System Settings (BRD Rule #12)
+            var holdSetting = await _context.SystemSettings
+                .FirstOrDefaultAsync(s => s.SettingKey == "LabBookingHoldMinutes" || s.SettingKey == "reservation-hold-minutes");
+            int holdMinutes = (holdSetting != null && int.TryParse(holdSetting.SettingValue, out int val) && val > 0) ? val : 15;
             DateTime expiresAt = DateTime.UtcNow.AddMinutes(holdMinutes);
 
             // 5. Save registration record as a temporary 'Held' state [PDF: 0.1.12]

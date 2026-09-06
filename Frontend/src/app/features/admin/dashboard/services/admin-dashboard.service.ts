@@ -132,6 +132,13 @@ export class AdminDashboardService {
     return this.apiService.put(this.apiService.routes.system.holdMinutes, { holdMinutes: mins });
   }
 
+  getAllSystemSettings(): Observable<Record<string, string>> {
+    return this.apiService.get<any>(this.apiService.routes.system.allSettings).pipe(
+      map((res) => res?.data ?? res ?? {}),
+      catchError(() => of({}))
+    );
+  }
+
   getDefaultPageSize(): Observable<number> {
     return this.apiService.get<any>(this.apiService.routes.system.pageSize).pipe(
       map((res) => res?.data?.pageSize ?? res?.pageSize ?? 10),

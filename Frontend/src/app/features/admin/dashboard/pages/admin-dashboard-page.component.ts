@@ -52,6 +52,8 @@ export class AdminDashboardPageComponent implements OnInit {
     );
   });
 
+  public readonly defaultCurrency = signal<string>('LKR');
+
   public readonly feeCollectionRate = computed(() => {
     const total = this.pendingFeesAmount() + this.totalPaidFeesAmount();
     if (total === 0) return 100;
@@ -59,7 +61,7 @@ export class AdminDashboardPageComponent implements OnInit {
   });
 
   public readonly formattedPendingFeesAmount = computed(() => {
-    return `LKR ${this.pendingFeesAmount().toLocaleString()}`;
+    return `${this.defaultCurrency()} ${this.pendingFeesAmount().toLocaleString()}`;
   });
 
   // SVG Donut Chart Calculated Offsets (Circumference = 2 * PI * 40 = 251.32)
@@ -108,6 +110,14 @@ export class AdminDashboardPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAnalytics();
+    this.dashboardService.getAllSystemSettings().subscribe({
+      next: (dict: Record<string, string>) => {
+        if (dict['DefaultCurrency']) {
+          this.defaultCurrency.set(dict['DefaultCurrency']);
+        }
+      },
+      error: () => {},
+    });
   }
 
   loadAnalytics(): void {

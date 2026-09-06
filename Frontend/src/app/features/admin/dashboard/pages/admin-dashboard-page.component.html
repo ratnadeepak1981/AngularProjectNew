@@ -306,7 +306,7 @@
               ></div>
             </div>
             <div class="flex justify-between text-3xs text-slate-400">
-              <span>Collected: LKR {{ totalPaidFeesAmount().toLocaleString() }}</span>
+              <span>Collected: {{ defaultCurrency() }} {{ totalPaidFeesAmount().toLocaleString() }}</span>
               <span>Outstanding: {{ formattedPendingFeesAmount() }}</span>
             </div>
           </div>

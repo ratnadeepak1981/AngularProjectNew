@@ -40,8 +40,49 @@ namespace CampusServicesPortal.Services.Implementations
         {
             var user = await _authRepository.GetUserByEmailAsync(request.Email);
 
+            // 1. Account Lockout Check
+            if (user != null && user.LockoutEndUtc.HasValue && user.LockoutEndUtc.Value > DateTime.UtcNow)
+            {
+                int remainingMinutes = Math.Max(1, (int)Math.Ceiling((user.LockoutEndUtc.Value - DateTime.UtcNow).TotalMinutes));
+                await _auditLogService.LogActivityAsync(
+                    userId: user.Id,
+                    userDisplayName: user.Email,
+                    action: "AccountLockoutActive",
+                    module: "Auth",
+                    entityId: user.Id.ToString(),
+                    description: $"Login attempt blocked: Account is locked out for {remainingMinutes} more minute(s).",
+                    isSuccess: false);
+
+                return ServiceResult<AuthResponseDto>.Failure($"Account is temporarily locked due to multiple failed login attempts. Please try again in {remainingMinutes} minute(s).", 423);
+            }
+
             if (user == null || !VerifyPasswordHash(request.Password, user.PasswordHash))
             {
+                if (user != null)
+                {
+                    user.FailedLoginAttempts++;
+                    var maxFailedSetting = await _authRepository.GetSystemSettingAsync("MaxFailedLogins");
+                    int maxFailed = maxFailedSetting != null && int.TryParse(maxFailedSetting.SettingValue, out int mf) ? mf : 5;
+
+                    var lockoutMinsSetting = await _authRepository.GetSystemSettingAsync("AccountLockoutDurationMinutes");
+                    int lockoutMins = lockoutMinsSetting != null && int.TryParse(lockoutMinsSetting.SettingValue, out int lm) ? lm : 15;
+
+                    if (user.FailedLoginAttempts >= maxFailed)
+                    {
+                        user.LockoutEndUtc = DateTime.UtcNow.AddMinutes(lockoutMins);
+                        await _auditLogService.LogActivityAsync(
+                            userId: user.Id,
+                            userDisplayName: user.Email,
+                            action: "AccountLockedOut",
+                            module: "Auth",
+                            entityId: user.Id.ToString(),
+                            description: $"Account locked for {lockoutMins} minutes due to {user.FailedLoginAttempts} consecutive failed attempts.",
+                            isSuccess: false);
+                    }
+
+                    await _authRepository.UpdateUserAsync(user);
+                }
+
                 await _auditLogService.LogActivityAsync(
                     userId: user?.Id,
                     userDisplayName: request.Email,
@@ -66,6 +107,29 @@ namespace CampusServicesPortal.Services.Implementations
                 }
 
                 return ServiceResult<AuthResponseDto>.Failure("Invalid login credentials provided.", 401);
+            }
+
+            // 2. Check Temporary Password Expiration
+            if (user.MustChangePassword && user.TemporaryPasswordExpiresAt.HasValue && user.TemporaryPasswordExpiresAt.Value < DateTime.UtcNow)
+            {
+                await _auditLogService.LogActivityAsync(
+                    userId: user.Id,
+                    userDisplayName: user.Email,
+                    action: "TemporaryPasswordExpired",
+                    module: "Auth",
+                    entityId: user.Id.ToString(),
+                    description: $"Login rejected for '{user.Email}': Temporary password credential has expired.",
+                    isSuccess: false);
+
+                return ServiceResult<AuthResponseDto>.Failure("Your temporary password has expired. Please request a password reset or contact administration.", 401);
+            }
+
+            // 3. Reset failed login attempts on successful authentication
+            if (user.FailedLoginAttempts > 0 || user.LockoutEndUtc.HasValue)
+            {
+                user.FailedLoginAttempts = 0;
+                user.LockoutEndUtc = null;
+                await _authRepository.UpdateUserAsync(user);
             }
 
             var student = await _authRepository.GetStudentByUserIdWithFacultyAsync(user.Id);
@@ -108,6 +172,20 @@ namespace CampusServicesPortal.Services.Implementations
                 }
             }
 
+            // 4. Check Password Expiry Policy
+            var expiryDaysSetting = await _authRepository.GetSystemSettingAsync("PasswordExpiryDays");
+            int expiryDays = expiryDaysSetting != null && int.TryParse(expiryDaysSetting.SettingValue, out int ed) ? ed : 90;
+            bool isPasswordExpired = false;
+            if (expiryDays > 0 && user.LastPasswordChangedAt.HasValue && user.LastPasswordChangedAt.Value.AddDays(expiryDays) < DateTime.UtcNow)
+            {
+                isPasswordExpired = true;
+            }
+
+            bool mustChange = user.MustChangePassword || isPasswordExpired;
+            string? changeReason = null;
+            if (user.MustChangePassword) changeReason = "TemporaryPassword";
+            else if (isPasswordExpired) changeReason = "ExpiredPassword";
+
             var tokenString = GenerateJwtToken(user, student?.Id ?? 0);
             var refreshTokenString = GenerateSecureRandomToken();
 
@@ -126,6 +204,9 @@ namespace CampusServicesPortal.Services.Implementations
                 Token = tokenString,
                 RefreshToken = refreshTokenString,
                 Role = user.Role,
+                MustChangePassword = mustChange,
+                PasswordExpired = isPasswordExpired,
+                ForceChangeReason = changeReason,
                 Profile = new StudentProfileResponseDto
                 {
                     Id = student?.Id ?? 0,
@@ -307,7 +388,8 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Role == "Student" ? studentId.ToString() : user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim("UserId", user.Id.ToString())
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

@@ -124,7 +124,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         errors: technicalErrors.length > 0 ? technicalErrors : undefined,
       };
 
-      if (error.status === 400 || error.status === 422) {
+      if (error.status === 409) {
+        toast.warning(clientMsg || 'A booking or duplicate registration conflict occurred. Refreshing active state...', 'Resource Conflict (409)');
+      } else if (error.status === 400 || error.status === 422) {
         toast.warning(clientMsg || 'Please verify form inputs and try again.', 'Validation Notice');
       } else if (error.status === 403) {
         toast.error(clientMsg || 'Access Denied: You do not have permission for this resource.');

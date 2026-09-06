@@ -37,6 +37,17 @@ namespace CampusServicesPortal.Repositories.Implementations
                 .FirstOrDefaultAsync(s => s.UserId == userId);
         }
 
+        public async Task UpdateUserAsync(User user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task<SystemSetting?> GetSystemSettingAsync(string key)
+        {
+            return await _context.SystemSettings.FirstOrDefaultAsync(s => s.SettingKey == key);
+        }
+
         public async Task SaveRefreshTokenAsync(RefreshToken token)
         {
             await _context.RefreshTokens.AddAsync(token);

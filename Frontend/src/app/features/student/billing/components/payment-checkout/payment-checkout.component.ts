@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FeePaymentItem } from '../../services/student-billing.service';
 import { ApiService } from '../../../../../core/services/api.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 
 @Component({
@@ -12,9 +13,10 @@ import { ToastService } from '../../../../../core/services/toast.service';
   templateUrl: './payment-checkout.component.html',
   styleUrl: './payment-checkout.component.css',
 })
-export class PaymentCheckoutComponent implements OnDestroy {
+export class PaymentCheckoutComponent implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
   private readonly apiService = inject(ApiService);
+  private readonly authService = inject(AuthService);
 
   @Input() item: FeePaymentItem | null = null;
   @Input() isSubmitting = false;
@@ -32,16 +34,14 @@ export class PaymentCheckoutComponent implements OnDestroy {
   public readonly cvc = signal<string>('789');
   public readonly selectedCardBrand = signal<string>('visa');
 
-  // 3D Secure SMS OTP Modal Signals & Countdown Timer
+  // 3D Secure SMS OTP Modal Signals & System Settings Dynamic Countdown Timer
   public readonly is3DSecureOpen = signal<boolean>(false);
   public readonly cardOtpCode = signal<string>('');
   public readonly currentOtpToken = signal<string>('');
   public readonly validatedCardDetails = signal<any>(null);
-  public readonly isPreviewingSms = signal<boolean>(false);
-  public readonly smsPreviewHtml = signal<string>('');
   
-  // 5-Minute OTP Expiry Countdown Timer
-  public readonly countdownSeconds = signal<number>(300);
+  public readonly otpValidityMinutes = signal<number>(3);
+  public readonly countdownSeconds = signal<number>(180);
   private timerInterval: any = null;
 
   public readonly formattedCountdown = computed<string>(() => {
@@ -90,6 +90,44 @@ export class PaymentCheckoutComponent implements OnDestroy {
     { id: 'unionpay', name: 'UnionPay', icon: '🟢🔴', code: 'UNIONPAY' },
     { id: 'discover', name: 'Discover / JCB', icon: '🟠', code: 'DISCOVER' },
   ];
+
+  ngOnInit(): void {
+    const profile = this.authService.userProfile();
+    if (profile?.name) {
+      this.cardholderName.set(profile.name);
+    }
+    this.loadOtpPolicy();
+  }
+
+  public getStudentPrimaryMobile(): string {
+    const profile = this.authService.userProfile();
+    if (profile) {
+      if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
+        const primary = profile.phoneNumbers.find((p) => p.isPrimary || p.phoneType === 'Primary Mobile');
+        if (primary?.phoneNumber) return primary.phoneNumber.trim();
+        return profile.phoneNumbers[0].phoneNumber.trim();
+      }
+      if (profile.contactDetails) {
+        const match = profile.contactDetails.match(/\+?\d[\d\s\-]{7,15}\d/);
+        if (match) return match[0].trim();
+      }
+    }
+    return '+94771234566';
+  }
+
+  private loadOtpPolicy(): void {
+    this.authService.getPasswordPolicy().subscribe({
+      next: (res) => {
+        const data = res?.data || res;
+        const mins = data?.otpValidityMinutes ?? data?.OtpValidityMinutes ?? 3;
+        if (mins > 0) {
+          this.otpValidityMinutes.set(mins);
+          this.countdownSeconds.set(mins * 60);
+        }
+      },
+      error: () => {},
+    });
+  }
 
   ngOnDestroy(): void {
     this.stopTimer();
@@ -158,6 +196,8 @@ export class PaymentCheckoutComponent implements OnDestroy {
       };
 
       const initialOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const userEmail = this.authService.userProfile()?.email || 'student@university.ac.lk';
+      const userPhone = this.getStudentPrimaryMobile();
       this.validatedCardDetails.set(cardDetails);
       this.cardOtpCode.set('');
       this.currentOtpToken.set(initialOtp);
@@ -167,18 +207,19 @@ export class PaymentCheckoutComponent implements OnDestroy {
       // Dispatch Payment OTP SMS via Shared API Endpoint
       this.apiService
         .post<any>('/sms/send', {
-          phoneNumber: '+94771234567',
-          purpose: 2, // PaymentOtp
+          phoneNumber: userPhone,
+          email: userEmail,
+          purpose: 'PaymentOtp',
           otpCode: initialOtp,
-          amount: this.item?.amount || 5000.0,
+          amount: this.item?.amount || 1500.0,
           transactionId: `TXN-${this.item?.id || 101}`,
         })
         .subscribe({
           next: () => {
-            this.toast.success(`Payment OTP sent to +94 77 *** 4567! Valid for 5:00 minutes.`);
+            this.toast.success(`3D Secure OTP dispatched to card mobile line (${userPhone})! Valid for ${this.otpValidityMinutes()} minutes.`);
           },
           error: () => {
-            this.toast.success(`Payment OTP sent to +94 77 *** 4567!`);
+            this.toast.success(`3D Secure OTP generated for ${userPhone}. Valid for ${this.otpValidityMinutes()} minutes.`);
           },
         });
     } else if (ch === 'lankapay') {
@@ -200,7 +241,7 @@ export class PaymentCheckoutComponent implements OnDestroy {
 
   onAuthorize3DSecure(): void {
     if (this.isExpired()) {
-      this.toast.error('The Payment OTP has expired. Please click "Resend OTP" to generate a fresh code.');
+      this.toast.error('The Payment OTP has expired. Please click "Resend OTP" to receive a fresh code.');
       return;
     }
 
@@ -228,66 +269,41 @@ export class PaymentCheckoutComponent implements OnDestroy {
 
   resendOtp(): void {
     const newOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const userEmail = this.authService.userProfile()?.email || 'student@university.ac.lk';
+    const userPhone = this.getStudentPrimaryMobile();
     this.currentOtpToken.set(newOtp);
     this.cardOtpCode.set('');
     this.startTimer();
-    this.smsPreviewHtml.set('');
 
     this.apiService
       .post<any>('/sms/send', {
-        phoneNumber: '+94771234567',
-        purpose: 2, // PaymentOtp
+        phoneNumber: userPhone,
+        email: userEmail,
+        purpose: 'PaymentOtp',
         otpCode: newOtp,
-        amount: this.item?.amount || 5000.0,
+        amount: this.item?.amount || 1500.0,
         transactionId: `TXN-${this.item?.id || 101}`,
       })
       .subscribe({
         next: () => {
-          this.toast.success(`Fresh Payment OTP (${newOtp}) sent via SMS! Valid for 5:00 mins.`);
+          this.toast.success(`Fresh 3D Secure OTP dispatched to ${userPhone}! Valid for ${this.otpValidityMinutes()} minutes.`);
         },
         error: () => {
-          this.toast.success(`Fresh Payment OTP (${newOtp}) sent via SMS!`);
+          this.toast.success(`Fresh 3D Secure OTP generated for ${userPhone}!`);
         },
       });
-  }
-
-  toggleSmsPreview(): void {
-    if (!this.smsPreviewHtml()) {
-      const amt = this.item?.amount || 5000.0;
-      const txn = `TXN-${this.item?.id || 101}`;
-
-      this.apiService
-        .get<any>(`/sms/preview/payment-otp`, {
-          email: 'ruwanbandara@univercity.co.lk',
-          amount: amt,
-          transactionId: txn,
-        })
-        .subscribe({
-          next: (htmlContent) => {
-            const raw = typeof htmlContent === 'string' ? htmlContent : htmlContent?.data || '';
-            this.smsPreviewHtml.set(raw);
-            this.isPreviewingSms.set(true);
-          },
-          error: () => {
-            this.isPreviewingSms.set(false);
-            this.toast.info(`OTP Code: ${this.currentOtpToken()}`);
-          },
-        });
-    } else {
-      this.isPreviewingSms.set(!this.isPreviewingSms());
-    }
   }
 
   close3DSecureModal(): void {
     this.stopTimer();
     this.is3DSecureOpen.set(false);
-    this.isPreviewingSms.set(false);
     this.toast.info('Payment authorization cancelled.');
   }
 
   private startTimer(): void {
     this.stopTimer();
-    this.countdownSeconds.set(300); // 5 minutes
+    const duration = (this.otpValidityMinutes() && this.otpValidityMinutes() > 0 ? this.otpValidityMinutes() : 3) * 60;
+    this.countdownSeconds.set(duration);
     this.timerInterval = setInterval(() => {
       const current = this.countdownSeconds();
       if (current <= 1) {

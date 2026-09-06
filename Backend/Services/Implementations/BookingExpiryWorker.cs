@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -45,7 +45,14 @@ namespace CampusServicesPortal.Services.Implementations
                     _logger.LogError(ex, "Error executing background sweep.");
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
     }

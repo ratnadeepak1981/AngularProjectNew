@@ -62,31 +62,21 @@ export class AuditLogsPageComponent implements OnInit {
   public readonly isDiffModalOpen = signal<boolean>(false);
   public readonly selectedLog = signal<AuditLog | null>(null);
 
-  // Dynamic Tabs Configuration with Live Security Badge
+  // Dynamic Tabs Configuration: 1. All Activity, 2. Security Alerts
   public readonly tabs = computed<TabItem[]>(() => {
     const unreviewed = this.unreviewedSecurityCount();
     return [
       { id: 'all', label: 'All Activity', icon: '📋' },
       {
         id: 'security',
-        label: unreviewed > 0 ? `Security Alerts (${unreviewed})` : 'Security & Auth Incidents',
+        label: unreviewed > 0 ? `Security Alerts (${unreviewed})` : 'Security Alerts',
         icon: unreviewed > 0 ? '🚨' : '🛡️',
       },
-      { id: 'correlated', label: 'Correlated Transactions (Smart Diff)', icon: '🔗' },
-      { id: 'finance', label: 'Financial & Billing', icon: '💳' },
-      { id: 'system', label: 'System & Admin Governance', icon: '⚙️' },
     ];
   });
 
-  // Displayed Logs Filtered by Active Tab
-  public readonly displayedLogs = computed<AuditLog[]>(() => {
-    const tab = this.activeTabId();
-    const logs = this.auditLogs();
-    if (tab === 'correlated') {
-      return logs.filter((row) => this.isRowCorrelated(row));
-    }
-    return logs;
-  });
+  // Displayed Logs
+  public readonly displayedLogs = computed<AuditLog[]>(() => this.auditLogs());
 
   // Dropdown Options
   public readonly moduleOptions: DropdownOption[] = [
@@ -250,19 +240,10 @@ export class AuditLogsPageComponent implements OnInit {
       isReviewedFilter = false;
     }
 
-    // Apply Tab-level context overrides
+    // Apply Tab-level context: Security Alerts tab filters for failures/incidents
     if (tab === 'security') {
-      if (!moduleFilter) moduleFilter = 'Auth';
-    } else if (tab === 'correlated') {
-      if (!moduleFilter) moduleFilter = 'Students';
-    } else if (tab === 'finance') {
-      if (!moduleFilter) moduleFilter = 'Billing';
-    } else if (tab === 'system') {
-      if (!moduleFilter) moduleFilter = 'SystemSettings';
+      isSuccessFilter = false;
     }
-
-    const pageNum = tab === 'correlated' ? 1 : this.currentPage();
-    const effectivePageSize = tab === 'correlated' ? Math.max(this.pageSize(), 50) : this.pageSize();
 
     const filter: AuditLogFilter = {
       searchTerm: formValues.searchTerm || undefined,
@@ -273,8 +254,8 @@ export class AuditLogsPageComponent implements OnInit {
       isReviewed: isReviewedFilter,
       sortBy: this.currentSortBy(),
       sortDirection: this.currentSortDir(),
-      pageNumber: pageNum,
-      pageSize: effectivePageSize,
+      pageNumber: this.currentPage(),
+      pageSize: this.pageSize(),
     };
 
     this.auditService.getAuditLogs(filter).subscribe({
@@ -376,9 +357,7 @@ export class AuditLogsPageComponent implements OnInit {
   // Pagination & Sorting handlers
   public onPageChange(page: number): void {
     this.currentPage.set(page);
-    if (this.activeTabId() !== 'correlated') {
-      this.loadAuditLogs();
-    }
+    this.loadAuditLogs();
   }
 
   public onPageSizeChange(size: number): void {
@@ -399,6 +378,40 @@ export class AuditLogsPageComponent implements OnInit {
   }
 
   // Diff Modal trigger
+
+  // Determine if record has a meaningful before/after diff
+  public hasMeaningfulDiff(row: AuditLog): boolean {
+    if (!row) return false;
+    const action = (row.action || '').toLowerCase();
+    if (
+      action.includes('login') ||
+      action.includes('logout') ||
+      action.includes('otp') ||
+      action.includes('token')
+    ) {
+      return false;
+    }
+    return this.isMeaningfulJson(row.beforeValuesJson) && this.isMeaningfulJson(row.afterValuesJson);
+  }
+
+  public isMeaningfulJson(jsonStr?: string | null): boolean {
+    if (!jsonStr) return false;
+    const trimmed = jsonStr.trim();
+    if (trimmed === '' || trimmed === '{}' || trimmed === '[]' || trimmed === 'null') {
+      return false;
+    }
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed === null || parsed === undefined) return false;
+      if (typeof parsed === 'object') {
+        return Object.keys(parsed).length > 0;
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public openDiffModal(log: AuditLog): void {
     this.selectedLog.set(log);
     this.isDiffModalOpen.set(true);

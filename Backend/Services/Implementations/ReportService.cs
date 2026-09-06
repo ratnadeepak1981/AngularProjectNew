@@ -57,14 +57,6 @@ namespace CampusServicesPortal.Services.Implementations
                 var summary = await _reportRepository.GetInstitutionalKpiSummaryAsync();
                 var (userId, displayName) = GetCurrentUserInfo();
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    "ViewKpiReport",
-                    "Reports",
-                    null,
-                    "Administrator generated Institutional KPI Overview report.",
-                    true);
 
                 return ServiceResult<InstitutionalKpiReportDto>.Success(summary);
             }
@@ -86,14 +78,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Faculty #{filter.DrilldownId.Value}." 
                     : "Student Demographics report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownStudentReport" : "ViewStudentReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<StudentDetailItemDto>>.Success(report);
             }
@@ -115,14 +99,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Hostel #{filter.DrilldownId.Value}." 
                     : "Hostel Occupancy report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownHostelReport" : "ViewHostelReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<HostelDetailItemDto>>.Success(report);
             }
@@ -144,14 +120,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Lab #{filter.DrilldownId.Value}." 
                     : "Lab Utilization report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownLabReport" : "ViewLabReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<LabBookingDetailItemDto>>.Success(report);
             }
@@ -173,14 +141,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Fee Type #{filter.DrilldownId.Value}." 
                     : "Billing & Financial Ledger report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownBillingReport" : "ViewBillingReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<PaymentDetailItemDto>>.Success(report);
             }
@@ -202,14 +162,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Complaint Category #{filter.DrilldownId.Value}." 
                     : "Complaint & Grievance Triage report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownComplaintReport" : "ViewComplaintReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<ComplaintDetailItemDto>>.Success(report);
             }
@@ -231,14 +183,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Certificate Type #{filter.DrilldownId.Value}." 
                     : "Certificate Issuance report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownCertificateReport" : "ViewCertificateReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<CertificateRequestDetailItemDto>>.Success(report);
             }
@@ -260,14 +204,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Event #{filter.DrilldownId.Value}." 
                     : "Event Participation report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    filter.DrilldownId.HasValue ? "DrilldownEventReport" : "ViewEventReport",
-                    "Reports",
-                    filter.DrilldownId?.ToString(),
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<EventRegistrationDetailItemDto>>.Success(report);
             }
@@ -289,14 +225,6 @@ namespace CampusServicesPortal.Services.Implementations
                     ? $"Drilldown subreport accessed for Notification Type '{filter.DrilldownKey}'." 
                     : "System Notification Dispatch report generated.";
 
-                await _auditLogService.LogActivityAsync(
-                    userId,
-                    displayName,
-                    !string.IsNullOrWhiteSpace(filter.DrilldownKey) ? "DrilldownNotificationReport" : "ViewNotificationReport",
-                    "Reports",
-                    filter.DrilldownKey,
-                    desc,
-                    true);
 
                 return ServiceResult<PagedReportResultDto<NotificationDetailItemDto>>.Success(report);
             }
@@ -313,7 +241,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetHostelRoomsReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewHostelRoomsReport", "Reports", null, "Hostel Rooms and Inventory report generated.", true);
                 return ServiceResult<PagedReportResultDto<HostelRoomDetailItemDto>>.Success(report);
             }
             catch (Exception ex)
@@ -329,7 +256,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetPendingHostelApplicationsReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewPendingHostelApplicationsReport", "Reports", null, "Pending Hostel Applications Queue report generated.", true);
                 return ServiceResult<PagedReportResultDto<PendingHostelApplicationItemDto>>.Success(report);
             }
             catch (Exception ex)
@@ -345,7 +271,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetLabDirectoryReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewLabDirectoryReport", "Reports", null, "Lab Directory & Layout Configuration report generated.", true);
                 return ServiceResult<PagedReportResultDto<LabDirectoryItemDto>>.Success(report);
             }
             catch (Exception ex)
@@ -361,7 +286,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetVenueUtilizationReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewVenueUtilizationReport", "Reports", null, "Campus Venues & Facility Utilization report generated.", true);
                 return ServiceResult<PagedReportResultDto<VenueUtilizationItemDto>>.Success(report);
             }
             catch (Exception ex)
@@ -377,7 +301,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetPendingStudentRegistrationsReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewPendingStudentRegistrationsReport", "Reports", null, "Pending Student Registrations report generated.", true);
                 return ServiceResult<PagedReportResultDto<PendingStudentRegistrationItemDto>>.Success(report);
             }
             catch (Exception ex)
@@ -393,7 +316,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetCertificateTypesCatalogReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewCertificateTypesCatalogReport", "Reports", null, "Certificate Types and Service Catalog report generated.", true);
                 return ServiceResult<PagedReportResultDto<CertificateTypeCatalogItemDto>>.Success(report);
             }
             catch (Exception ex)
@@ -409,7 +331,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 var report = await _reportRepository.GetComplaintCategoriesSlaReportAsync(filter);
                 var (userId, displayName) = GetCurrentUserInfo();
-                await _auditLogService.LogActivityAsync(userId, displayName, "ViewComplaintCategoriesSlaReport", "Reports", null, "Complaint Categories & SLA Performance report generated.", true);
                 return ServiceResult<PagedReportResultDto<ComplaintCategorySlaItemDto>>.Success(report);
             }
             catch (Exception ex)
