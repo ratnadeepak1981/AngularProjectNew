@@ -74,15 +74,6 @@ namespace CampusServicesPortal.Repositories.Implementations
                 .FirstOrDefaultAsync(p => p.Token == token && !p.IsUsed && p.ExpiresAt > DateTime.UtcNow);
         }
 
-        public async Task<PasswordResetToken?> GetLatestUnusedTokenAsync()
-        {
-            return await _context.PasswordResetTokens
-                .Include(p => p.Student)
-                .ThenInclude(s => s.User)
-                .Where(p => !p.IsUsed && p.ExpiresAt > DateTime.UtcNow)
-                .OrderByDescending(p => p.Id)
-                .FirstOrDefaultAsync();
-        }
 
         public async Task<Student?> GetStudentByIdAsync(int id)
         {

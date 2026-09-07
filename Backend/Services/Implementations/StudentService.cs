@@ -137,16 +137,16 @@ namespace CampusServicesPortal.Services.Implementations
                 }
             }
 
-            string contactSummary = phoneEntities.Count > 0
-                ? string.Join(" | ", phoneEntities.Select(p => $"{p.PhoneType}: {p.PhoneNumber}"))
-                : (request.ContactDetails ?? string.Empty);
+            var primaryPhone = phoneEntities.FirstOrDefault(p => p.IsPrimary) ?? phoneEntities.FirstOrDefault();
+            string primaryPhoneNumber = primaryPhone?.PhoneNumber?.Trim() 
+                ?? (!string.IsNullOrWhiteSpace(request.ContactDetails) ? request.ContactDetails.Trim() : string.Empty);
 
             // 6. Instantiate structural database fields
             var newStudent = new CampusServicesPortal.Models.Student
             {
                 IndexNumber = masterRecord.IndexNumber,
                 FullName = masterRecord.FullName,
-                ContactDetails = contactSummary,
+                ContactDetails = primaryPhoneNumber,
                 EmailVerified = false,
                 FacultyId = request.FacultyId,
                 EmailVerificationToken = Guid.NewGuid().ToString(),
@@ -169,7 +169,6 @@ namespace CampusServicesPortal.Services.Implementations
             await _studentRepository.SaveChangesAsync();
 
             // 7. Dispatch Initial Registration SMS OTP Simulation
-            var primaryPhone = phoneEntities.FirstOrDefault(p => p.IsPrimary) ?? phoneEntities.FirstOrDefault();
             if (primaryPhone != null)
             {
                 string regOtp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
@@ -289,7 +288,8 @@ namespace CampusServicesPortal.Services.Implementations
                     }
                 }
                 await _studentRepository.SyncPhoneNumbersAsync(id, updatedPhones);
-                student.ContactDetails = string.Join(" | ", updatedPhones.Select(p => $"{p.PhoneType}: {p.PhoneNumber}"));
+                var primPhone = updatedPhones.FirstOrDefault(p => p.IsPrimary) ?? updatedPhones.FirstOrDefault();
+                student.ContactDetails = primPhone?.PhoneNumber?.Trim() ?? string.Empty;
             }
 
             // 3. Sync Addresses

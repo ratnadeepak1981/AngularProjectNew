@@ -12,7 +12,6 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task InvalidateExistingResetTokensAsync(int studentId);
         Task SavePasswordResetTokenAsync(PasswordResetToken token);
         Task<PasswordResetToken?> GetPasswordResetTokenAsync(string token);
-        Task<PasswordResetToken?> GetLatestUnusedTokenAsync();
         Task<Student?> GetStudentByIdAsync(int id);
         Task UpdateUserAsync(User user);
         Task UpdateResetTokenStatusAsync(PasswordResetToken token);

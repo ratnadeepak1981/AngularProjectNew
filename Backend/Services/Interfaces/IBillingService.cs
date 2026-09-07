@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CampusServicesPortal.DTOs.Requests.Billing;
 using CampusServicesPortal.DTOs.Responses.Billing;
@@ -14,8 +14,11 @@ namespace CampusServicesPortal.Services.Interfaces
         // Hooks operational rule violations immediately out to financial profiles
         Task<ServiceResult<object>> IssueLabFineAsync(GenerateLabFineDto request);
 
-        // Simulates balance checking transactions
-        Task<ServiceResult<FeePaymentResponseDto>> ProcessPaymentAsync(int paymentId, int studentId);
+        // Requests server-authoritative 3D Secure payment OTP
+        Task<ServiceResult<object>> RequestPaymentOtpAsync(int paymentId, int studentId);
+
+        // Simulates balance checking and settlement transactions
+        Task<ServiceResult<FeePaymentResponseDto>> ProcessPaymentAsync(int paymentId, int studentId, ProcessPaymentRequestDto? request = null);
 
         // Account statements lookups
         Task<ServiceResult<IEnumerable<FeePaymentResponseDto>>> GetStudentLedgerAsync(int studentId);

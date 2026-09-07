@@ -177,10 +177,6 @@ namespace CampusServicesPortal.Services.Implementations
                         _memoryCache.Set($"PaymentAmount_Phone_{cleanPaymentPhone}", amt, TimeSpan.FromMinutes(validityMinutes));
                         _memoryCache.Set($"PaymentTxn_Phone_{cleanPaymentPhone}", txn, TimeSpan.FromMinutes(validityMinutes));
                     }
-                    _memoryCache.Set("LatestPaymentOtp", otp, TimeSpan.FromMinutes(validityMinutes));
-                    _memoryCache.Set("LatestPaymentPhone", request.PhoneNumber, TimeSpan.FromMinutes(validityMinutes));
-                    _memoryCache.Set("LatestPaymentAmount", amt, TimeSpan.FromMinutes(validityMinutes));
-                    _memoryCache.Set("LatestPaymentTxn", txn, TimeSpan.FromMinutes(validityMinutes));
                 }
                 else if (cleanPurpose.Equals(SmsPurposes.PaymentReceipt, StringComparison.OrdinalIgnoreCase) || cleanPurpose == "3")
                 {
@@ -194,7 +190,7 @@ namespace CampusServicesPortal.Services.Implementations
             }
 
             await SendSmsAsync(request.PhoneNumber, msg);
-            return ServiceResult<object>.Success(new { Message = "SMS dispatched successfully to simulation gateway.", To = request.PhoneNumber, OtpCode = otp }, 200);
+            return ServiceResult<object>.Success(new { Message = "SMS dispatched successfully to simulation gateway.", To = request.PhoneNumber }, 200);
         }
 
         public async Task<ServiceResult<string>> GenerateForgotPasswordSmsPreviewAsync(string email)
@@ -222,11 +218,14 @@ namespace CampusServicesPortal.Services.Implementations
                 int validityMinutes = await GetOtpValidityMinutesAsync();
                 remainingMins = validityMinutes;
             }
-            else
+            else if (student != null)
             {
-                var latestToken = await _passwordRepo.GetLatestUnusedTokenAsync();
-                if (latestToken != null && !latestToken.IsUsed && latestToken.ExpiresAt >= DateTime.UtcNow &&
-                    student != null && latestToken.StudentId == student.Id)
+                var latestToken = await _context.PasswordResetTokens
+                    .Where(p => p.StudentId == student.Id && !p.IsUsed && p.ExpiresAt >= DateTime.UtcNow)
+                    .OrderByDescending(p => p.Id)
+                    .FirstOrDefaultAsync();
+
+                if (latestToken != null)
                 {
                     tokenCode = latestToken.Token;
                     remainingMins = Math.Max(1, (int)Math.Ceiling((latestToken.ExpiresAt - DateTime.UtcNow).TotalMinutes));
@@ -240,7 +239,8 @@ namespace CampusServicesPortal.Services.Implementations
 
             string fullName = student?.FullName ?? await ResolveStudentNameAsync(cleanEmail);
             string expiresAtStr = $"Valid for {remainingMins} minutes (Expires in ~{remainingMins} mins)";
-            string phoneNo = !string.IsNullOrWhiteSpace(student?.ContactDetails) ? student.ContactDetails : "+94 77 123 4567";
+            string phoneNo = student?.PhoneNumbers?.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber 
+                             ?? (!string.IsNullOrWhiteSpace(student?.ContactDetails) ? student.ContactDetails : "Mobile line on record");
 
             string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "ForgotPasswordOtp.cshtml");
             string cssPath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Sms", "ForgotPasswordOtp.css");

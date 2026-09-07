@@ -121,7 +121,11 @@ export class StudentPaymentPageComponent implements OnInit {
     if (!item || !this.pendingPaymentPayload) return;
 
     this.isSubmitting.set(true);
-    this.billingService.payInvoice(item.id).subscribe({
+    const paymentPayload = {
+      paymentChannel: this.pendingPaymentPayload.channel || 'card',
+      ...(this.pendingPaymentPayload.details || {}),
+    };
+    this.billingService.payInvoice(item.id, paymentPayload).subscribe({
       next: (res) => {
         const recNo = res?.receiptNumber || res?.data?.receiptNumber || 'REC-' + Math.floor(100000 + Math.random() * 900000);
         this.isSubmitting.set(false);

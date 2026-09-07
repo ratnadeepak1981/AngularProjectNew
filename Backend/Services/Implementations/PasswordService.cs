@@ -115,13 +115,18 @@ namespace CampusServicesPortal.Services.Implementations
                 await _passwordRepository.SavePasswordResetTokenAsync(resetToken);
 
                 // Dispatch SMS simulation
-                string phone = !string.IsNullOrWhiteSpace(student.ContactDetails) ? student.ContactDetails : "+94 77 123 4567";
-                await _smsService.DispatchSmsAsync(new SendSmsRequestDto
+                string phone = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() 
+                               ?? (!string.IsNullOrWhiteSpace(student.ContactDetails) ? student.ContactDetails.Trim() : string.Empty);
+
+                if (!string.IsNullOrWhiteSpace(phone))
                 {
-                    PhoneNumber = phone,
-                    Purpose = SmsPurposes.ForgotPasswordOtp,
-                    OtpCode = otpCode
-                });
+                    await _smsService.DispatchSmsAsync(new SendSmsRequestDto
+                    {
+                        PhoneNumber = phone,
+                        Purpose = SmsPurposes.ForgotPasswordOtp,
+                        OtpCode = otpCode
+                    });
+                }
             }
 
             await _auditLogService.LogActivityAsync(
@@ -137,7 +142,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 Message = $"Verification OTP code dispatched successfully. Valid for {otpMins} minutes.",
                 Email = cleanEmail,
-                OtpCode = otpCode,
                 ValidityMinutes = otpMins,
                 ExpiresInSeconds = otpMins * 60
             }, 200);
@@ -262,10 +266,6 @@ namespace CampusServicesPortal.Services.Implementations
             else
             {
                 dbTokenRecord = await _passwordRepository.GetPasswordResetTokenAsync(cleanTokenInput);
-                if (dbTokenRecord == null)
-                {
-                    dbTokenRecord = await _passwordRepository.GetLatestUnusedTokenAsync();
-                }
 
                 if (dbTokenRecord != null && !dbTokenRecord.IsUsed && dbTokenRecord.ExpiresAt > DateTime.UtcNow)
                 {

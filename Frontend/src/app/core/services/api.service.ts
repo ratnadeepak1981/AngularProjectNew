@@ -120,6 +120,7 @@ export class ApiService {
     },
     billing: {
       ledger: '/billing/ledger',
+      requestOtp: (id: number) => `/billing/payments/${id}/request-otp`,
       pay: (id: number) => `/billing/payments/${id}/pay`,
       assignFee: '/billing/fees/assign',
       cancelUnpaid: (id: number) => `/billing/fee-payments/${id}`,

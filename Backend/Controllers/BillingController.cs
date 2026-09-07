@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -42,12 +42,21 @@ namespace CampusServicesPortal.Controllers
             return ProcessServiceResult(result, "Account transaction ledger statements retrieved successfully.");
         }
 
-        // POST /api/billing/payments/{id}/pay — Student: Settle invoice via checkout simulation [PDF: 0.1.14]
-        [HttpPost("payments/{id}/pay")]
-        public async Task<IActionResult> PayInvoice(int id)
+        // POST /api/billing/payments/{id}/request-otp — Student: Request 3D Secure OTP for payment authorization
+        [HttpPost("payments/{id}/request-otp")]
+        public async Task<IActionResult> RequestPaymentOtp(int id)
         {
             int studentId = GetCurrentStudentId();
-            var result = await _billingService.ProcessPaymentAsync(id, studentId);
+            var result = await _billingService.RequestPaymentOtpAsync(id, studentId);
+            return ProcessServiceResult(result, "3D Secure payment OTP requested successfully.");
+        }
+
+        // POST /api/billing/payments/{id}/pay — Student: Settle invoice via checkout simulation [PDF: 0.1.14]
+        [HttpPost("payments/{id}/pay")]
+        public async Task<IActionResult> PayInvoice(int id, [FromBody] ProcessPaymentRequestDto? request = null)
+        {
+            int studentId = GetCurrentStudentId();
+            var result = await _billingService.ProcessPaymentAsync(id, studentId, request);
             return ProcessServiceResult(result, "Financial clearing transaction processed and completed successfully.");
         }
 

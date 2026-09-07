@@ -170,7 +170,6 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 Message = $"SMS verification OTP code dispatched to {request.PhoneNumber}. Valid for {validityMinutes} minutes.",
                 PhoneNumber = request.PhoneNumber,
-                OtpCode = otpCode,
                 ValidityMinutes = validityMinutes,
                 ExpiresInSeconds = validityMinutes * 60
             }, 200);
@@ -269,20 +268,31 @@ namespace CampusServicesPortal.Services.Implementations
                 _memoryCache.Remove($"PhoneOtp_User_{userKey}");
             }
 
+            CampusServicesPortal.Models.Student? student = null;
             if (!string.IsNullOrWhiteSpace(request.EmailOrIndex))
             {
-                var student = await _studentRepository.GetByIndexOrEmailAsync(request.EmailOrIndex);
-                if (student != null)
-                {
-                    var primaryPhone = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary) 
-                                       ?? student.PhoneNumbers.FirstOrDefault();
+                student = await _studentRepository.GetByIndexOrEmailAsync(request.EmailOrIndex);
+            }
+            else if (!string.IsNullOrEmpty(cleanPhone))
+            {
+                var allStudents = await _studentRepository.SearchStudentsAsync(null, null);
+                student = allStudents.FirstOrDefault(s => s.PhoneNumbers.Any(p => NormalizePhoneKey(p.PhoneNumber) == cleanPhone) 
+                    || NormalizePhoneKey(s.ContactDetails ?? string.Empty) == cleanPhone);
+            }
 
-                    if (primaryPhone != null)
-                    {
-                        primaryPhone.IsVerified = true;
-                        await _studentRepository.UpdateAsync(student);
-                        await _studentRepository.SaveChangesAsync();
-                    }
+            if (student != null)
+            {
+                var targetPhone = student.PhoneNumbers.FirstOrDefault(p => NormalizePhoneKey(p.PhoneNumber) == cleanPhone)
+                                   ?? student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary) 
+                                   ?? student.PhoneNumbers.FirstOrDefault();
+
+                if (targetPhone != null)
+                {
+                    targetPhone.IsVerified = true;
+                    var prim = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary) ?? targetPhone;
+                    student.ContactDetails = prim.PhoneNumber.Trim();
+                    await _studentRepository.UpdateAsync(student);
+                    await _studentRepository.SaveChangesAsync();
                 }
             }
 

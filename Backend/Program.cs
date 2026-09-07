@@ -258,6 +258,36 @@ namespace CampusServicesPortal
                 {
                     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     AuditLogDataSeeder.SeedAuditLogsAsync(context).GetAwaiter().GetResult();
+
+                    // Normalize student ContactDetails to store only the clean primary mobile
+                    var studentsWithPhones = context.Students.Include(s => s.PhoneNumbers).ToList();
+                    bool modified = false;
+                    foreach (var st in studentsWithPhones)
+                    {
+                        var primaryPhone = st.PhoneNumbers.FirstOrDefault(p => p.IsPrimary) ?? st.PhoneNumbers.FirstOrDefault();
+                        if (primaryPhone != null && !string.IsNullOrWhiteSpace(primaryPhone.PhoneNumber))
+                        {
+                            string clean = primaryPhone.PhoneNumber.Trim();
+                            if (st.ContactDetails != clean)
+                            {
+                                st.ContactDetails = clean;
+                                modified = true;
+                            }
+                        }
+                        else if (!string.IsNullOrWhiteSpace(st.ContactDetails) && (st.ContactDetails.Contains("|") || st.ContactDetails.Contains(":")))
+                        {
+                            var match = System.Text.RegularExpressions.Regex.Match(st.ContactDetails, @"\+?\d[\d\s\-]{7,15}\d");
+                            if (match.Success)
+                            {
+                                st.ContactDetails = match.Value.Trim();
+                                modified = true;
+                            }
+                        }
+                    }
+                    if (modified)
+                    {
+                        context.SaveChanges();
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -5,6 +5,7 @@ body {
     padding: 30px 15px;
     color: #334155;
 }
+
 .email-card {
     max-width: 580px;
     margin: 0 auto;
@@ -14,27 +15,60 @@ body {
     box-shadow: 0 10px 25px rgba(15, 44, 89, 0.1);
     border: 1px solid #e2e8f0;
 }
+
 .email-header {
     background: linear-gradient(135deg, #0F2C59 0%, #1E3A8A 100%);
     color: #ffffff;
     padding: 28px 30px;
     text-align: center;
 }
+
+.system-notice {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #38bdf8;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
 .email-header h1 {
     margin: 0;
     font-size: 22px;
     font-weight: 800;
     letter-spacing: 0.5px;
 }
+
 .email-header p {
     margin: 6px 0 0 0;
     font-size: 13px;
     opacity: 0.85;
 }
+
 .email-body {
     padding: 32px 30px;
     line-height: 1.6;
 }
+
+.body-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+    .body-title-row h2 {
+        margin: 0;
+        color: #0f2c59;
+        font-size: 18px;
+        font-weight: 800;
+    }
+
+.greeting-text {
+    font-size: 15px;
+    margin-top: 0;
+}
+
 .meta-table {
     width: 100%;
     border-collapse: collapse;
@@ -44,13 +78,31 @@ body {
     margin: 20px 0;
     font-size: 13px;
 }
-.meta-table td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #e2e8f0;
+
+    .meta-table td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .meta-table tr:last-child td {
+        border-bottom: none;
+    }
+
+.meta-label {
+    color: #64748b;
+    font-weight: 600;
+    width: 140px;
 }
-.meta-table tr:last-child td {
-    border-bottom: none;
+
+.meta-value-primary {
+    font-weight: 700;
+    color: #0f2c59;
 }
+
+.meta-value-secondary {
+    font-weight: 600;
+}
+
 .token-box {
     background: #eff6ff;
     border: 2px dashed #2563eb;
@@ -59,6 +111,15 @@ body {
     text-align: center;
     margin: 24px 0;
 }
+
+.token-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 6px;
+    font-weight: 700;
+}
+
 .token-code {
     font-size: 26px;
     font-weight: 800;
@@ -66,6 +127,37 @@ body {
     letter-spacing: 4px;
     font-family: monospace;
 }
+
+.expiry-text {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 24px;
+}
+
+.signoff-block {
+    font-size: 15px;
+    margin-bottom: 0;
+}
+
+.signoff-signature {
+    font-weight: 700;
+    color: #0f2c59;
+    margin-top: 4px;
+    margin-bottom: 24px;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+
+.disclaimer-text {
+    font-size: 13px;
+    color: #475569;
+    margin: 0;
+}
+
 .email-footer {
     background: #f8fafc;
     border-top: 1px solid #e2e8f0;
@@ -73,4 +165,9 @@ body {
     text-align: center;
     font-size: 12px;
     color: #64748b;
+}
+
+.footer-title {
+    margin: 0 0 6px 0;
+    font-weight: 600;
 }

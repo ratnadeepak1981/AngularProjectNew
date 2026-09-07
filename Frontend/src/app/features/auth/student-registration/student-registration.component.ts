@@ -208,7 +208,7 @@ export class StudentRegistrationComponent implements OnInit {
       email: formVal.email.trim(),
       password: formVal.password,
       facultyId: Number(formVal.facultyId),
-      contactDetails: phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | '),
+      contactDetails: this.primaryMobileNumber().trim(),
       phoneNumbers: phoneList.map((p: any) => ({
         phoneType: p.phoneType,
         phoneNumber: p.phoneNumber.trim(),

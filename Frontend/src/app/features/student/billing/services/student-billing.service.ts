@@ -62,7 +62,11 @@ export class StudentBillingService {
     );
   }
 
-  payInvoice(id: number): Observable<ApiResponse<PaymentReceiptResponse> | any> {
-    return this.apiService.post<ApiResponse<PaymentReceiptResponse>>(this.apiService.routes.billing.pay(id), {});
+  requestPaymentOtp(id: number): Observable<ApiResponse<any> | any> {
+    return this.apiService.post<ApiResponse<any>>(this.apiService.routes.billing.requestOtp(id), {});
+  }
+
+  payInvoice(id: number, payload: any = {}): Observable<ApiResponse<PaymentReceiptResponse> | any> {
+    return this.apiService.post<ApiResponse<PaymentReceiptResponse>>(this.apiService.routes.billing.pay(id), payload);
   }
 }

@@ -5,38 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Campus Portal - Account Verification Email</title>
     <style>
-        {{CSS_CONTENT}}
-    </style>
+        {
+
+        {
+            CSS_CONTENT
+        }
+
+        }</style>
 </head>
 <body>
 
     <div class="email-card">
         <div class="email-header">
+            <div class="system-notice">Notice Type: System Generated Email Notification</div>
             <h1>🎓 University of Kelaniya</h1>
             <p>Campus Services Portal — Registrar Verification Office</p>
         </div>
 
         <div class="email-body">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="margin: 0; color: #0f2c59; font-size: 18px;">Account Email Verification</h2>
+            <div class="body-title-row">
+                <h2>Account Email Verification</h2>
                 {{STATUS_BADGE}}
             </div>
 
-            <p style="font-size: 15px; margin-top: 0;">Dear <strong>{{FULL_NAME}}</strong>,</p>
+            <p class="greeting-text">Dear <strong>{{FULL_NAME}}</strong>,</p>
 
             <p>Welcome to the University Campus Services Portal! Your account registration has been processed against the Registrar Master List records.</p>
 
             <table class="meta-table">
                 <tr>
-                    <td style="color: #64748b; font-weight: 600; width: 140px;">Student Index No:</td>
-                    <td style="font-weight: 700; color: #0f2c59;">{{INDEX_NUMBER}}</td>
+                    <td class="meta-label">Student Index No:</td>
+                    <td class="meta-value-primary">{{INDEX_NUMBER}}</td>
                 </tr>
                 <tr>
-                    <td style="color: #64748b; font-weight: 600;">Registered Email:</td>
-                    <td style="font-weight: 600;">{{REGISTERED_EMAIL}}</td>
+                    <td class="meta-label">Registered Email:</td>
+                    <td class="meta-value-secondary">{{REGISTERED_EMAIL}}</td>
                 </tr>
                 <tr>
-                    <td style="color: #64748b; font-weight: 600;">Faculty Unit:</td>
+                    <td class="meta-label">Faculty Unit:</td>
                     <td>{{FACULTY_NAME}}</td>
                 </tr>
             </table>
@@ -44,17 +50,24 @@
             <p>To activate your portal login and complete account setup, please enter your single-use verification token:</p>
 
             <div class="token-box">
-                <div style="font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 6px; font-weight: 700;">Single-Use Activation Token</div>
+                <div class="token-title">Single-Use Activation Token</div>
                 <div class="token-code">{{TOKEN}}</div>
             </div>
 
-            <p style="font-size: 12px; color: #64748b;">⏰ This single-use verification token is valid until: <strong>{{EXPIRES_STR}}</strong>.</p>
-            <p style="font-size: 13px; color: #475569;">If you did not initiate this registration request, please disregard this message or notify the IT Helpdesk.</p>
+            <p class="expiry-text">⏰ This single-use verification token is valid until: <strong>{{EXPIRES_STR}}</strong>.</p>
+
+            <div class="signoff-block">
+                <p>Yours faithfully,</p>
+                <p class="signoff-signature">Administrator.</p>
+            </div>
+
+            <hr class="divider" />
+            <p class="disclaimer-text">If you did not initiate this registration request, please disregard this message or notify the IT Helpdesk.</p>
         </div>
 
         <div class="email-footer">
-            <p style="margin: 0 0 6px 0; font-weight: 600;">Campus Services Portal — University Registrar Office</p>
-            <p style="margin: 0;">This is an automated system dispatch. Please do not reply directly to this email address.</p>
+            <p class="footer-title">Campus Services Portal — University Registrar Office</p>
+            <p>This is an automated system dispatch. Please do not reply directly to this email address.</p>
         </div>
     </div>
 

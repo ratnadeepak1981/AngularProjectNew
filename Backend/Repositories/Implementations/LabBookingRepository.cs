@@ -17,12 +17,16 @@ public class LabBookingRepository : ILabBookingRepository
     }
 
     public async Task<LabBooking?> GetByIdAsync(int id) => 
-        await _context.LabBookings.Include(b => b.Lab).Include(b => b.Seat).FirstOrDefaultAsync(b => b.Id == id);
+        await _context.LabBookings.Include(b => b.Lab)
+                                  .Include(b => b.Seat)
+                                  .Include(b => b.Student)
+                                  .FirstOrDefaultAsync(b => b.Id == id);
 
     public async Task<IEnumerable<LabBooking>> GetStudentBookingsAsync(int studentId) =>
         await _context.LabBookings
             .Include(b => b.Lab)
             .Include(b => b.Seat)
+            .Include(b => b.Student)
             .Where(b => b.StudentId == studentId)
             .OrderByDescending(b => b.BookingDate)
             .ToListAsync();
@@ -32,6 +36,7 @@ public class LabBookingRepository : ILabBookingRepository
         await _context.LabBookings.CountAsync(b => b.LabId == labId 
             && b.BookingDate.Date == date.Date 
             && b.TimeSlot == timeSlot 
+             
             && (b.Status == "Confirmed" || (b.Status == "Held" && b.ExpiresAt > DateTime.UtcNow)));
 
     // Checks specific seat layout maps (Computer Labs)
@@ -55,6 +60,7 @@ public class LabBookingRepository : ILabBookingRepository
     public async Task<LabBooking?> GetActiveBookingForSeatAsync(int labId, int seatId, DateTime date, string timeSlot)
     {
         return await _context.LabBookings
+            .Include(b => b.Student) // Fixed: Ensures query loads student metadata mapping paths
             .FirstOrDefaultAsync(b => b.LabId == labId
                 && b.SeatId == seatId
                 && b.BookingDate.Date == date.Date
@@ -65,6 +71,9 @@ public class LabBookingRepository : ILabBookingRepository
     public async Task<IEnumerable<LabBooking>> GetActiveBookingsForLabSlotAsync(int labId, DateTime date, string timeSlot)
     {
         return await _context.LabBookings
+            .Include(b => b.Lab)
+            .Include(b => b.Seat)
+            .Include(b => b.Student) // Fixed: Populates student name column in grid views
             .Where(b => b.LabId == labId
                 && b.BookingDate.Date == date.Date
                 && b.TimeSlot == timeSlot
@@ -76,6 +85,17 @@ public class LabBookingRepository : ILabBookingRepository
     {
         return await _context.LabBookings
             .Where(b => b.Status == "Held" && b.ExpiresAt < DateTime.UtcNow)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<LabBooking>> GetAllBookingsForAuditHistoryAsync()
+    {
+        return await _context.LabBookings
+            .Include(b => b.Lab)
+            .Include(b => b.Seat)
+            .Include(b => b.Student) // Fixed: Maps student names to the screen layout grid
+            .AsNoTracking() // Performance Optimization: Cuts memory tracking overhead for audit history logs
+            .OrderByDescending(b => b.Id)
             .ToListAsync();
     }
 }

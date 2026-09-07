@@ -161,6 +161,17 @@ namespace CampusServicesPortal.Repositories.Implementations
             {
                 _context.StudentPhoneNumbers.RemoveRange(toRemove);
             }
+
+            // Enforce single-primary integrity: only one number may have IsPrimary = true
+            var allActivePhones = existingPhones.Where(e => matchedExisting.Contains(e.Id)).Concat(incomingList.Where(i => i.Id == 0)).ToList();
+            var primaryItem = allActivePhones.FirstOrDefault(p => p.IsPrimary) ?? allActivePhones.FirstOrDefault();
+            if (primaryItem != null)
+            {
+                foreach (var p in allActivePhones)
+                {
+                    p.IsPrimary = ReferenceEquals(p, primaryItem);
+                }
+            }
         }
 
         public async Task SyncAddressesAsync(int studentId, IEnumerable<StudentAddress> addresses)

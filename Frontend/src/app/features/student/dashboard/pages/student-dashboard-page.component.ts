@@ -281,9 +281,8 @@ export class StudentDashboardPageComponent implements OnInit {
     const phoneList = formVal.phoneNumbers || [];
     const addr = formVal.address;
 
-    const formattedContact = phoneList && phoneList.length > 0
-      ? phoneList.map((p: any) => `${p.phoneType}: ${p.phoneNumber}`).join(' | ')
-      : (formVal.contactDetails || '');
+    const primaryPhoneItem = phoneList.find((p: any) => p.phoneType === 'Primary Mobile' || p.isPrimary) || phoneList[0];
+    const formattedContact = primaryPhoneItem?.phoneNumber?.trim() || (formVal.contactDetails || '');
 
     const currentFaculty = this.facultyName();
     let facultyId = 1;
