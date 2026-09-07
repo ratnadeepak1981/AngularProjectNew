@@ -77,9 +77,14 @@ export class ForgotPasswordComponent implements OnInit {
   ngOnInit(): void {
     this.loadOtpPolicy();
     const qMode = this.route.snapshot.queryParamMap.get('mode');
+    const qToken = this.route.snapshot.queryParamMap.get('token');
     const storedReason = this.authService.forceChangeReason();
 
-    if (qMode === 'ExpiredPassword' || storedReason === 'ExpiredPassword') {
+    if (qToken) {
+      this.mode.set('ForgotPassword');
+      this.resetTicket.set(qToken.trim());
+      this.step.set('reset');
+    } else if (qMode === 'ExpiredPassword' || storedReason === 'ExpiredPassword') {
       this.mode.set('ExpiredPassword');
       this.step.set('reset');
     } else if (qMode === 'TemporaryPassword' || storedReason === 'TemporaryPassword') {

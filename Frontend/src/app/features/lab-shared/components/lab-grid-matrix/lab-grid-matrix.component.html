@@ -72,9 +72,10 @@
                       [class.cursor-pointer]="isStudent && seat.status === 'Available' && !seat.isBroken"
                       [class.hover:shadow-md]="isStudent && seat.status === 'Available' && !seat.isBroken"
                       [ngClass]="{
-                        'bg-emerald-50/90 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 hover:border-emerald-500': (seat.status === 'Available' || seat.status === 'active' || seat.status === 'Active') && !seat.isBroken,
-                        'bg-amber-50/90 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700/80': seat.status === 'Held' && !seat.isBroken,
-                        'bg-rose-50/90 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700/80': seat.status === 'Occupied' && !seat.isBroken,
+                        'bg-blue-50/90 dark:bg-blue-950/60 border-blue-300 dark:border-blue-700/80 hover:border-blue-500': !showBookingStatus && !seat.isBroken && seat.status !== 'Broken',
+                        'bg-emerald-50/90 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700/80 hover:border-emerald-500': showBookingStatus && (seat.status === 'Available' || seat.status === 'active' || seat.status === 'Active') && !seat.isBroken,
+                        'bg-amber-50/90 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700/80': showBookingStatus && seat.status === 'Held' && !seat.isBroken,
+                        'bg-rose-50/90 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700/80': showBookingStatus && seat.status === 'Occupied' && !seat.isBroken,
                         'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700': seat.isBroken || seat.status === 'Broken'
                       }"
                       class="relative group mx-auto max-w-[145px] w-full min-h-[76px] rounded-xl p-2 border transition-all flex flex-col items-center justify-between shadow-2xs"
@@ -100,9 +101,10 @@
                       <div class="mt-1.5 flex flex-col items-center gap-1 text-center w-full">
                         <span
                           [ngClass]="{
-                            'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200': (seat.status === 'Available' || seat.status === 'active' || seat.status === 'Active') && !seat.isBroken,
-                            'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-200': seat.status === 'Held' && !seat.isBroken,
-                            'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/80 dark:text-rose-200': seat.status === 'Occupied' && !seat.isBroken,
+                            'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/80 dark:text-blue-200': !showBookingStatus && !seat.isBroken && seat.status !== 'Broken',
+                            'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200': showBookingStatus && (seat.status === 'Available' || seat.status === 'active' || seat.status === 'Active') && !seat.isBroken,
+                            'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/80 dark:text-amber-200': showBookingStatus && seat.status === 'Held' && !seat.isBroken,
+                            'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/80 dark:text-rose-200': showBookingStatus && seat.status === 'Occupied' && !seat.isBroken,
                             'bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200': seat.isBroken || seat.status === 'Broken'
                           }"
                           class="w-7 h-7 rounded-lg border flex items-center justify-center text-sm shadow-xs font-bold transition-all"
@@ -114,15 +116,25 @@
                           {{ seat.seatNumber }}
                         </span>
 
-                        <!-- Status Badge (Student Mode) or Indicator (Admin Mode) -->
+                        <!-- Status Badge (Student Mode), Booking Status (Date-wise), or Structural Indicator (General) -->
                         <div class="mt-0.5">
                           @if (isStudent) {
                             <app-status-badge [status]="seat.isBroken ? 'Broken' : seat.status" size="sm"></app-status-badge>
+                          } @else if (showBookingStatus) {
+                            @if (seat.isBroken) {
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">Broken</span>
+                            } @else if (seat.status === 'Held') {
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-semibold">Held</span>
+                            } @else if (seat.status === 'Occupied') {
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 font-semibold">Occupied</span>
+                            } @else {
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Available</span>
+                            }
                           } @else {
                             @if (seat.isBroken) {
                               <span class="text-[8px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 font-semibold">Broken</span>
                             } @else {
-                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">Active</span>
+                              <span class="text-[8px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold">Active</span>
                             }
                           }
                         </div>

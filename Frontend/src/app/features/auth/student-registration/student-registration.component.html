@@ -298,7 +298,7 @@
   [mode]="'dual'"
   [currentStep]="verificationStep()"
   [emailAddress]="registrationForm.get('email')?.value"
-  [phoneNumber]="primaryMobileNumber()"
+  [phoneNumber]="getPrimaryMobileNumber()"
   [validityMinutes]="otpValidityMinutes()"
   [isVerifying]="isVerifyingToken() || isVerifyingSms()"
   [isResending]="isResendingToken() || isResendingSms()"

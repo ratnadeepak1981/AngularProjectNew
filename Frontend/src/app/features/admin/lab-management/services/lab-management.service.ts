@@ -163,6 +163,39 @@ export class LabManagementService {
   }
 
   /**
+   * Get 1-indexed 2D Matrix Layout for a lab on a specific date
+   */
+  getLabLayoutForDate(labId: number, date: string): Observable<LabMatrixLayoutResponse> {
+    return this.api.get<RawApiLayoutPayload>(`/lab-bookings/layout/${labId}?date=${date}&timeSlot=09%3A00%20-%2011%3A00%20AM`).pipe(
+      map((res: RawApiLayoutPayload) => {
+        const payload: RawApiLayoutPayload = res?.data || res || {};
+        const rawSeats: RawApiSeat[] = payload.seats || payload.Seats || [];
+        const seats: LabSeat[] = rawSeats.map((s: RawApiSeat): LabSeat => ({
+          id: s.id || 0,
+          labId: labId,
+          seatNumber: s.seatNumber || s.SeatNumber || `LAB${labId}-PC`,
+          rowIndex: s.rowIndex || s.RowIndex || 1,
+          columnIndex: s.columnIndex || s.ColumnIndex || 1,
+          status: (s.status || s.Status || 'Available') as LabSeat['status'],
+          isBroken: s.isBroken || s.status === 'Broken',
+          equipmentDetails: s.equipmentDetails || 'Standard PC Workstation',
+          maintenanceStatus: s.status === 'Broken' ? 'Maintenance Needed' : 'Operational',
+        }));
+
+        return {
+          totalRows: payload.totalRows ?? payload.TotalRows ?? 4,
+          totalColumns: payload.totalColumns ?? payload.TotalColumns ?? 3,
+          seats: seats,
+        };
+      }),
+      catchError((err: unknown) => {
+        console.error('Failed to fetch date-wise lab layout matrix:', err);
+        return of({ totalRows: 4, totalColumns: 3, seats: [] });
+      })
+    );
+  }
+
+  /**
    * Add a workstation seat at (rowIndex, columnIndex)
    */
   addSeat(labId: number, seatNumber: string, rowIndex: number = 1, columnIndex: number = 1, equipmentDetails?: string): Observable<boolean> {

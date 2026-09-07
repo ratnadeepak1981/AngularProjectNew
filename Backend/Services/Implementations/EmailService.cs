@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using CampusServicesPortal.Repositories.Interfaces;
@@ -10,22 +10,32 @@ using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
 using MimeKit;
 
+using CampusServicesPortal.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+
 namespace CampusServicesPortal.Services.Implementations
 {
     public class EmailService : IEmailService
     {
         private readonly IAccountRepository _accountRepo;
+        private readonly IPasswordRepository _passwordRepo;
+        private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<EmailService> _logger;
         private readonly IConfiguration _configuration;
 
         public EmailService(
             IAccountRepository accountRepo,
+            IPasswordRepository passwordRepo,
+            AppDbContext context,
             IWebHostEnvironment env,
             ILogger<EmailService> logger,
             IConfiguration configuration)
         {
             _accountRepo = accountRepo;
+            _passwordRepo = passwordRepo;
+            _context = context;
             _env = env;
             _logger = logger;
             _configuration = configuration;
@@ -137,6 +147,66 @@ namespace CampusServicesPortal.Services.Implementations
                 .Replace("{{INDEX_NUMBER}}", student.IndexNumber ?? "N/A", StringComparison.Ordinal)
                 .Replace("{{REGISTERED_EMAIL}}", student.User?.Email ?? cleanEmail, StringComparison.Ordinal)
                 .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? "General University Faculty", StringComparison.Ordinal)
+                .Replace("{{TOKEN}}", token, StringComparison.Ordinal)
+                .Replace("{{EXPIRES_STR}}", expiresStr, StringComparison.Ordinal);
+
+            return ServiceResult<string>.Success(renderedHtml, 200);
+        }
+
+        /// <summary>
+        /// Reads active password reset token parameters directly out of database tables and compiles the HTML reset template.
+        /// </summary>
+        public async Task<ServiceResult<string>> GeneratePasswordResetEmailPreviewAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return ServiceResult<string>.Failure("Email parameter is required.", 400);
+            }
+
+            string cleanEmail = email.Trim().ToLowerInvariant();
+            var student = await _passwordRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
+
+            if (student == null)
+            {
+                return ServiceResult<string>.Failure($"No student account record found for email '{cleanEmail}'.", 404);
+            }
+
+            // Look up latest active unconsumed reset token
+            var activeToken = await _context.PasswordResetTokens
+                .Where(p => p.StudentId == student.Id && !p.IsUsed && p.ExpiresAt >= DateTime.UtcNow)
+                .OrderByDescending(p => p.Id)
+                .FirstOrDefaultAsync();
+
+            string token = activeToken?.Token ?? "NO-ACTIVE-TOKEN";
+            string expiresStr = activeToken != null
+                ? activeToken.ExpiresAt.ToString("g") + " UTC"
+                : "24 Hours from Issue";
+
+            string statusBadge = student.User?.IsActive == true
+                ? "<span style='background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 12px;'>ACCOUNT ACTIVE</span>"
+                : "<span style='background: #fee2e2; color: #b91c1c; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 12px;'>ACCOUNT LOCKED</span>";
+
+            string resetUrl = $"http://localhost:4200/auth/reset-password?token={Uri.EscapeDataString(token)}";
+
+            string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Email", "PasswordReset.cshtml");
+            string cssPath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Email", "PasswordReset.css");
+
+            if (!File.Exists(templatePath) || !File.Exists(cssPath))
+            {
+                return ServiceResult<string>.Failure("Password reset email template files missing on server.", 500);
+            }
+
+            string cssContent = await File.ReadAllTextAsync(cssPath);
+            string htmlTemplate = await File.ReadAllTextAsync(templatePath);
+
+            string renderedHtml = htmlTemplate
+                .Replace("{{CSS_CONTENT}}", cssContent, StringComparison.Ordinal)
+                .Replace("{{STATUS_BADGE}}", statusBadge, StringComparison.Ordinal)
+                .Replace("{{FULL_NAME}}", student.FullName ?? "Student User", StringComparison.Ordinal)
+                .Replace("{{INDEX_NUMBER}}", student.IndexNumber ?? "N/A", StringComparison.Ordinal)
+                .Replace("{{REGISTERED_EMAIL}}", student.User?.Email ?? cleanEmail, StringComparison.Ordinal)
+                .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? "General University Faculty", StringComparison.Ordinal)
+                .Replace("{{RESET_URL}}", resetUrl, StringComparison.Ordinal)
                 .Replace("{{TOKEN}}", token, StringComparison.Ordinal)
                 .Replace("{{EXPIRES_STR}}", expiresStr, StringComparison.Ordinal);
 

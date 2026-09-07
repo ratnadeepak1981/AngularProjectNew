@@ -54,5 +54,40 @@ namespace CampusServicesPortal.Controllers
                 message = $"Verification security routing engine run completed for inbox target '{email}'."
             });
         }
+
+        // GET /api/email/preview/password-reset — Render HTML password reset email preview directly inside Swagger
+        [HttpGet("preview/password-reset")]
+        public async Task<IActionResult> PreviewPasswordResetEmail([FromQuery] string email)
+        {
+            var result = await _emailService.GeneratePasswordResetEmailPreviewAsync(email);
+            if (!result.IsSuccess)
+            {
+                return ProcessServiceResult(result, "Password reset email preview generation failed.");
+            }
+
+            return Content(result.Data ?? string.Empty, "text/html");
+        }
+
+        // POST /api/email/send/password-reset — Dispatches the authentic password reset email directly via real Gmail SMTP
+        [HttpPost("send/password-reset")]
+        public async Task<IActionResult> SendPasswordResetEmail([FromQuery] string email)
+        {
+            var previewResult = await _emailService.GeneratePasswordResetEmailPreviewAsync(email);
+            if (!previewResult.IsSuccess)
+            {
+                return ProcessServiceResult(previewResult, "Failed to compile password reset template payload for the requested account.");
+            }
+
+            string subject = "Campus Services Portal - Reset Your Account Password";
+            string htmlContent = previewResult.Data ?? string.Empty;
+
+            await _emailService.SendEmailAsync(email, subject, htmlContent);
+
+            return Ok(new
+            {
+                status = "PROCESSED",
+                message = $"Password reset security notification dispatched to inbox target '{email}'."
+            });
+        }
     }
 }

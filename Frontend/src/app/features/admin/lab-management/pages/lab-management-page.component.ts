@@ -1,11 +1,10 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { TabComponent, TabItem } from '../../../../shared/components/tab-component/tab.component';
-import { DataTableComponent } from '../../../../shared/components/data-table/data-table.component';
-import { TableColumn } from '../../../../shared/components/data-table/models/table-column.model';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
+import { DatePickerComponent } from '../../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 
@@ -21,10 +20,11 @@ import { LabBookingsHistoryComponent } from '../components/lab-bookings-history/
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     PageHeaderComponent,
     TabComponent,
-    DataTableComponent,
     ActionButtonComponent,
+    DatePickerComponent,
     LabDetailsComponent,
     LabGridMatrixComponent,
     LabBookingsHistoryComponent,
@@ -45,55 +45,24 @@ export class LabManagementPageComponent implements OnInit {
   public readonly isLoading = signal(false);
   public readonly pageSize = signal<number>(5);
 
-  // Active Tab State ('labs-list' | 'seat-builder' | 'bookings-audit')
-  public readonly activeTabId = signal<string>('labs-list');
+  // Active Tab State
+  public readonly activeTabId = signal<string>('general-layout');
 
   // Tab Definition Items
   public readonly tabs: TabItem[] = [
-    { id: 'labs-list', label: 'Campus Labs Directory', icon: '🏛️' },
-    { id: 'seat-builder', label: '2D Seat Map Builder', icon: '🗺️' },
-    { id: 'bookings-audit', label: 'Seat Reservations Audit', icon: '🎫' },
+    { id: 'general-layout', label: 'General Lab Layout', icon: '🗺️' },
+    { id: 'datewise-layout', label: 'Date-wise Lab Layout', icon: '📅' },
+    { id: 'bookings-history', label: 'Booking History', icon: '📋' },
   ];
 
-  // Directory Table Columns Configuration
-  public readonly directoryColumns: TableColumn[] = [
-    { key: 'name', header: 'Laboratory Name', sortable: true, filterable: true, type: 'text' },
-    {
-      key: 'labType',
-      header: 'Lab Type',
-      sortable: true,
-      filterable: true,
-      type: 'badge',
-      badgeMap: {
-        Computer: {
-          label: '💻 Computer Lab',
-          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs',
-        },
-        Science: {
-          label: '🧪 Science Lab',
-          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-2xs',
-        },
-        computer: {
-          label: '💻 Computer Lab',
-          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 shadow-2xs',
-        },
-        science: {
-          label: '🧪 Science Lab',
-          class: 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 shadow-2xs',
-        },
-      },
-    },
-    { key: 'capacity', header: 'Capacity', sortable: true, filterable: false, type: 'text' },
-    {
-      key: 'seatsBuilt',
-      header: 'Workstations Built',
-      sortable: true,
-      filterable: false,
-      type: 'text',
-      format: (val, row) => (row.labType === 'Science' || row.labType === 'science' ? '— (Batch Lab)' : `${val ?? 0} Workstations`),
-    },
-    { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions' },
-  ];
+  // Zoom State Signals (Tab 1 and Tab 2)
+  public readonly generalLayoutZoom = signal<number>(100);
+  public readonly datewiseLayoutZoom = signal<number>(100);
+
+  // Date-wise Layout State
+  public readonly datewiseDate = signal<string>('');
+  public readonly datewiseSeats = signal<LabSeat[]>([]);
+  public readonly datewiseSelectedLab = signal<Lab | null>(null);
 
   ngOnInit(): void {
     this.settingsService.getAllSettings().subscribe({
@@ -220,6 +189,71 @@ export class LabManagementPageComponent implements OnInit {
         this.loadLabs();
       } else {
         this.toast.error('Failed to create laboratory profile.');
+      }
+    });
+  }
+
+  // --- Zoom Controls ---
+
+  zoomIn(tab: 'general' | 'datewise'): void {
+    const current = tab === 'general' ? this.generalLayoutZoom() : this.datewiseLayoutZoom();
+    const next = Math.min(current + 10, 200);
+    if (tab === 'general') {
+      this.generalLayoutZoom.set(next);
+    } else {
+      this.datewiseLayoutZoom.set(next);
+    }
+  }
+
+  zoomOut(tab: 'general' | 'datewise'): void {
+    const current = tab === 'general' ? this.generalLayoutZoom() : this.datewiseLayoutZoom();
+    const next = Math.max(current - 10, 50);
+    if (tab === 'general') {
+      this.generalLayoutZoom.set(next);
+    } else {
+      this.datewiseLayoutZoom.set(next);
+    }
+  }
+
+  resetZoom(tab: 'general' | 'datewise'): void {
+    if (tab === 'general') {
+      this.generalLayoutZoom.set(100);
+    } else {
+      this.datewiseLayoutZoom.set(100);
+    }
+  }
+
+  // --- Date-wise Layout ---
+
+  onLabSelectForDatewise(labId: number): void {
+    const lab = this.labs().find((l) => l.id === labId);
+    if (lab) {
+      this.datewiseSelectedLab.set(lab);
+      // Load layout for selected date if date is already chosen
+      if (this.datewiseDate()) {
+        this.loadDatewiseLayout(lab.id, this.datewiseDate());
+      }
+    }
+  }
+
+  onDatewiseDateChange(date: string): void {
+    this.datewiseDate.set(date);
+    const lab = this.datewiseSelectedLab();
+    if (lab && date) {
+      this.loadDatewiseLayout(lab.id, date);
+    }
+  }
+
+  loadDatewiseLayout(labId: number, date: string): void {
+    this.labService.getLabLayoutForDate(labId, date).subscribe((layout) => {
+      this.datewiseSeats.set(layout.seats);
+      const current = this.datewiseSelectedLab();
+      if (current && current.id === labId) {
+        this.datewiseSelectedLab.set({
+          ...current,
+          totalRows: layout.totalRows,
+          totalColumns: layout.totalColumns,
+        });
       }
     });
   }

@@ -20,7 +20,9 @@ export class LabBookingsHistoryComponent {
     { key: 'id', header: 'Booking Ref', sortable: true, filterable: true, type: 'text' },
     { key: 'labName', header: 'Campus Laboratory', sortable: true, filterable: true, type: 'text' },
     { key: 'studentName', header: 'Student Name', sortable: true, filterable: true, type: 'text' },
+    { key: 'studentId', header: 'Student Index', sortable: true, filterable: true, type: 'text' },
     { key: 'seatNumber', header: 'Station / Seat ID', sortable: true, filterable: true, type: 'text' },
+    { key: 'bookingDate', header: 'Booking Date', sortable: true, filterable: true, type: 'text' },
     { key: 'timeSlot', header: 'Reservation Slot', sortable: true, filterable: true, type: 'text' },
     {
       key: 'status',
@@ -47,6 +49,5 @@ export class LabBookingsHistoryComponent {
         },
       },
     },
-    { key: 'createdAt', header: 'Created Date', sortable: true, filterable: false, type: 'text' },
   ];
 }

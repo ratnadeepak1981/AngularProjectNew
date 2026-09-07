@@ -14,8 +14,8 @@
     (tabChange)="onTabChange($event)"
   ></app-tab-component>
 
-  <!-- TAB 1: Campus Labs Directory -->
-  @if (activeTabId() === 'labs-list') {
+  <!-- TAB 1: General Lab Layout -->
+  @if (activeTabId() === 'general-layout') {
     <div class="space-y-6 animate-fade-in">
       <!-- Hidden Create Lab Trigger Component Ref -->
       <app-lab-details
@@ -25,99 +25,202 @@
         (createLabSubmitted)="onCreateLabSubmitted($event)"
       ></app-lab-details>
 
-      <!-- Campus Labs Directory Table -->
+      <!-- Lab Selector -->
       <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
             <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>🏛️</span> Configured Campus Laboratories
+              <span>🗺️</span> General Lab Layout
             </h3>
             <p class="text-xs text-slate-500 dark:text-slate-400">
-              Select a lab row to inspect layout properties or instantiate a new lab profile.
+              Inspect the physical lab layout. Select a lab to view its workstation grid.
             </p>
           </div>
-          <app-action-button
-            label="+ Create New Laboratory"
-            icon="plus"
-            variant="primary"
-            size="sm"
-            (btnClick)="labDetailsRef.openCreateModal()"
-          ></app-action-button>
+          <div class="flex items-center gap-3">
+            <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Select Lab:</label>
+            <select
+              class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              [ngModel]="selectedLab()?.id"
+              (ngModelChange)="selectLab(labs()[labs().findIndex(l => l.id === $event)] || labs()[0])"
+            >
+              @for (lab of labs(); track lab.id) {
+                <option [ngValue]="lab.id">{{ lab.name }}</option>
+              }
+            </select>
+            <app-action-button
+              label="+ Create New Laboratory"
+              icon="plus"
+              variant="primary"
+              size="sm"
+              (btnClick)="labDetailsRef.openCreateModal()"
+            ></app-action-button>
+          </div>
         </div>
 
-        <app-data-table
-          [data]="labs()"
-          [columns]="directoryColumns"
-          [pageSize]="pageSize()"
-          [showSearch]="true"
-          searchPlaceholder="Search laboratories by name, type, or capacity..."
-        >
-          <!-- Custom Actions Cell Template -->
-          <ng-template #cellActions let-row>
-            <div class="flex items-center gap-2">
-              <app-action-button
-                label="View Specs"
-                icon="search"
-                variant="outline"
-                size="sm"
-                (btnClick)="openSpecsModal(row)"
-              ></app-action-button>
-
-              @if (row.requiresSeatSelection) {
-                <app-action-button
-                  label="Inspect 2D Grid ➔"
-                  icon="grid"
-                  variant="primary"
-                  size="sm"
-                  (btnClick)="openGridModal(row)"
-                ></app-action-button>
-              }
+        @if (selectedLab()) {
+          @if (selectedLab()?.requiresSeatSelection) {
+            <!-- Zoom Controls -->
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Zoom:</span>
+              <button
+                type="button"
+                (click)="zoomOut('general')"
+                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-colors"
+              >
+                −
+              </button>
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300 min-w-[40px] text-center">{{ generalLayoutZoom() }}%</span>
+              <button
+                type="button"
+                (click)="zoomIn('general')"
+                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-colors"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                (click)="resetZoom('general')"
+                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold text-xs rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer transition-colors"
+              >
+                Reset
+              </button>
             </div>
-          </ng-template>
-        </app-data-table>
+
+            <!-- Zoomable Lab Layout Container -->
+            <div class="overflow-auto">
+              <div [style.transform]="'scale(' + (generalLayoutZoom() / 100) + ')'" [style.transform-origin]="'top left'" class="transition-transform duration-200">
+                <app-lab-grid-matrix
+                  [labId]="selectedLab()!.id"
+                  [labName]="selectedLab()!.name"
+                  [totalRows]="selectedLab()!.totalRows || 4"
+                  [totalCols]="selectedLab()!.totalColumns || 3"
+                  [seats]="seats()"
+                  [showBookingStatus]="false"
+                  (seatAdded)="onAddSeat($event)"
+                  (seatRemoved)="onRemoveSeat($event)"
+                ></app-lab-grid-matrix>
+              </div>
+            </div>
+          } @else {
+            <!-- Science Lab Batch Allocation Notice -->
+            <div class="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-8 text-center">
+              <span class="text-4xl mb-3 block">🧪</span>
+              <h3 class="text-lg font-bold text-amber-900 dark:text-amber-200">
+                Science Laboratory Batch Capacity Allocation
+              </h3>
+              <p class="text-xs text-amber-700 dark:text-amber-300 max-w-lg mx-auto mt-2">
+                Science labs operate on batch room capacity reservations (Max {{ selectedLab()?.capacity }} students) without individual workstation seat maps.
+              </p>
+            </div>
+          }
+        } @else {
+          <div class="text-center py-12">
+            <p class="text-sm text-slate-500">Please select a laboratory to view its layout.</p>
+          </div>
+        }
       </div>
     </div>
   }
 
-  <!-- TAB 2: Interactive 2D Seat Map Builder -->
-  @if (activeTabId() === 'seat-builder') {
+  <!-- TAB 2: Date-wise Lab Layout -->
+  @if (activeTabId() === 'datewise-layout') {
     <div class="space-y-6 animate-fade-in">
-      @if (selectedLab()) {
-        <!-- Selected Lab Card Header -->
-        <app-lab-details
-          [lab]="selectedLab()"
-          (inspectLayout)="inspectLabLayout($event)"
-          (createLabSubmitted)="onCreateLabSubmitted($event)"
-        ></app-lab-details>
-
-        @if (selectedLab()?.requiresSeatSelection) {
-          <!-- 1-Indexed 2D Grid Matrix Component -->
-          <app-lab-grid-matrix
-            [labId]="selectedLab()!.id"
-            [labName]="selectedLab()!.name"
-            [totalRows]="selectedLab()!.totalRows || 4"
-            [totalCols]="selectedLab()!.totalColumns || 3"
-            [seats]="seats()"
-            (seatAdded)="onAddSeat($event)"
-            (seatRemoved)="onRemoveSeat($event)"
-          ></app-lab-grid-matrix>
-        } @else {
-          <!-- Science Lab Batch Allocation Notice -->
-          <div class="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-8 text-center">
-            <span class="text-4xl mb-3 block">🧪</span>
-            <h3 class="text-lg font-bold text-amber-900 dark:text-amber-200">
-              Science Laboratory Batch Capacity Allocation
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📅</span> Date-wise Lab Layout
             </h3>
-            <p class="text-xs text-amber-700 dark:text-amber-300 max-w-lg mx-auto mt-2">
-              Science labs operate on batch room capacity reservations (Max {{ selectedLab()?.capacity }} students) without individual workstation seat maps.
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              View booking/availability status for a specific date. Select a lab and a date.
+            </p>
+          </div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Select Lab:</label>
+            <select
+              class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              [ngModel]="datewiseSelectedLab()?.id"
+              (ngModelChange)="onLabSelectForDatewise($event)"
+            >
+              @for (lab of labs(); track lab.id) {
+                <option [ngValue]="lab.id">{{ lab.name }}</option>
+              }
+            </select>
+            <app-date-picker
+              label="Booking Date"
+              [selectedDate]="datewiseDate()"
+              [minDate]="''"
+              (dateChange)="onDatewiseDateChange($event)"
+            ></app-date-picker>
+          </div>
+        </div>
+
+        @if (datewiseSelectedLab() && datewiseDate()) {
+          @if (datewiseSelectedLab()?.requiresSeatSelection) {
+            <!-- Zoom Controls -->
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-xs font-bold text-slate-600 dark:text-slate-400">Zoom:</span>
+              <button
+                type="button"
+                (click)="zoomOut('datewise')"
+                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-colors"
+              >
+                −
+              </button>
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300 min-w-[40px] text-center">{{ datewiseLayoutZoom() }}%</span>
+              <button
+                type="button"
+                (click)="zoomIn('datewise')"
+                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer transition-colors"
+              >
+                +
+              </button>
+              <button
+                type="button"
+                (click)="resetZoom('datewise')"
+                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-950/60 text-blue-700 dark:text-blue-300 font-bold text-xs rounded-lg border border-blue-200 dark:border-blue-800 cursor-pointer transition-colors"
+              >
+                Reset
+              </button>
+            </div>
+
+            <!-- Zoomable Date-wise Lab Layout Container -->
+            <div class="overflow-auto">
+              <div [style.transform]="'scale(' + (datewiseLayoutZoom() / 100) + ')'" [style.transform-origin]="'top left'" class="transition-transform duration-200">
+                <app-lab-grid-matrix
+                  [labId]="datewiseSelectedLab()!.id"
+                  [labName]="datewiseSelectedLab()!.name"
+                  [totalRows]="datewiseSelectedLab()!.totalRows || 4"
+                  [totalCols]="datewiseSelectedLab()!.totalColumns || 3"
+                  [seats]="datewiseSeats()"
+                  [showBookingStatus]="true"
+                ></app-lab-grid-matrix>
+              </div>
+            </div>
+          } @else {
+            <!-- Science Lab Batch Allocation Notice -->
+            <div class="bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl p-8 text-center">
+              <span class="text-4xl mb-3 block">🧪</span>
+              <h3 class="text-lg font-bold text-amber-900 dark:text-amber-200">
+                Science Laboratory Batch Capacity Allocation
+              </h3>
+              <p class="text-xs text-amber-700 dark:text-amber-300 max-w-lg mx-auto mt-2">
+                Science labs operate on batch room capacity reservations (Max {{ datewiseSelectedLab()?.capacity }} students) without individual workstation seat maps.
+              </p>
+            </div>
+          }
+        } @else {
+          <div class="text-center py-12">
+            <p class="text-sm text-slate-500">
+              @if (!datewiseSelectedLab()) {
+                Please select a laboratory to view booking status.
+              } @else {
+                Please select a date to view booking/availability information.
+              }
             </p>
           </div>
         }
-      } @else {
-        <div class="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <p class="text-sm text-slate-500">Please select a laboratory from the directory to inspect 2D layout.</p>
-        </div>
-      }
+      </div>
     </div>
   }
 
@@ -149,8 +252,8 @@
     ></app-lab-grid-matrix>
   }
 
-  <!-- TAB 3: Seat Reservations Audit -->
-  @if (activeTabId() === 'bookings-audit') {
+  <!-- TAB 3: Booking History -->
+  @if (activeTabId() === 'bookings-history') {
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm animate-fade-in">
       <app-lab-bookings-history
         [bookings]="bookingsHistory()"

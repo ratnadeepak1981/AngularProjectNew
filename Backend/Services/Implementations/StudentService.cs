@@ -21,17 +21,20 @@ namespace CampusServicesPortal.Services.Implementations
         private readonly IStudentRepository _studentRepository;
         private readonly IPasswordRepository _passwordRepository;
         private readonly ISmsService _smsService;
+        private readonly IEmailService _emailService;
         private readonly IMemoryCache _memoryCache;
 
         public StudentService(
             IStudentRepository studentRepository, 
             IPasswordRepository passwordRepository,
             ISmsService smsService,
+            IEmailService emailService,
             IMemoryCache memoryCache)
         {
             _studentRepository = studentRepository;
             _passwordRepository = passwordRepository;
             _smsService = smsService;
+            _emailService = emailService;
             _memoryCache = memoryCache;
         }
 
@@ -192,7 +195,22 @@ namespace CampusServicesPortal.Services.Implementations
                 });
             }
 
-            // 8. Response Mapping
+            // 8. Dispatch Real Verification Email via SMTP
+            try
+            {
+                var previewResult = await _emailService.GenerateVerificationEmailPreviewAsync(request.Email.Trim());
+                if (previewResult.IsSuccess && !string.IsNullOrEmpty(previewResult.Data))
+                {
+                    await _emailService.SendEmailAsync(
+                        request.Email.Trim(),
+                        "Campus Services Portal - Verify Your Student Email Account",
+                        previewResult.Data
+                    );
+                }
+            }
+            catch {}
+
+            // 9. Response Mapping
             var profileResponse = MapToProfileResponseDto(newStudent, request.Email);
             return ServiceResult<StudentProfileResponseDto>.Success(profileResponse, 201);
         }

@@ -30,6 +30,7 @@ export class LabGridMatrixComponent implements OnChanges {
   @Input() seats: LabSeat[] = [];
   @Input() isModal: boolean = false;
   @Input() isStudent: boolean = false;
+  @Input() showBookingStatus: boolean = true;
 
   @Output() seatAdded = new EventEmitter<{ seatNumber: string; row: number; col: number }>();
   @Output() seatRemoved = new EventEmitter<number>();

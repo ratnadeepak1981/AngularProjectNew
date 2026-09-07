@@ -130,14 +130,20 @@ export class StudentRegistrationComponent implements OnInit {
     return this.registrationForm.get('address') as FormGroup;
   }
 
-  public readonly primaryMobileNumber = computed<string>(() => {
+  public getPrimaryMobileNumber(): string {
     const array = this.phoneNumbersArray;
     if (array && array.length > 0) {
       const primary = array.at(0)?.get('phoneNumber')?.value;
-      if (primary) return primary;
+      if (primary && typeof primary === 'string' && primary.trim().length > 0) {
+        return primary.trim();
+      }
     }
-    return '+94 77 123 4567';
-  });
+    const cd = this.registrationForm?.get('contactDetails')?.value;
+    if (cd && typeof cd === 'string' && cd.trim().length > 0) {
+      return cd.trim();
+    }
+    return '';
+  }
 
   verifyMasterIndex(): void {
     const indexNum = this.registrationForm.get('indexNumber')?.value?.trim();
@@ -208,7 +214,7 @@ export class StudentRegistrationComponent implements OnInit {
       email: formVal.email.trim(),
       password: formVal.password,
       facultyId: Number(formVal.facultyId),
-      contactDetails: this.primaryMobileNumber().trim(),
+      contactDetails: this.getPrimaryMobileNumber(),
       phoneNumbers: phoneList.map((p: any) => ({
         phoneType: p.phoneType,
         phoneNumber: p.phoneNumber.trim(),
@@ -258,6 +264,8 @@ export class StudentRegistrationComponent implements OnInit {
         this.isEmailVerified.set(true);
         this.toast.success('Step 1 Complete: University Email Verified! Proceeding to Step 2: Primary Mobile SMS Verification.');
         this.verificationStep.set(2);
+        // Automatically generate & dispatch Primary Mobile SMS OTP for Step 2
+        this.resendSmsOtp();
       },
       error: (err) => {
         this.isVerifyingToken.set(false);
@@ -272,10 +280,11 @@ export class StudentRegistrationComponent implements OnInit {
 
     this.isVerifyingSms.set(true);
     const formVal = this.registrationForm.getRawValue();
+    const phoneNo = this.getPrimaryMobileNumber();
 
     const payload = {
       emailOrIndex: formVal.email?.trim() || formVal.indexNumber?.trim(),
-      phoneNumber: this.primaryMobileNumber(),
+      phoneNumber: phoneNo,
       otpCode: smsCode.trim()
     };
 
@@ -284,7 +293,7 @@ export class StudentRegistrationComponent implements OnInit {
         this.isVerifyingSms.set(false);
         this.isPhoneVerified.set(true);
         this.toast.success(
-          `Enterprise Registration Complete! Email and Primary Mobile (${this.primaryMobileNumber()}) verified. Redirecting to sign in...`
+          `Enterprise Registration Complete! Email and Primary Mobile (${phoneNo}) verified. Redirecting to sign in...`
         );
         this.isVerifyModalOpen.set(false);
 
@@ -326,21 +335,22 @@ export class StudentRegistrationComponent implements OnInit {
   resendSmsOtp(): void {
     this.isResendingSms.set(true);
     const formVal = this.registrationForm.getRawValue();
+    const phoneNo = this.getPrimaryMobileNumber();
 
     const payload = {
       emailOrIndex: formVal.email?.trim() || formVal.indexNumber?.trim(),
-      phoneNumber: this.primaryMobileNumber(),
+      phoneNumber: phoneNo,
       purpose: 'Registration'
     };
 
     this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.sendPhoneOtp, payload).subscribe({
       next: () => {
         this.isResendingSms.set(false);
-        this.toast.info(`Fresh SMS OTP token dispatched to ${this.primaryMobileNumber()}. Check SMS preview.`);
+        this.toast.info(`Fresh SMS OTP token dispatched to ${phoneNo}. Check SMS preview.`);
       },
       error: () => {
         this.isResendingSms.set(false);
-        this.toast.info(`Fresh SMS OTP token dispatched to ${this.primaryMobileNumber()}. Check SMS preview.`);
+        this.toast.info(`Fresh SMS OTP token dispatched to ${phoneNo}. Check SMS preview.`);
       }
     });
   }

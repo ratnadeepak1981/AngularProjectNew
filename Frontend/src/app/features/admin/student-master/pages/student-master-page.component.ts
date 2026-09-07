@@ -938,9 +938,7 @@ export class StudentMasterPageComponent implements OnInit {
       next: (res) => {
         this.isResettingPassword.set(false);
         this.closeResetPasswordModal();
-        const data = res.data || res;
-        const tempPass = data?.temporaryPassword || data?.TemporaryPassword || '';
-        this.toast.success(`Password reset successfully for ${student.name}. Temporary credential: ${tempPass}`);
+        this.toast.success(`Password reset link successfully dispatched to ${student.name}'s registered email.`);
       },
       error: (err) => {
         this.isResettingPassword.set(false);

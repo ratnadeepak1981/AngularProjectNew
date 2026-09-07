@@ -23,19 +23,22 @@ namespace CampusServicesPortal.Services.Implementations
         private readonly IMemoryCache _memoryCache;
         private readonly ISmsService _smsService;
         private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
 
         public PasswordService(
             IPasswordRepository passwordRepository,
             IAuditLogService auditLogService,
             IMemoryCache memoryCache,
             ISmsService smsService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IEmailService emailService)
         {
             _passwordRepository = passwordRepository;
             _auditLogService = auditLogService;
             _memoryCache = memoryCache;
             _smsService = smsService;
             _notificationService = notificationService;
+            _emailService = emailService;
         }
 
         public async Task<ServiceResult<PasswordPolicyResponseDto>> GetPasswordPolicyAsync()
@@ -105,14 +108,29 @@ namespace CampusServicesPortal.Services.Implementations
             if (student != null)
             {
                 await _passwordRepository.InvalidateExistingResetTokensAsync(student.Id);
+                string resetTokenStr = Guid.NewGuid().ToString("N");
                 var resetToken = new PasswordResetToken
                 {
                     StudentId = student.Id,
-                    Token = otpCode,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(otpMins),
+                    Token = resetTokenStr,
+                    ExpiresAt = DateTime.UtcNow.AddHours(24),
                     IsUsed = false
                 };
                 await _passwordRepository.SavePasswordResetTokenAsync(resetToken);
+
+                // Dispatch Email Notification via SMTP channel with 24h validity rich HTML template
+                try
+                {
+                    var emailPreview = await _emailService.GeneratePasswordResetEmailPreviewAsync(cleanEmail);
+                    if (emailPreview.IsSuccess && !string.IsNullOrWhiteSpace(emailPreview.Data))
+                    {
+                        await _emailService.SendEmailAsync(cleanEmail, "Password Reset Request - Campus Services Portal", emailPreview.Data);
+                    }
+                }
+                catch
+                {
+                    // Fail gracefully so preview and OTP flows still work if SMTP has transient issues
+                }
 
                 // Dispatch SMS simulation
                 string phone = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() 
@@ -135,7 +153,7 @@ namespace CampusServicesPortal.Services.Implementations
                 action: "ForgotPasswordInitiated",
                 module: "Auth",
                 entityId: user?.Id.ToString(),
-                description: $"Password reset OTP requested for '{request.Email}'. Dispatched with {otpMins}-minute validity.",
+                description: $"Password reset requested for '{request.Email}'. Reset link (24h validity) and OTP code ({otpMins}-min validity) dispatched.",
                 isSuccess: true);
 
             return ServiceResult<object>.Success(new
@@ -485,11 +503,18 @@ namespace CampusServicesPortal.Services.Implementations
             var tempHoursSetting = await _passwordRepository.GetSystemSettingAsync("TemporaryPasswordValidityHours");
             int tempHours = tempHoursSetting != null && int.TryParse(tempHoursSetting.SettingValue, out var th) && th > 0 ? th : 24;
 
-            // Generate secure temporary password (e.g. Temp#739281)
-            string randomDigits = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
-            string tempPassword = $"Temp#{randomDigits}";
+            // Generate 24-hour reset token
+            await _passwordRepository.InvalidateExistingResetTokensAsync(student.Id);
+            string resetTokenStr = Guid.NewGuid().ToString("N");
+            var resetToken = new PasswordResetToken
+            {
+                StudentId = student.Id,
+                Token = resetTokenStr,
+                ExpiresAt = DateTime.UtcNow.AddHours(tempHours),
+                IsUsed = false
+            };
+            await _passwordRepository.SavePasswordResetTokenAsync(resetToken);
 
-            student.User.PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword);
             student.User.MustChangePassword = true;
             student.User.TemporaryPasswordExpiresAt = DateTime.UtcNow.AddHours(tempHours);
             student.User.FailedLoginAttempts = 0;
@@ -498,13 +523,44 @@ namespace CampusServicesPortal.Services.Implementations
             await _passwordRepository.UpdateUserAsync(student.User);
             await _passwordRepository.RevokeAllUserSessionsAsync(student.User.Id);
 
+            // Dispatch rich HTML email via SMTP channel to student's email
+            if (!string.IsNullOrWhiteSpace(student.User?.Email))
+            {
+                try
+                {
+                    var emailPreview = await _emailService.GeneratePasswordResetEmailPreviewAsync(student.User.Email);
+                    if (emailPreview.IsSuccess && !string.IsNullOrWhiteSpace(emailPreview.Data))
+                    {
+                        await _emailService.SendEmailAsync(student.User.Email, "Administrator Initiated Password Reset - Campus Services Portal", emailPreview.Data);
+                    }
+                }
+                catch
+                {
+                    // Graceful handling
+                }
+            }
+
             // Dispatch notification to student
             await _notificationService.SendInternalNotificationAsync(new CreateNotificationDto
             {
                 StudentId = student.Id,
                 Type = "SecurityAlert",
-                Message = $"Security Notice: An administrator has reset your portal password. Your temporary password is: {tempPassword}. Valid for {tempHours} hours. You will be required to change this password immediately upon logging in."
+                Message = $"Security Notice: An administrator has initiated a password reset for your portal account. A secure reset link has been dispatched to your registered email ({student.User.Email}), valid for {tempHours} hours."
             });
+
+            // Dispatch SMS simulation
+            string phone = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() 
+                           ?? (!string.IsNullOrWhiteSpace(student.ContactDetails) ? student.ContactDetails.Trim() : string.Empty);
+
+            if (!string.IsNullOrWhiteSpace(phone))
+            {
+                await _smsService.DispatchSmsAsync(new SendSmsRequestDto
+                {
+                    PhoneNumber = phone,
+                    Purpose = SmsPurposes.ForgotPasswordOtp,
+                    OtpCode = resetTokenStr.Substring(0, 6).ToUpper()
+                });
+            }
 
             await _auditLogService.LogActivityAsync(
                 userId: student.UserId,
@@ -512,16 +568,17 @@ namespace CampusServicesPortal.Services.Implementations
                 action: "AdminInitiatedPasswordReset",
                 module: "Auth",
                 entityId: student.Id.ToString(),
-                description: $"Administrator reset password for student '{student.FullName}' ({student.IndexNumber}). Temporary credentials valid for {tempHours} hours.",
+                description: $"Administrator initiated password reset for student '{student.FullName}' ({student.IndexNumber}). Reset instructions dispatched to student's email with {tempHours}-hour validity.",
                 isSuccess: true);
 
+            // Zero-knowledge return for Administrator (temporary credentials never exposed)
             return ServiceResult<object>.Success(new
             {
-                Message = "Student password reset successfully. Temporary credentials have been dispatched.",
+                Message = "Student password reset link has been successfully dispatched to their registered email address.",
                 StudentId = student.Id,
-                TemporaryPassword = tempPassword,
+                Email = student.User?.Email,
                 ValidityHours = tempHours,
-                ExpiresAt = student.User.TemporaryPasswordExpiresAt
+                ExpiresAt = resetToken.ExpiresAt
             }, 200);
         }
 
