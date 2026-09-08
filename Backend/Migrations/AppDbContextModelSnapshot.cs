@@ -153,6 +153,9 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Name")
+                        .IsUnique();
+
                     b.ToTable("CertificateTypes");
 
                     b.HasData(
@@ -227,6 +230,9 @@ namespace CampusServicesPortal.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("ComplaintCategories");
 
@@ -515,28 +521,6 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("HostelApplications");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedRoomId = 1,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 0, DateTimeKind.Utc),
-                            PreferredHostelId = 1,
-                            SpecialRequirements = "Prefer lower floor room.",
-                            Status = "RoomAssigned",
-                            StudentId = 1,
-                            TermSemester = "Year 1 - Sem 1"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 0, DateTimeKind.Utc),
-                            PreferredHostelId = 2,
-                            Status = "Pending",
-                            StudentId = 3,
-                            TermSemester = "Year 1 - Sem 1"
-                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Lab", b =>

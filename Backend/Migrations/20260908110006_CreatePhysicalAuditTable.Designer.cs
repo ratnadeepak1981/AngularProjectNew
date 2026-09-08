@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CampusServicesPortal.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260903103917_AddLastPasswordChangedAtToUser")]
-    partial class AddLastPasswordChangedAtToUser
+    [Migration("20260908110006_CreatePhysicalAuditTable")]
+    partial class CreatePhysicalAuditTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,83 @@ namespace CampusServicesPortal.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("CampusServicesPortal.Models.AuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("AfterValuesJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BeforeValuesJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsReviewed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReviewedBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("UserDisplayName")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("IsReviewed", "IsSuccess");
+
+                    b.HasIndex("Module", "Action");
+
+                    b.ToTable("AuditLogs");
+                });
 
             modelBuilder.Entity("CampusServicesPortal.Models.CertificateRequest", b =>
                 {
@@ -78,6 +155,9 @@ namespace CampusServicesPortal.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("CertificateTypes");
 
@@ -153,6 +233,9 @@ namespace CampusServicesPortal.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
 
                     b.ToTable("ComplaintCategories");
 
@@ -441,28 +524,6 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("StudentId");
 
                     b.ToTable("HostelApplications");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AssignedRoomId = 1,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 0, DateTimeKind.Utc),
-                            PreferredHostelId = 1,
-                            SpecialRequirements = "Prefer lower floor room.",
-                            Status = "RoomAssigned",
-                            StudentId = 1,
-                            TermSemester = "Year 1 - Sem 1"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 7, 31, 10, 5, 16, 0, DateTimeKind.Utc),
-                            PreferredHostelId = 2,
-                            Status = "Pending",
-                            StudentId = 3,
-                            TermSemester = "Year 1 - Sem 1"
-                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Lab", b =>
@@ -537,9 +598,15 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("LabId");
 
-                    b.HasIndex("SeatId");
+                    b.HasIndex("SeatId", "BookingDate", "TimeSlot")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LabBookings_Seat_ActiveSlot")
+                        .HasFilter("[Status] = 'Confirmed'");
 
-                    b.HasIndex("StudentId");
+                    b.HasIndex("StudentId", "BookingDate", "TimeSlot")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LabBookings_Student_ActiveSlot")
+                        .HasFilter("[Status] = 'Confirmed'");
 
                     b.ToTable("LabBookings");
                 });
@@ -778,6 +845,52 @@ namespace CampusServicesPortal.Migrations
                     b.ToTable("Students");
                 });
 
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AddressLine1")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AddressLine2")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AddressType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DistrictOrProvince")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentId");
+
+                    b.ToTable("StudentAddresses");
+                });
+
             modelBuilder.Entity("CampusServicesPortal.Models.StudentMasterList", b =>
                 {
                     b.Property<int>("Id")
@@ -800,6 +913,8 @@ namespace CampusServicesPortal.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FacultyId");
 
                     b.HasIndex("IndexNumber")
                         .IsUnique();
@@ -883,11 +998,20 @@ namespace CampusServicesPortal.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
+                    b.Property<int>("FailedLoginAttempts")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastPasswordChangedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -898,6 +1022,9 @@ namespace CampusServicesPortal.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("TemporaryPasswordExpiresAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -1160,6 +1287,26 @@ namespace CampusServicesPortal.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentAddress", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.Student", "Student")
+                        .WithMany("Addresses")
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.StudentMasterList", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.Faculty", null)
+                        .WithMany()
+                        .HasForeignKey("FacultyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CampusServicesPortal.Models.StudentPhoneNumber", b =>
                 {
                     b.HasOne("CampusServicesPortal.Models.Student", "Student")
@@ -1183,6 +1330,8 @@ namespace CampusServicesPortal.Migrations
 
             modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>
                 {
+                    b.Navigation("Addresses");
+
                     b.Navigation("PhoneNumbers");
                 });
 #pragma warning restore 612, 618
