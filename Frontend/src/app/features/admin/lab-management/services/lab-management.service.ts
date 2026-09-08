@@ -165,8 +165,8 @@ export class LabManagementService {
   /**
    * Get 1-indexed 2D Matrix Layout for a lab on a specific date
    */
-  getLabLayoutForDate(labId: number, date: string): Observable<LabMatrixLayoutResponse> {
-    return this.api.get<RawApiLayoutPayload>(`/lab-bookings/layout/${labId}?date=${date}&timeSlot=09%3A00%20-%2011%3A00%20AM`).pipe(
+  getLabLayoutForDate(labId: number, date: string, timeSlot: string = '09:00 - 11:00 AM'): Observable<LabMatrixLayoutResponse> {
+    return this.api.get<RawApiLayoutPayload>(`/lab-bookings/layout/${labId}?date=${encodeURIComponent(date)}&timeSlot=${encodeURIComponent(timeSlot)}`).pipe(
       map((res: RawApiLayoutPayload) => {
         const payload: RawApiLayoutPayload = res?.data || res || {};
         const rawSeats: RawApiSeat[] = payload.seats || payload.Seats || [];

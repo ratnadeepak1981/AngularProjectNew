@@ -1,4 +1,4 @@
-using CampusServicesPortal.Data;
+﻿using CampusServicesPortal.Data;
 using CampusServicesPortal.DTOs.Requests.Labs;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Labs;
@@ -332,6 +332,28 @@ public class LabBookingService : ILabBookingService
         }
     }
 
+    public async Task<IEnumerable<LabBookingResponseDto>> GetAllBookingsAsync()
+    {
+        // 1. Call the clean repository method you already created
+        var bookings = await _bookingRepo.GetAllBookingsForAuditHistoryAsync();
 
+        // 2. Transform the database rows into the clean DTO models with Student Names
+        return bookings.Select(b => new LabBookingResponseDto
+        {
+            Id = b.Id,
+            StudentId = b.StudentId,
+
+            // 👇 Fixes the missing name tracking issue
+            StudentName = b.Student?.FullName ?? $"Student #{b.StudentId}",
+
+            LabName = b.Lab?.Name ?? string.Empty,
+            LabType = b.Lab?.LabType ?? string.Empty,
+            SeatNumber = b.Seat?.SeatNumber ?? "Bench Slot",
+            BookingDate = b.BookingDate,
+            TimeSlot = b.TimeSlot,
+            Status = b.Status,
+            ExpiresAt = b.ExpiresAt
+        }).ToList();
+    }
 
 }

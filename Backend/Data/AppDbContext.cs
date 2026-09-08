@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using CampusServicesPortal.Models;
 
 namespace CampusServicesPortal.Data
@@ -269,6 +269,54 @@ namespace CampusServicesPortal.Data
                 new CertificateType { Id = 1, Name = "Official Academic Transcript", IsActive = true },
                 new CertificateType { Id = 2, Name = "Bonafide Student Status Letter", IsActive = true }
             );
+            // --- MODULE 1 RULES (Student Profile & Unified Auth) ---
+            modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
+            modelBuilder.Entity<StudentMasterList>().HasIndex(s => s.IndexNumber).IsUnique();
+
+            // 👇 ADD THIS RELATIONSHIP MAPPING HERE TO FIX THE MISSING FK
+            modelBuilder.Entity<StudentMasterList>()
+                .HasOne<Faculty>() // Binds to the Faculty entity
+                .WithMany()        // No reverse navigation property needed in Faculty
+                .HasForeignKey(s => s.FacultyId) // Uses FacultyId as the Foreign Key column
+                .OnDelete(DeleteBehavior.Restrict); // Prevents deleting a Faculty if referenced here
+                                                    // --- MODULE 3 RULES (Lab Reservation) ---
+            modelBuilder.Entity<LabSeat>()
+                .HasOne(ls => ls.Lab)
+                .WithMany(l => l.Seats)
+                .HasForeignKey(ls => ls.LabId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LabBooking>()
+                .HasOne(lb => lb.Lab)
+                .WithMany()
+                .HasForeignKey(lb => lb.LabId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LabBooking>()
+                .HasOne(lb => lb.Student)
+                .WithMany()
+                .HasForeignKey(lb => lb.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<LabBooking>()
+                .HasOne(lb => lb.Seat)
+                .WithMany()
+                .HasForeignKey(lb => lb.SeatId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // 👇 ADD THESE TWO FILTERED INDEX DEFINITIONS HERE
+            modelBuilder.Entity<LabBooking>()
+                .HasIndex(lb => new { lb.StudentId, lb.BookingDate, lb.TimeSlot })
+                .HasDatabaseName("UX_LabBookings_Student_ActiveSlot")
+                .HasFilter("[Status] = 'Confirmed'")
+                .IsUnique();
+
+            modelBuilder.Entity<LabBooking>()
+                .HasIndex(lb => new { lb.SeatId, lb.BookingDate, lb.TimeSlot })
+                .HasDatabaseName("UX_LabBookings_Seat_ActiveSlot")
+                .HasFilter("[Status] = 'Confirmed'")
+                .IsUnique();
+
 
             modelBuilder.Entity<HostelApplication>().HasData(
                 new HostelApplication

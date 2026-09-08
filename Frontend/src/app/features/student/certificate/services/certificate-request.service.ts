@@ -9,6 +9,7 @@ import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-int
 @Injectable({
   providedIn: 'root',
 })
+
 export class CertificateRequestService {
   private readonly api = inject(ApiService);
 
