@@ -81,10 +81,11 @@
             <input
               type="text"
               [ngModel]="termSemester()"
-              (ngModelChange)="termSemester.set($event)"
               name="termSemester"
               placeholder="e.g. 2026 / Semester 1"
               required
+              readonly
+              disabled
               class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
@@ -99,9 +100,10 @@
             <input
               type="date"
               [ngModel]="termStartDate()"
-              (ngModelChange)="termStartDate.set($event)"
               name="termStartDate"
               required
+              readonly
+              disabled
               class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
             />
           </div>
@@ -112,9 +114,10 @@
             <input
               type="date"
               [ngModel]="termEndDate()"
-              (ngModelChange)="termEndDate.set($event)"
               name="termEndDate"
               required
+              readonly
+              disabled
               class="w-full px-3.5 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
               [ngClass]="{ 'border-rose-400 focus:ring-rose-500 bg-rose-50/20': isTermDateRangeInvalid() }"
             />
@@ -151,7 +154,8 @@
             [disabled]="isSubmitting() || !selectedHostelId() || selectedHostelId() === 0"
             class="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs transition-colors shadow-sm cursor-pointer inline-flex items-center gap-2"
           >
-            @if (isSubmitting()) {
+            @if (isSubmitting())
+            {
               <span class="inline-block animate-spin text-sm">⏳</span>
               <span>Submitting Application...</span>
             } @else {

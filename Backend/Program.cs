@@ -1,5 +1,6 @@
 using CampusServicesPortal.Application.Interfaces.Repositories;
 using CampusServicesPortal.Data;
+using CampusServicesPortal.Data.Interceptors;
 using CampusServicesPortal.Data.Seeding;
 using CampusServicesPortal.Infrastructure.Repositories;
 using CampusServicesPortal.Interceptors;
@@ -75,10 +76,13 @@ namespace CampusServicesPortal
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+            builder.Services.AddScoped<DbExceptionInterceptor>();
 
             builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
             {
                 var interceptor = serviceProvider.GetRequiredService<AuditSaveChangesInterceptor>();
+                var errorInterceptor = serviceProvider.GetRequiredService<DbExceptionInterceptor>();
+
                 options.UseSqlServer(
                     builder.Configuration.GetConnectionString("CampusServicesPortalConnection"),
                     sqlOptions =>
@@ -89,7 +93,8 @@ namespace CampusServicesPortal
                             maxRetryDelay: TimeSpan.FromSeconds(5),
                             errorNumbersToAdd: null);
                     })
-                .AddInterceptors(interceptor);
+                .AddInterceptors(interceptor, errorInterceptor);
+              
             });
 
             // Core Identity Service & Repository Registrations

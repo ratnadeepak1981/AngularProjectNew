@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CampusServicesPortal.DTOs.Requests.Labs;
@@ -25,13 +25,23 @@ public class LabBookingsController : BaseApiController
         return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(userBookings, 200), "Student lab bookings retrieved.");
     }
 
+   
+
+    // =========================================================================
+    // 🛠️ ARCHITECTURAL FIX: Hook into the complete global audit data channel
+    // =========================================================================
     [HttpGet("audit-history")]
     public async Task<IActionResult> GetAuditHistory()
     {
-        var studentId = 1;
-        var auditHistory = await _bookingService.GetStudentBookingsAsync(studentId);
-        return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(auditHistory, 200), "Lab bookings audit history retrieved.");
+        // 👇 Call the new method to pull full history for all students with names loaded
+        var auditHistory = await _bookingService.GetAllBookingsAsync();
+
+        return ProcessServiceResult(
+            Wrappers.ServiceResult<object>.Success(auditHistory, 200),
+            "All campus lab bookings audit history log records retrieved successfully."
+        );
     }
+
 
     [HttpGet("layout/{labId:int}")]
     public async Task<IActionResult> GetLayout(int labId, [FromQuery] DateTime? date, [FromQuery] string? timeSlot)

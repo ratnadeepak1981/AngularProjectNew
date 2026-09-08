@@ -9,7 +9,7 @@ import { ConfirmModalComponent } from '../../../../shared/components/dialogs/con
 import { ToastContainerComponent } from '../../../../shared/components/toast-container/toast-container.component';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 
-import { BookingSelectorsComponent } from '../components/booking-selectors/booking-selectors.component';
+import { BookingSelectorsComponent } from '../../../lab-shared/components/booking-selectors/booking-selectors.component';
 import { ActiveHoldTimerComponent } from '../components/active-hold-timer/active-hold-timer.component';
 import { StudentHistoryListComponent } from '../components/student-history-list/student-history-list.component';
 import { LabGridMatrixComponent } from '../../../lab-shared/components/lab-grid-matrix/lab-grid-matrix.component';

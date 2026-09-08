@@ -15,6 +15,9 @@ public interface ILabBookingService
 
     Task ProcessExpiredHoldsAsync();
 
+    Task<IEnumerable<LabBookingResponseDto>> GetAllBookingsAsync();
+
+    
 }
 
 

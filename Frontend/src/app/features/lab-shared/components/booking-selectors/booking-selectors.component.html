@@ -1,0 +1,67 @@
+<div class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-800 space-y-4">
+  <div class="flex flex-wrap justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 gap-3">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">📍</span>
+      <div>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">1. Select Laboratory & Date Slot</h3>
+        <p class="text-2xs text-slate-500 dark:text-slate-400">Choose campus facility, date, and 2-hour session slot to view live availability matrix.</p>
+      </div>
+    </div>
+
+    <button
+      (click)="onRefreshClick()"
+      [disabled]="isLoading()"
+      class="px-3.5 py-1.5 text-xs bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold rounded-xl border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs disabled:opacity-50"
+    >
+      <span>🔄</span> Refresh Matrix
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <!-- 1. Laboratory Selection Dropdown -->
+    <div>
+      <label class="block text-2xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+        <span>🏛️</span> Available Campus Laboratory
+      </label>
+      <select
+        [value]="selectedLabId()"
+        (change)="onLabSelect($event)"
+        class="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow cursor-pointer"
+      >
+        <option value="0" disabled>-- Select Laboratory --</option>
+        @for (lab of labs(); track lab.id) {
+          <option [value]="lab.id">
+            {{ lab.labType === 'Computer' || lab.labType === 'computer' ? '💻' : '🧪' }}
+            {{ lab.name }}
+            ({{ lab.labType }} Lab - {{ lab.requiresSeatSelection ? 'Built Workstations: ' + (lab.seatsBuilt || lab.capacity) : 'Cap: ' + lab.capacity }})
+          </option>
+        }
+      </select>
+    </div>
+
+    <!-- 2. Reservation Date Picker (Shared Reusable Component with [min] Today & Future Dates Constraint) -->
+    <app-date-picker
+      label="Reservation Date"
+      [selectedDate]="selectedDate()"
+      [minDate]="minTodayDate()"
+      [disabled]="isLoading()"
+      (dateChange)="dateChange.emit($event)"
+    ></app-date-picker>
+
+    <!-- 3. Time Slot Select -->
+    <div>
+      <label class="block text-2xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+        <span>⏰</span> Time Slot (2-Hr Session)
+      </label>
+      <select
+        [value]="selectedTimeSlot()"
+        (change)="onTimeSlotSelect($event)"
+        class="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow cursor-pointer"
+      >
+        @for (slot of timeSlots; track slot) {
+          <option [value]="slot">{{ slot }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</div>

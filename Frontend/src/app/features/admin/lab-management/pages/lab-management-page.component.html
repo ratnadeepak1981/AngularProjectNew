@@ -43,9 +43,14 @@
               [ngModel]="selectedLab()?.id"
               (ngModelChange)="selectLab(labs()[labs().findIndex(l => l.id === $event)] || labs()[0])"
             >
-              @for (lab of labs(); track lab.id) {
-                <option [ngValue]="lab.id">{{ lab.name }}</option>
-              }
+            @for (lab of labs(); track lab.id)
+            {
+                <option [ngValue]="lab.id">
+                {{ lab.labType === 'Computer' || lab.labType === 'computer' ? '💻' : '🧪' }} 
+                {{ lab.name }}
+                </option>
+            }
+
             </select>
             <app-action-button
               label="+ Create New Laboratory"
@@ -143,9 +148,13 @@
               (ngModelChange)="onLabSelectForDatewise($event)"
             >
               @for (lab of labs(); track lab.id) {
-                <option [ngValue]="lab.id">{{ lab.name }}</option>
+                <!-- 👇 Added icons to the Date-wise tab loop -->
+                <option [ngValue]="lab.id">
+                  {{ lab.requiresSeatSelection ? '💻' : '🧪' }} {{ lab.name }}
+                </option>
               }
             </select>
+
             <app-date-picker
               label="Booking Date"
               [selectedDate]="datewiseDate()"

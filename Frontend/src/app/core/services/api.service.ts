@@ -1,5 +1,6 @@
 import { HttpClient, HttpParams, HttpHeaders, HttpContext } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { environment } from '../../../environments/environment.development';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -8,6 +9,17 @@ import { Observable } from 'rxjs';
 export class ApiService {
   private readonly http = inject(HttpClient);
   
+   public get baseUrl(): string 
+   {
+    // 1. Still checks local storage first for manual overrides
+    const customUrl = localStorage.getItem('API_BASE_URL');
+    if (customUrl) return customUrl;
+
+    // 2. Delegate the URL resolution logic entirely to the environment configuration
+    return environment.getApiUrl();
+  }
+
+  /*
   public get baseUrl(): string {
     const customUrl = localStorage.getItem('API_BASE_URL');
     if (customUrl) return customUrl;
@@ -21,6 +33,7 @@ export class ApiService {
 
     return 'https://localhost:7089/api';
   }
+    */
 
   /**
    * Master Catalog of API Endpoints

@@ -18,5 +18,7 @@ public interface ILabBookingRepository
 
     Task<IEnumerable<LabBooking>> GetActiveBookingsForLabSlotAsync(int labId, DateTime date, string timeSlot);
     Task<IEnumerable<LabBooking>> GetExpiredHeldBookingsAsync();
+
+    Task<IEnumerable<LabBooking>> GetAllBookingsForAuditHistoryAsync();
 }
 

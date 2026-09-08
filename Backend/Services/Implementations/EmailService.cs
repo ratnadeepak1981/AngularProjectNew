@@ -105,20 +105,24 @@ namespace CampusServicesPortal.Services.Implementations
         /// <summary>
         /// Reads active registration verification parameters directly out of database tables and compiles the template.
         /// </summary>
+
+
+        /// <summary>
+        /// Reads active password reset token parameters directly out of database tables and compiles the HTML reset template.
+        /// </summary>
+        /// <summary>
+        /// Reads active registration verification parameters directly out of database tables and compiles the template.
+        /// </summary>
         public async Task<ServiceResult<string>> GenerateVerificationEmailPreviewAsync(string email)
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return ServiceResult<string>.Failure("Email parameter is required.", 400);
-            }
+            if (string.IsNullOrWhiteSpace(email)) return ServiceResult<string>.Failure("Email parameter is required.", 400);
 
             string cleanEmail = email.Trim();
             var student = await _accountRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
+            if (student == null) return ServiceResult<string>.Failure($"No student account record found for email '{cleanEmail}'.", 404);
 
-            if (student == null)
-            {
-                return ServiceResult<string>.Failure($"No student account record found for email '{cleanEmail}'.", 404);
-            }
+            // Call the helper method to cleanly extract institutional parameters
+            var systemSettings = await GetDynamicSystemSettingsAsync();
 
             string token = student.EmailVerificationToken ?? "NO-TOKEN-GENERATED";
             string expiresStr = student.EmailVerificationTokenExpiresAt.HasValue
@@ -132,21 +136,21 @@ namespace CampusServicesPortal.Services.Implementations
             string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Email", "EmailVerification.cshtml");
             string cssPath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Email", "EmailVerification.css");
 
-            if (!File.Exists(templatePath) || !File.Exists(cssPath))
-            {
-                return ServiceResult<string>.Failure("Email verification template files missing on server.", 500);
-            }
+            if (!File.Exists(templatePath) || !File.Exists(cssPath)) return ServiceResult<string>.Failure("Email verification template files missing on server.", 500);
 
-            string cssContent = await File.ReadAllTextAsync(cssPath);
-            string htmlTemplate = await File.ReadAllTextAsync(templatePath);
+            string cssContent = await File.ReadAllTextAsync(cssPath, System.Text.Encoding.UTF8);
+            string htmlTemplate = await File.ReadAllTextAsync(templatePath, System.Text.Encoding.UTF8);
 
             string renderedHtml = htmlTemplate
                 .Replace("{{CSS_CONTENT}}", cssContent, StringComparison.Ordinal)
+                .Replace("{{INSTITUTION_NAME}}", systemSettings.InstitutionName, StringComparison.Ordinal)
+                .Replace("{{ACADEMIC_YEAR}}", systemSettings.AcademicYear, StringComparison.Ordinal)
+                .Replace("{{SEMESTER}}", systemSettings.Semester, StringComparison.Ordinal)
                 .Replace("{{STATUS_BADGE}}", statusBadge, StringComparison.Ordinal)
                 .Replace("{{FULL_NAME}}", student.FullName ?? "Student User", StringComparison.Ordinal)
                 .Replace("{{INDEX_NUMBER}}", student.IndexNumber ?? "N/A", StringComparison.Ordinal)
                 .Replace("{{REGISTERED_EMAIL}}", student.User?.Email ?? cleanEmail, StringComparison.Ordinal)
-                .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? "General University Faculty", StringComparison.Ordinal)
+                .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? systemSettings.InstitutionName, StringComparison.Ordinal)
                 .Replace("{{TOKEN}}", token, StringComparison.Ordinal)
                 .Replace("{{EXPIRES_STR}}", expiresStr, StringComparison.Ordinal);
 
@@ -158,29 +162,22 @@ namespace CampusServicesPortal.Services.Implementations
         /// </summary>
         public async Task<ServiceResult<string>> GeneratePasswordResetEmailPreviewAsync(string email)
         {
-            if (string.IsNullOrWhiteSpace(email))
-            {
-                return ServiceResult<string>.Failure("Email parameter is required.", 400);
-            }
+            if (string.IsNullOrWhiteSpace(email)) return ServiceResult<string>.Failure("Email parameter is required.", 400);
 
             string cleanEmail = email.Trim().ToLowerInvariant();
             var student = await _passwordRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
+            if (student == null) return ServiceResult<string>.Failure($"No student account record found for email '{cleanEmail}'.", 404);
 
-            if (student == null)
-            {
-                return ServiceResult<string>.Failure($"No student account record found for email '{cleanEmail}'.", 404);
-            }
+            // Call the same single helper method here
+            var systemSettings = await GetDynamicSystemSettingsAsync();
 
-            // Look up latest active unconsumed reset token
             var activeToken = await _context.PasswordResetTokens
                 .Where(p => p.StudentId == student.Id && !p.IsUsed && p.ExpiresAt >= DateTime.UtcNow)
                 .OrderByDescending(p => p.Id)
                 .FirstOrDefaultAsync();
 
             string token = activeToken?.Token ?? "NO-ACTIVE-TOKEN";
-            string expiresStr = activeToken != null
-                ? activeToken.ExpiresAt.ToString("g") + " UTC"
-                : "24 Hours from Issue";
+            string expiresStr = activeToken != null ? activeToken.ExpiresAt.ToString("g") + " UTC" : "24 Hours from Issue";
 
             string statusBadge = student.User?.IsActive == true
                 ? "<span style='background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 12px;'>ACCOUNT ACTIVE</span>"
@@ -191,26 +188,44 @@ namespace CampusServicesPortal.Services.Implementations
             string templatePath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Email", "PasswordReset.cshtml");
             string cssPath = Path.Combine(_env.ContentRootPath, "Views", "Templates", "Email", "PasswordReset.css");
 
-            if (!File.Exists(templatePath) || !File.Exists(cssPath))
-            {
-                return ServiceResult<string>.Failure("Password reset email template files missing on server.", 500);
-            }
+            if (!File.Exists(templatePath) || !File.Exists(cssPath)) return ServiceResult<string>.Failure("Password reset email template files missing on server.", 500);
 
-            string cssContent = await File.ReadAllTextAsync(cssPath);
-            string htmlTemplate = await File.ReadAllTextAsync(templatePath);
+            string cssContent = await File.ReadAllTextAsync(cssPath, System.Text.Encoding.UTF8);
+            string htmlTemplate = await File.ReadAllTextAsync(templatePath, System.Text.Encoding.UTF8);
 
             string renderedHtml = htmlTemplate
                 .Replace("{{CSS_CONTENT}}", cssContent, StringComparison.Ordinal)
+                .Replace("{{INSTITUTION_NAME}}", systemSettings.InstitutionName, StringComparison.Ordinal)
+                .Replace("{{ACADEMIC_YEAR}}", systemSettings.AcademicYear, StringComparison.Ordinal)
+                .Replace("{{SEMESTER}}", systemSettings.Semester, StringComparison.Ordinal)
                 .Replace("{{STATUS_BADGE}}", statusBadge, StringComparison.Ordinal)
                 .Replace("{{FULL_NAME}}", student.FullName ?? "Student User", StringComparison.Ordinal)
                 .Replace("{{INDEX_NUMBER}}", student.IndexNumber ?? "N/A", StringComparison.Ordinal)
                 .Replace("{{REGISTERED_EMAIL}}", student.User?.Email ?? cleanEmail, StringComparison.Ordinal)
-                .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? "General University Faculty", StringComparison.Ordinal)
+                .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? systemSettings.InstitutionName, StringComparison.Ordinal)
                 .Replace("{{RESET_URL}}", resetUrl, StringComparison.Ordinal)
                 .Replace("{{TOKEN}}", token, StringComparison.Ordinal)
                 .Replace("{{EXPIRES_STR}}", expiresStr, StringComparison.Ordinal);
 
             return ServiceResult<string>.Success(renderedHtml, 200);
         }
+
+
+        private async Task<(string InstitutionName, string AcademicYear, string Semester)> GetDynamicSystemSettingsAsync()
+        {
+            var settings = await _context.SystemSettings.ToListAsync();
+
+            string institutionName = settings.FirstOrDefault(s => s.SettingKey == "InstitutionName")?.SettingValue
+                ?? "University Portal";
+            string currentYear = settings.FirstOrDefault(s => s.SettingKey == "AcademicYear")?.SettingValue
+                ?? "Current Term";
+            string currentSemester = settings.FirstOrDefault(s => s.SettingKey == "Semester")?.SettingValue
+                ?? "";
+
+            return (institutionName, currentYear, currentSemester);
+        }
+
     }
+
+
 }

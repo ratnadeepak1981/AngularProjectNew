@@ -13,6 +13,7 @@ import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
 import { LabBookingRecord, LabManagementService } from '../services/lab-management.service';
 import { LabDetailsComponent } from '../components/lab-details/lab-details.component';
 import { LabGridMatrixComponent } from '../../../lab-shared/components/lab-grid-matrix/lab-grid-matrix.component';
+import { BookingSelectorsComponent } from '../../../lab-shared/components/booking-selectors/booking-selectors.component';
 import { LabBookingsHistoryComponent } from '../components/lab-bookings-history/lab-bookings-history.component';
 
 @Component({
@@ -27,6 +28,7 @@ import { LabBookingsHistoryComponent } from '../components/lab-bookings-history/
     DatePickerComponent,
     LabDetailsComponent,
     LabGridMatrixComponent,
+    BookingSelectorsComponent,
     LabBookingsHistoryComponent,
   ],
   templateUrl: './lab-management-page.component.html',
@@ -63,6 +65,7 @@ export class LabManagementPageComponent implements OnInit {
   public readonly datewiseDate = signal<string>('');
   public readonly datewiseSeats = signal<LabSeat[]>([]);
   public readonly datewiseSelectedLab = signal<Lab | null>(null);
+  public readonly datewiseTimeSlot = signal<string>('09:00 - 11:00 AM');
 
   ngOnInit(): void {
     this.settingsService.getAllSettings().subscribe({
@@ -229,9 +232,8 @@ export class LabManagementPageComponent implements OnInit {
     const lab = this.labs().find((l) => l.id === labId);
     if (lab) {
       this.datewiseSelectedLab.set(lab);
-      // Load layout for selected date if date is already chosen
       if (this.datewiseDate()) {
-        this.loadDatewiseLayout(lab.id, this.datewiseDate());
+        this.loadDatewiseLayout(lab.id, this.datewiseDate(), this.datewiseTimeSlot());
       }
     }
   }
@@ -240,12 +242,27 @@ export class LabManagementPageComponent implements OnInit {
     this.datewiseDate.set(date);
     const lab = this.datewiseSelectedLab();
     if (lab && date) {
-      this.loadDatewiseLayout(lab.id, date);
+      this.loadDatewiseLayout(lab.id, date, this.datewiseTimeSlot());
     }
   }
 
-  loadDatewiseLayout(labId: number, date: string): void {
-    this.labService.getLabLayoutForDate(labId, date).subscribe((layout) => {
+  onDatewiseTimeSlotChange(slot: string): void {
+    this.datewiseTimeSlot.set(slot);
+    const lab = this.datewiseSelectedLab();
+    if (lab && this.datewiseDate()) {
+      this.loadDatewiseLayout(lab.id, this.datewiseDate(), slot);
+    }
+  }
+
+  onDatewiseRefresh(): void {
+    const lab = this.datewiseSelectedLab();
+    if (lab && this.datewiseDate()) {
+      this.loadDatewiseLayout(lab.id, this.datewiseDate(), this.datewiseTimeSlot());
+    }
+  }
+
+  loadDatewiseLayout(labId: number, date: string, timeSlot: string = '09:00 - 11:00 AM'): void {
+    this.labService.getLabLayoutForDate(labId, date, timeSlot).subscribe((layout) => {
       this.datewiseSeats.set(layout.seats);
       const current = this.datewiseSelectedLab();
       if (current && current.id === labId) {
