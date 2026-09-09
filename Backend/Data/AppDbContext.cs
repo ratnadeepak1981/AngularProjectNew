@@ -410,7 +410,13 @@ namespace CampusServicesPortal.Data
                 }
             );
 
-            // Sample Seed Data for Lab Booking Time Slots
+            // 1. Seed the parent Labs First (with required LabType property included)
+            modelBuilder.Entity<Lab>().HasData(
+                new Lab { Id = 1, Name = "Computer Lab 1", IsActive = true, LabType = "Computer" },
+                new Lab { Id = 2, Name = "Computer Lab 2", IsActive = true, LabType = "Computer" }
+            );
+
+            // 2. Sample Seed Data for Lab Booking Time Slots
             modelBuilder.Entity<LabBookingTimeSlot>().HasData(
                 new LabBookingTimeSlot { Id = 1, LabId = 1, StartTime = "09:00", EndTime = "11:00", DisplayOrder = 1, IsActive = true },
                 new LabBookingTimeSlot { Id = 2, LabId = 1, StartTime = "11:00", EndTime = "13:00", DisplayOrder = 2, IsActive = true },
@@ -422,6 +428,7 @@ namespace CampusServicesPortal.Data
                 new LabBookingTimeSlot { Id = 7, LabId = 2, StartTime = "14:00", EndTime = "16:00", DisplayOrder = 3, IsActive = true },
                 new LabBookingTimeSlot { Id = 8, LabId = 2, StartTime = "16:00", EndTime = "18:00", DisplayOrder = 4, IsActive = true }
             );
+
 
             // Faculties
             modelBuilder.Entity<Faculty>().HasData(

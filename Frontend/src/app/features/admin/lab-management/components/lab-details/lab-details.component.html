@@ -182,19 +182,11 @@
                       <button
                         type="button"
                         (click)="toggleSlotActive(slot)"
-                        title="Toggle Active Status (PATCH)"
+                        title="Toggle Active Status (Soft Delete)"
                         class="px-2 py-1 text-2xs font-bold rounded-lg border transition-colors cursor-pointer"
                         [ngClass]="slot.isActive ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'"
                       >
                         {{ slot.isActive ? 'Deactivate' : 'Activate' }}
-                      </button>
-                      <button
-                        type="button"
-                        (click)="deleteSlot(slot)"
-                        title="Delete Time Slot"
-                        class="px-2 py-1 text-2xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition-colors cursor-pointer"
-                      >
-                        Delete
                       </button>
                     </div>
                   </td>

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CampusServicesPortal.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260908110006_CreatePhysicalAuditTable")]
-    partial class CreatePhysicalAuditTable
+    [Migration("20260909120549_AddLabBookingTimeSlots")]
+    partial class AddLabBookingTimeSlots
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -559,6 +559,24 @@ namespace CampusServicesPortal.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Labs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Capacity = 0,
+                            IsActive = true,
+                            LabType = "Computer",
+                            Name = "Computer Lab 1"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Capacity = 0,
+                            IsActive = true,
+                            LabType = "Computer",
+                            Name = "Computer Lab 2"
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.LabBooking", b =>
@@ -594,9 +612,14 @@ namespace CampusServicesPortal.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int?>("TimeSlotId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("LabId");
+
+                    b.HasIndex("TimeSlotId");
 
                     b.HasIndex("SeatId", "BookingDate", "TimeSlot")
                         .IsUnique()
@@ -609,6 +632,130 @@ namespace CampusServicesPortal.Migrations
                         .HasFilter("[Status] = 'Confirmed'");
 
                     b.ToTable("LabBookings");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.LabBookingTimeSlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EndTime")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LabId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StartTime")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LabId", "StartTime", "EndTime")
+                        .IsUnique()
+                        .HasDatabaseName("UX_LabBookingTimeSlots_Lab_TimeRange");
+
+                    b.ToTable("LabBookingTimeSlots");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(756),
+                            DisplayOrder = 1,
+                            EndTime = "11:00",
+                            IsActive = true,
+                            LabId = 1,
+                            StartTime = "09:00"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(759),
+                            DisplayOrder = 2,
+                            EndTime = "13:00",
+                            IsActive = true,
+                            LabId = 1,
+                            StartTime = "11:00"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(760),
+                            DisplayOrder = 3,
+                            EndTime = "16:00",
+                            IsActive = true,
+                            LabId = 1,
+                            StartTime = "14:00"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(761),
+                            DisplayOrder = 4,
+                            EndTime = "18:00",
+                            IsActive = true,
+                            LabId = 1,
+                            StartTime = "16:00"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(763),
+                            DisplayOrder = 1,
+                            EndTime = "11:00",
+                            IsActive = true,
+                            LabId = 2,
+                            StartTime = "09:00"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(764),
+                            DisplayOrder = 2,
+                            EndTime = "13:00",
+                            IsActive = true,
+                            LabId = 2,
+                            StartTime = "11:00"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(765),
+                            DisplayOrder = 3,
+                            EndTime = "16:00",
+                            IsActive = true,
+                            LabId = 2,
+                            StartTime = "14:00"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CreatedAt = new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(766),
+                            DisplayOrder = 4,
+                            EndTime = "18:00",
+                            IsActive = true,
+                            LabId = 2,
+                            StartTime = "16:00"
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.LabSeat", b =>
@@ -977,8 +1124,18 @@ namespace CampusServicesPortal.Migrations
                         },
                         new
                         {
-                            SettingKey = "MaxDailyLabBookings",
-                            SettingValue = "1"
+                            SettingKey = "LabBookingSlotDurationMinutes",
+                            SettingValue = "15"
+                        },
+                        new
+                        {
+                            SettingKey = "MaxLabBookingsPerStudentPerDay",
+                            SettingValue = "2"
+                        },
+                        new
+                        {
+                            SettingKey = "MaxDailySlots",
+                            SettingValue = "2"
                         });
                 });
 
@@ -1195,11 +1352,29 @@ namespace CampusServicesPortal.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("CampusServicesPortal.Models.LabBookingTimeSlot", "BookingTimeSlot")
+                        .WithMany()
+                        .HasForeignKey("TimeSlotId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BookingTimeSlot");
+
                     b.Navigation("Lab");
 
                     b.Navigation("Seat");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("CampusServicesPortal.Models.LabBookingTimeSlot", b =>
+                {
+                    b.HasOne("CampusServicesPortal.Models.Lab", "Lab")
+                        .WithMany("TimeSlots")
+                        .HasForeignKey("LabId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Lab");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.LabSeat", b =>
@@ -1326,6 +1501,8 @@ namespace CampusServicesPortal.Migrations
             modelBuilder.Entity("CampusServicesPortal.Models.Lab", b =>
                 {
                     b.Navigation("Seats");
+
+                    b.Navigation("TimeSlots");
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>

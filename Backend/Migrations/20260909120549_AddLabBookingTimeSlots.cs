@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CampusServicesPortal.Migrations
 {
     /// <inheritdoc />
-    public partial class CreatePhysicalAuditTable : Migration
+    public partial class AddLabBookingTimeSlots : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -219,6 +219,31 @@ namespace CampusServicesPortal.Migrations
                         principalTable: "Hostels",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LabBookingTimeSlots",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    LabId = table.Column<int>(type: "int", nullable: false),
+                    StartTime = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    EndTime = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LabBookingTimeSlots", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LabBookingTimeSlots_Labs_LabId",
+                        column: x => x.LabId,
+                        principalTable: "Labs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -484,6 +509,7 @@ namespace CampusServicesPortal.Migrations
                     StudentId = table.Column<int>(type: "int", nullable: false),
                     SeatId = table.Column<int>(type: "int", nullable: true),
                     BookingDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TimeSlotId = table.Column<int>(type: "int", nullable: true),
                     TimeSlot = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false)
@@ -491,6 +517,12 @@ namespace CampusServicesPortal.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_LabBookings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LabBookings_LabBookingTimeSlots_TimeSlotId",
+                        column: x => x.TimeSlotId,
+                        principalTable: "LabBookingTimeSlots",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_LabBookings_LabSeats_SeatId",
                         column: x => x.SeatId,
@@ -675,12 +707,38 @@ namespace CampusServicesPortal.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "Labs",
+                columns: new[] { "Id", "Capacity", "IsActive", "LabType", "Name", "TotalColumns", "TotalRows" },
+                values: new object[,]
+                {
+                    { 1, 0, true, "Computer", "Computer Lab 1", null, null },
+                    { 2, 0, true, "Computer", "Computer Lab 2", null, null }
+                });
+
+            migrationBuilder.InsertData(
                 table: "SystemSettings",
                 columns: new[] { "SettingKey", "SettingValue" },
                 values: new object[,]
                 {
                     { "LabBookingHoldMinutes", "15" },
-                    { "MaxDailyLabBookings", "1" }
+                    { "LabBookingSlotDurationMinutes", "15" },
+                    { "MaxDailySlots", "2" },
+                    { "MaxLabBookingsPerStudentPerDay", "2" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "LabBookingTimeSlots",
+                columns: new[] { "Id", "CreatedAt", "DisplayOrder", "EndTime", "IsActive", "LabId", "StartTime", "UpdatedAt" },
+                values: new object[,]
+                {
+                    { 1, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(756), 1, "11:00", true, 1, "09:00", null },
+                    { 2, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(759), 2, "13:00", true, 1, "11:00", null },
+                    { 3, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(760), 3, "16:00", true, 1, "14:00", null },
+                    { 4, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(761), 4, "18:00", true, 1, "16:00", null },
+                    { 5, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(763), 1, "11:00", true, 2, "09:00", null },
+                    { 6, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(764), 2, "13:00", true, 2, "11:00", null },
+                    { 7, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(765), 3, "16:00", true, 2, "14:00", null },
+                    { 8, new DateTime(2026, 9, 9, 12, 5, 48, 347, DateTimeKind.Utc).AddTicks(766), 4, "18:00", true, 2, "16:00", null }
                 });
 
             migrationBuilder.CreateIndex(
@@ -781,6 +839,11 @@ namespace CampusServicesPortal.Migrations
                 column: "LabId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LabBookings_TimeSlotId",
+                table: "LabBookings",
+                column: "TimeSlotId");
+
+            migrationBuilder.CreateIndex(
                 name: "UX_LabBookings_Seat_ActiveSlot",
                 table: "LabBookings",
                 columns: new[] { "SeatId", "BookingDate", "TimeSlot" },
@@ -793,6 +856,12 @@ namespace CampusServicesPortal.Migrations
                 columns: new[] { "StudentId", "BookingDate", "TimeSlot" },
                 unique: true,
                 filter: "[Status] = 'Confirmed'");
+
+            migrationBuilder.CreateIndex(
+                name: "UX_LabBookingTimeSlots_Lab_TimeRange",
+                table: "LabBookingTimeSlots",
+                columns: new[] { "LabId", "StartTime", "EndTime" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_LabSeats_LabId",
@@ -925,6 +994,9 @@ namespace CampusServicesPortal.Migrations
 
             migrationBuilder.DropTable(
                 name: "Rooms");
+
+            migrationBuilder.DropTable(
+                name: "LabBookingTimeSlots");
 
             migrationBuilder.DropTable(
                 name: "LabSeats");
