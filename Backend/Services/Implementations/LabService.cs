@@ -133,12 +133,18 @@ public class LabService : ILabService
         var lab = await _labRepo.GetByIdAsync(dto.LabId);
         if (lab == null) throw new KeyNotFoundException("Laboratory not found.");
 
-        if (string.Compare(dto.EndTime, dto.StartTime, StringComparison.OrdinalIgnoreCase) <= 0)
+        var formattedStart = FormatTime12Hour(dto.StartTime);
+        var formattedEnd = FormatTime12Hour(dto.EndTime);
+
+        var startTs = ParseTimeSpan(formattedStart);
+        var endTs = ParseTimeSpan(formattedEnd);
+
+        if (endTs <= startTs)
         {
             throw new ArgumentException("End time must be after start time.");
         }
 
-        bool isOverlapping = await _labRepo.HasOverlappingTimeSlotAsync(dto.LabId, dto.StartTime, dto.EndTime);
+        bool isOverlapping = await _labRepo.HasOverlappingTimeSlotAsync(dto.LabId, formattedStart, formattedEnd);
         if (isOverlapping)
         {
             throw new InvalidOperationException("An active time slot with an overlapping time range already exists for this laboratory.");
@@ -147,8 +153,8 @@ public class LabService : ILabService
         var newSlot = new LabBookingTimeSlot
         {
             LabId = dto.LabId,
-            StartTime = dto.StartTime.Trim(),
-            EndTime = dto.EndTime.Trim(),
+            StartTime = formattedStart,
+            EndTime = formattedEnd,
             DisplayOrder = dto.DisplayOrder,
             IsActive = true,
             CreatedAt = DateTime.UtcNow
@@ -174,19 +180,25 @@ public class LabService : ILabService
         var slot = await _labRepo.GetTimeSlotByIdAsync(slotId);
         if (slot == null) throw new KeyNotFoundException("Time slot record not found.");
 
-        if (string.Compare(dto.EndTime, dto.StartTime, StringComparison.OrdinalIgnoreCase) <= 0)
+        var formattedStart = FormatTime12Hour(dto.StartTime);
+        var formattedEnd = FormatTime12Hour(dto.EndTime);
+
+        var startTs = ParseTimeSpan(formattedStart);
+        var endTs = ParseTimeSpan(formattedEnd);
+
+        if (endTs <= startTs)
         {
             throw new ArgumentException("End time must be after start time.");
         }
 
-        bool isOverlapping = await _labRepo.HasOverlappingTimeSlotAsync(slot.LabId, dto.StartTime, dto.EndTime, slotId);
+        bool isOverlapping = await _labRepo.HasOverlappingTimeSlotAsync(slot.LabId, formattedStart, formattedEnd, slotId);
         if (isOverlapping)
         {
             throw new InvalidOperationException("An active time slot with an overlapping time range already exists for this laboratory.");
         }
 
-        slot.StartTime = dto.StartTime.Trim();
-        slot.EndTime = dto.EndTime.Trim();
+        slot.StartTime = formattedStart;
+        slot.EndTime = formattedEnd;
         slot.DisplayOrder = dto.DisplayOrder;
         slot.IsActive = dto.IsActive;
         slot.UpdatedAt = DateTime.UtcNow;
@@ -203,6 +215,26 @@ public class LabService : ILabService
             DisplayOrder = slot.DisplayOrder,
             IsAvailable = true
         };
+    }
+
+    private static TimeSpan ParseTimeSpan(string timeStr)
+    {
+        if (string.IsNullOrWhiteSpace(timeStr)) return TimeSpan.Zero;
+        timeStr = timeStr.Trim();
+        if (DateTime.TryParse(timeStr, out var dt)) return dt.TimeOfDay;
+        if (TimeSpan.TryParse(timeStr, out var ts)) return ts;
+        return TimeSpan.Zero;
+    }
+
+    private static string FormatTime12Hour(string timeStr)
+    {
+        if (string.IsNullOrWhiteSpace(timeStr)) return timeStr;
+        timeStr = timeStr.Trim();
+        if (DateTime.TryParse(timeStr, out var dt))
+        {
+            return dt.ToString("hh:mm tt");
+        }
+        return timeStr;
     }
 
     public async Task<bool> ToggleTimeSlotActiveAsync(int slotId, bool isActive)

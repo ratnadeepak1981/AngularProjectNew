@@ -98,36 +98,20 @@
 
           <div class="grid grid-cols-2 gap-3">
             <!-- Start Time -->
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                Start Time:
-              </label>
-              <input
-                type="text"
-                [ngModel]="newSlotStartTime()"
-                (ngModelChange)="newSlotStartTime.set($event)"
-                name="startTime"
-                placeholder="e.g. 09:00 AM"
-                required
-                class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
+            <app-time-picker
+              label="Start Time"
+              icon="⏰"
+              [selectedTime]="newSlotStartTime()"
+              (timeChange)="newSlotStartTime.set($event)"
+            ></app-time-picker>
 
             <!-- End Time -->
-            <div>
-              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                End Time:
-              </label>
-              <input
-                type="text"
-                [ngModel]="newSlotEndTime()"
-                (ngModelChange)="newSlotEndTime.set($event)"
-                name="endTime"
-                placeholder="e.g. 11:00 AM"
-                required
-                class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-              />
-            </div>
+            <app-time-picker
+              label="End Time"
+              icon="⌛"
+              [selectedTime]="newSlotEndTime()"
+              (timeChange)="newSlotEndTime.set($event)"
+            ></app-time-picker>
           </div>
 
           <!-- Display Order -->

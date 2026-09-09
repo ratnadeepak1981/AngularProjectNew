@@ -60,9 +60,24 @@ public class LabRepository : ILabRepository
         }
 
         var activeSlots = await query.ToListAsync();
+        var newStartTs = ParseTimeSpan(startTime);
+        var newEndTs = ParseTimeSpan(endTime);
+
         return activeSlots.Any(t =>
-            string.Compare(startTime, t.EndTime, StringComparison.OrdinalIgnoreCase) < 0 &&
-            string.Compare(endTime, t.StartTime, StringComparison.OrdinalIgnoreCase) > 0);
+        {
+            var existingStartTs = ParseTimeSpan(t.StartTime);
+            var existingEndTs = ParseTimeSpan(t.EndTime);
+            return newStartTs < existingEndTs && newEndTs > existingStartTs;
+        });
+    }
+
+    private static TimeSpan ParseTimeSpan(string timeStr)
+    {
+        if (string.IsNullOrWhiteSpace(timeStr)) return TimeSpan.Zero;
+        timeStr = timeStr.Trim();
+        if (DateTime.TryParse(timeStr, out var dt)) return dt.TimeOfDay;
+        if (TimeSpan.TryParse(timeStr, out var ts)) return ts;
+        return TimeSpan.Zero;
     }
 
     public async Task<bool> HasBookingsForTimeSlotAsync(int slotId) =>

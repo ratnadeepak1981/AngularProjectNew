@@ -7,6 +7,7 @@ import { TableColumn } from '../../../../../shared/components/data-table/models/
 import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 import { ConfirmModalComponent } from '../../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 import { ToastContainerComponent } from '../../../../../shared/components/toast-container/toast-container.component';
+import { TimePickerComponent } from '../../../../../shared/components/time-picker/time-picker.component';
 
 import { Lab } from '../../../../../core/models/lab/lab.model';
 import { LabTimeSlot, CreateLabTimeSlotDto } from '../../../../../core/models/lab/lab-time-slot.model';
@@ -23,6 +24,7 @@ import { ToastService } from '../../../../../core/services/toast.service';
     ActionButtonComponent,
     ConfirmModalComponent,
     ToastContainerComponent,
+    TimePickerComponent,
   ],
   templateUrl: './lab-time-slots-management.component.html',
   styleUrl: './lab-time-slots-management.component.css',
