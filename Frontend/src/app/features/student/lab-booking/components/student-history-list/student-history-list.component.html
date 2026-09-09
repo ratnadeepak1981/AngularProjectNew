@@ -26,6 +26,35 @@
     [isLoading]="isLoading()"
     emptyMessage="No lab workstation bookings found in your account history."
   >
+    <ng-template #cellCustom let-row let-col="column">
+      @if (col.key === 'labName') {
+        <div class="flex items-center gap-2">
+          <span class="text-base">{{ isScienceLab(row) ? '🧪' : '💻' }}</span>
+          <div>
+            <span class="font-bold text-slate-900 dark:text-white block">{{ row.labName }}</span>
+            <span
+              class="inline-block px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase tracking-wider"
+              [ngClass]="isScienceLab(row)
+                ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300/50'
+                : 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300/50'"
+            >
+              {{ isScienceLab(row) ? 'Science Lab' : 'Computer Lab' }}
+            </span>
+          </div>
+        </div>
+      } @else if (col.key === 'seatNumber') {
+        @if (isScienceLab(row)) {
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 shadow-2xs">
+            <span>🧪</span> {{ row.seatNumber && row.seatNumber !== 'N/A' ? row.seatNumber : 'Bench Slot' }}
+          </span>
+        } @else {
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-extrabold bg-indigo-100 dark:bg-indigo-950/80 text-indigo-800 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800 shadow-2xs">
+            <span>🪑</span> {{ row.seatNumber || 'PC Workstation' }}
+          </span>
+        }
+      }
+    </ng-template>
+
     <ng-template #cellStatus let-row>
       <app-status-badge [status]="row.status"></app-status-badge>
     </ng-template>

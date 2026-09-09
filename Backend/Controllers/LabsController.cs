@@ -62,8 +62,90 @@ public class LabsController : ControllerBase
         catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
         catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
     }
+
+    // =========================================================================
+    // TIME SLOT MANAGEMENT ENDPOINTS
+    // =========================================================================
+
+    // GET /api/labs/{id}/time-slots
+    [HttpGet("{id}/time-slots")]
+    [Authorize(Roles = "Admin,Student")]
+    public async Task<IActionResult> GetTimeSlots(int id, [FromQuery] bool activeOnly = false)
+    {
+        var slots = await _labService.GetLabTimeSlotsAsync(id, activeOnly);
+        return Ok(slots);
+    }
+
+    // GET /api/labs/{id}/time-slots/available?date={date}
+    [HttpGet("{id}/time-slots/available")]
+    [Authorize(Roles = "Admin,Student")]
+    public async Task<IActionResult> GetAvailableTimeSlots(int id, [FromQuery] DateTime? date)
+    {
+        var targetDate = date ?? DateTime.Today;
+        var slots = await _labService.GetAvailableTimeSlotsAsync(id, targetDate);
+        return Ok(slots);
+    }
+
+    // POST /api/labs/{id}/time-slots
+    [HttpPost("{id}/time-slots")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> CreateTimeSlot(int id, [FromBody] CampusServicesPortal.DTOs.Requests.Labs.CreateLabTimeSlotDto request)
+    {
+        try
+        {
+            request.LabId = id;
+            var created = await _labService.CreateLabTimeSlotAsync(request);
+            return StatusCode(201, created);
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
+        catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
+    }
+
+    // PUT /api/labs/time-slots/{slotId}
+    [HttpPut("time-slots/{slotId}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateTimeSlot(int slotId, [FromBody] CampusServicesPortal.DTOs.Requests.Labs.UpdateLabTimeSlotDto request)
+    {
+        try
+        {
+            var updated = await _labService.UpdateLabTimeSlotAsync(slotId, request);
+            return Ok(updated);
+        }
+        catch (ArgumentException ex) { return BadRequest(ex.Message); }
+        catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
+        catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
+    }
+
+    // PATCH /api/labs/time-slots/{slotId}/toggle-active
+    [HttpPatch("time-slots/{slotId}/toggle-active")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ToggleTimeSlotActive(int slotId, [FromBody] ToggleTimeSlotActiveRequest request)
+    {
+        try
+        {
+            var success = await _labService.ToggleTimeSlotActiveAsync(slotId, request.IsActive);
+            return success ? Ok(new { message = $"Time slot active status updated to {request.IsActive}." }) : BadRequest("Unable to toggle time slot active status.");
+        }
+        catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
+    }
+
+    // DELETE /api/labs/time-slots/{slotId}
+    [HttpDelete("time-slots/{slotId}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteTimeSlot(int slotId)
+    {
+        try
+        {
+            var success = await _labService.DeleteLabTimeSlotAsync(slotId);
+            return success ? Ok(new { message = "Time slot deleted successfully." }) : BadRequest("Unable to delete time slot.");
+        }
+        catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
+        catch (InvalidOperationException ex) { return BadRequest(ex.Message); }
+    }
 }
 
 // Request contracts scoped locally to clean up the controller signature 
 public record CreateLabRequest(string Name, string LabType, int Capacity, int? TotalRows, int? TotalColumns);
 public record AddSeatRequest(string SeatNumber, int RowIndex = 1, int ColumnIndex = 1, string? EquipmentDetails = null);
+public record ToggleTimeSlotActiveRequest(bool IsActive);

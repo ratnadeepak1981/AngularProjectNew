@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CampusServicesPortal.Models;
@@ -19,6 +19,8 @@ public class LabBooking
 
     [Required]
     public DateTime BookingDate { get; set; }
+
+    public int? TimeSlotId { get; set; }
 
     [Required]
     [MaxLength(50)]
@@ -42,4 +44,7 @@ public class LabBooking
 
     [ForeignKey(nameof(SeatId))]
     public LabSeat? Seat { get; set; }
+
+    [ForeignKey(nameof(TimeSlotId))]
+    public LabBookingTimeSlot? BookingTimeSlot { get; set; }
 }

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Data;
+using CampusServicesPortal.Data;
 using CampusServicesPortal.DTOs.Requests.Labs;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Labs;
@@ -120,7 +120,7 @@ public class LabBookingService : ILabBookingService
 
                 // Check student daily booking limit from SystemSettings
                 var maxSlotSetting = await _context.SystemSettings
-                    .FirstOrDefaultAsync(s => s.SettingKey == "MaxDailySlots");
+                    .FirstOrDefaultAsync(s => s.SettingKey == "MaxLabBookingsPerStudentPerDay" || s.SettingKey == "MaxDailySlots");
                 int maxDailySlots = maxSlotSetting != null && int.TryParse(maxSlotSetting.SettingValue, out var maxSlots) ? maxSlots : 2;
 
                 var studentDayBookings = await _context.LabBookings

@@ -259,8 +259,10 @@ export class SystemSettingsPageComponent implements OnInit {
         if (res.data) {
           const dict = res.data;
           if (dict['InstitutionName']) this.institutionName.set(dict['InstitutionName']);
-          if (dict['LabBookingHoldMinutes']) this.holdMinutes.set(parseInt(dict['LabBookingHoldMinutes'], 10) || 15);
-          if (dict['MaxDailySlots']) this.maxDailySlots.set(parseInt(dict['MaxDailySlots'], 10) || 2);
+          if (dict['LabBookingSlotDurationMinutes']) this.holdMinutes.set(parseInt(dict['LabBookingSlotDurationMinutes'], 10) || 15);
+          else if (dict['LabBookingHoldMinutes']) this.holdMinutes.set(parseInt(dict['LabBookingHoldMinutes'], 10) || 15);
+          if (dict['MaxLabBookingsPerStudentPerDay']) this.maxDailySlots.set(parseInt(dict['MaxLabBookingsPerStudentPerDay'], 10) || 2);
+          else if (dict['MaxDailySlots']) this.maxDailySlots.set(parseInt(dict['MaxDailySlots'], 10) || 2);
           if (dict['RequireSeatSelection']) this.requireSeatSelection.set(dict['RequireSeatSelection'] === 'true');
           if (dict['ComputerLabSeatSelection']) this.computerLabSeatSelection.set(dict['ComputerLabSeatSelection'] === 'true');
           if (dict['ScienceLabSeatSelection']) this.scienceLabSeatSelection.set(dict['ScienceLabSeatSelection'] === 'true');
@@ -430,7 +432,9 @@ export class SystemSettingsPageComponent implements OnInit {
 
     const payload: Record<string, string> = {
       InstitutionName: this.institutionName(),
+      LabBookingSlotDurationMinutes: this.holdMinutes().toString(),
       LabBookingHoldMinutes: this.holdMinutes().toString(),
+      MaxLabBookingsPerStudentPerDay: this.maxDailySlots().toString(),
       MaxDailySlots: this.maxDailySlots().toString(),
       RequireSeatSelection: this.requireSeatSelection().toString(),
       ComputerLabSeatSelection: this.computerLabSeatSelection().toString(),

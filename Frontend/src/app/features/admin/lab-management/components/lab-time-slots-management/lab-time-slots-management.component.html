@@ -1,0 +1,172 @@
+<div class="space-y-6">
+  <!-- Toast Notification Overlay -->
+  <app-toast-container></app-toast-container>
+
+  <!-- Main Card Container -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
+    
+    <!-- Top Bar: Header & Add Action -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⏰</span> Lab Booking Time Slots Control Panel
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Manage, search, order, activate, deactivate, or delete booking time slots across campus laboratories.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <app-action-button
+          label="+ Create New Time Slot"
+          icon="plus"
+          variant="primary"
+          size="sm"
+          (btnClick)="openCreateModal()"
+        ></app-action-button>
+      </div>
+    </div>
+
+    <!-- Reusable Enterprise Data Table Component (Identical to Image 1 / Booking History Table) -->
+    <app-data-table
+      [columns]="columns"
+      [data]="allSlots()"
+      [isLoading]="isLoading()"
+      [pageSize]="pageSize()"
+      [showSearch]="true"
+      searchPlaceholder="Search time slots e.g. 09:00 AM or lab..."
+      emptyMessage="No lab time slots found matching criteria."
+    >
+      <!-- Action Cell Template Slot -->
+      <ng-template #cellActions let-slot>
+        <div class="flex items-center justify-end gap-2">
+          <app-action-button
+            [label]="slot.isActive ? 'Deactivate' : 'Activate'"
+            [icon]="slot.isActive ? 'lock' : 'check'"
+            [variant]="slot.isActive ? 'warning' : 'success'"
+            size="sm"
+            (btnClick)="promptToggleActive(slot)"
+          ></app-action-button>
+
+          <app-action-button
+            label="Delete"
+            icon="trash"
+            variant="danger"
+            size="sm"
+            (btnClick)="promptDelete(slot)"
+          ></app-action-button>
+        </div>
+      </ng-template>
+    </app-data-table>
+  </div>
+
+  <!-- Create Time Slot Modal Overlay -->
+  @if (isCreateModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-white space-y-4">
+        
+        <div class="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⏰</span> Instantiate Lab Time Slot
+          </h3>
+          <button (click)="closeCreateModal()" class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1 leading-none">
+            &times;
+          </button>
+        </div>
+
+        <form (ngSubmit)="submitCreateSlot()" class="space-y-4">
+          <!-- Laboratory Selection -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+              Target Laboratory:
+            </label>
+            <select
+              [ngModel]="newSlotLabId()"
+              (ngModelChange)="newSlotLabId.set($event)"
+              name="labId"
+              required
+              class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600 cursor-pointer"
+            >
+              @for (lab of labs(); track lab.id) {
+                <option [value]="lab.id">
+                  {{ lab.labType === 'Computer' || lab.labType === 'computer' ? '💻' : '🧪' }}
+                  {{ lab.name }} (ID: {{ lab.id }})
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Start Time -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                Start Time:
+              </label>
+              <input
+                type="text"
+                [ngModel]="newSlotStartTime()"
+                (ngModelChange)="newSlotStartTime.set($event)"
+                name="startTime"
+                placeholder="e.g. 09:00 AM"
+                required
+                class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            <!-- End Time -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                End Time:
+              </label>
+              <input
+                type="text"
+                [ngModel]="newSlotEndTime()"
+                (ngModelChange)="newSlotEndTime.set($event)"
+                name="endTime"
+                placeholder="e.g. 11:00 AM"
+                required
+                class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+          </div>
+
+          <!-- Display Order -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+              Display Sort Order:
+            </label>
+            <input
+              type="number"
+              [ngModel]="newSlotDisplayOrder()"
+              (ngModelChange)="newSlotDisplayOrder.set($event)"
+              name="displayOrder"
+              min="1"
+              required
+              class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <app-action-button label="Cancel" variant="ghost" size="sm" (btnClick)="closeCreateModal()"></app-action-button>
+            <app-action-button label="Save Time Slot" icon="plus" variant="primary" size="sm" type="submit"></app-action-button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Reusable Confirmation Dialog Modal -->
+  <app-confirm-modal
+    [isOpen]="isConfirmModalOpen()"
+    [title]="modalTitle()"
+    [message]="modalMessage()"
+    [icon]="modalIcon()"
+    [iconVariant]="modalIconVariant()"
+    [confirmText]="modalConfirmText()"
+    [confirmIcon]="modalConfirmIcon()"
+    [confirmVariant]="modalConfirmVariant()"
+    [isLoading]="isSubmitting()"
+    (confirm)="onModalConfirm()"
+    (cancel)="onModalCancel()"
+  ></app-confirm-modal>
+</div>

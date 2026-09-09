@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.EntityFrameworkCore;
 using CampusServicesPortal.Models;
 
@@ -39,6 +39,7 @@ namespace CampusServicesPortal.Data
         public DbSet<Lab> Labs => Set<Lab>();
         public DbSet<LabSeat> LabSeats => Set<LabSeat>();
         public DbSet<LabBooking> LabBookings => Set<LabBooking>();
+        public DbSet<LabBookingTimeSlot> LabBookingTimeSlots => Set<LabBookingTimeSlot>();
 
         // ============================================================
         // MODULE 4: Event Registration
@@ -213,6 +214,23 @@ namespace CampusServicesPortal.Data
                 .HasForeignKey(lb => lb.SeatId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<LabBookingTimeSlot>()
+                .HasOne(ts => ts.Lab)
+                .WithMany(l => l.TimeSlots)
+                .HasForeignKey(ts => ts.LabId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<LabBookingTimeSlot>()
+                .HasIndex(ts => new { ts.LabId, ts.StartTime, ts.EndTime })
+                .HasDatabaseName("UX_LabBookingTimeSlots_Lab_TimeRange")
+                .IsUnique();
+
+            modelBuilder.Entity<LabBooking>()
+                .HasOne(lb => lb.BookingTimeSlot)
+                .WithMany()
+                .HasForeignKey(lb => lb.TimeSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             // Prevent duplicate confirmed booking for the same student,
             // date and time slot.
             modelBuilder.Entity<LabBooking>()
@@ -377,9 +395,32 @@ namespace CampusServicesPortal.Data
                 },
                 new SystemSetting
                 {
-                    SettingKey = "MaxDailyLabBookings",
-                    SettingValue = "1"
+                    SettingKey = "LabBookingSlotDurationMinutes",
+                    SettingValue = "15"
+                },
+                new SystemSetting
+                {
+                    SettingKey = "MaxLabBookingsPerStudentPerDay",
+                    SettingValue = "2"
+                },
+                new SystemSetting
+                {
+                    SettingKey = "MaxDailySlots",
+                    SettingValue = "2"
                 }
+            );
+
+            // Sample Seed Data for Lab Booking Time Slots
+            modelBuilder.Entity<LabBookingTimeSlot>().HasData(
+                new LabBookingTimeSlot { Id = 1, LabId = 1, StartTime = "09:00", EndTime = "11:00", DisplayOrder = 1, IsActive = true },
+                new LabBookingTimeSlot { Id = 2, LabId = 1, StartTime = "11:00", EndTime = "13:00", DisplayOrder = 2, IsActive = true },
+                new LabBookingTimeSlot { Id = 3, LabId = 1, StartTime = "14:00", EndTime = "16:00", DisplayOrder = 3, IsActive = true },
+                new LabBookingTimeSlot { Id = 4, LabId = 1, StartTime = "16:00", EndTime = "18:00", DisplayOrder = 4, IsActive = true },
+
+                new LabBookingTimeSlot { Id = 5, LabId = 2, StartTime = "09:00", EndTime = "11:00", DisplayOrder = 1, IsActive = true },
+                new LabBookingTimeSlot { Id = 6, LabId = 2, StartTime = "11:00", EndTime = "13:00", DisplayOrder = 2, IsActive = true },
+                new LabBookingTimeSlot { Id = 7, LabId = 2, StartTime = "14:00", EndTime = "16:00", DisplayOrder = 3, IsActive = true },
+                new LabBookingTimeSlot { Id = 8, LabId = 2, StartTime = "16:00", EndTime = "18:00", DisplayOrder = 4, IsActive = true }
             );
 
             // Faculties

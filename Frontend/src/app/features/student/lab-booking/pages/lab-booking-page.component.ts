@@ -18,6 +18,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 
 import { Lab } from '../../../../core/models/lab/lab.model';
+import { LabTimeSlot } from '../../../../core/models/lab/lab-time-slot.model';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
 import { LabBooking } from '../../../../core/models/lab/lab-booking.model';
 
@@ -59,7 +60,16 @@ export class LabBookingPageComponent implements OnInit {
   public readonly labs = signal<Lab[]>([]);
   public readonly selectedLabId = signal<number>(0);
   public readonly selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
-  public readonly selectedTimeSlot = signal<string>('09:00 - 11:00 AM');
+  public readonly selectedTimeSlot = signal<string>('');
+  public readonly availableTimeSlots = signal<LabTimeSlot[]>([]);
+
+  public readonly availableTimeSlotStrings = computed<string[]>(() => {
+    const slots = this.availableTimeSlots();
+    if (slots && slots.length > 0) {
+      return slots.filter((s) => s.isActive).map((s) => `${s.startTime} - ${s.endTime}`);
+    }
+    return [];
+  });
 
   // Matrix Layout & Seat State
   public readonly isLoadingLabs = signal<boolean>(false);
@@ -170,13 +180,42 @@ export class LabBookingPageComponent implements OnInit {
       this.systemHoldMinutes.set(mins || 15);
     });
     this.labBookingService.getSystemSettings().subscribe((dict) => {
-      if (dict['MaxDailySlots']) {
+      if (dict['MaxLabBookingsPerStudentPerDay']) {
+        const slots = parseInt(dict['MaxLabBookingsPerStudentPerDay'], 10);
+        if (slots > 0) this.maxDailySlots.set(slots);
+      } else if (dict['MaxDailySlots']) {
         const slots = parseInt(dict['MaxDailySlots'], 10);
         if (slots > 0) this.maxDailySlots.set(slots);
       }
-      if (dict['LabBookingHoldMinutes']) {
+
+      if (dict['LabBookingSlotDurationMinutes']) {
+        const mins = parseInt(dict['LabBookingSlotDurationMinutes'], 10);
+        if (mins > 0) this.systemHoldMinutes.set(mins);
+      } else if (dict['LabBookingHoldMinutes']) {
         const mins = parseInt(dict['LabBookingHoldMinutes'], 10);
         if (mins > 0) this.systemHoldMinutes.set(mins);
+      }
+    });
+  }
+
+  public loadAvailableTimeSlots(): void {
+    const labId = this.selectedLabId();
+    const date = this.selectedDate();
+    if (!labId || !date) {
+      this.availableTimeSlots.set([]);
+      this.selectedTimeSlot.set('');
+      return;
+    }
+
+    this.labBookingService.getAvailableTimeSlots(labId, date).subscribe((slots) => {
+      this.availableTimeSlots.set(slots);
+      const strList = slots.filter((s) => s.isActive).map((s) => `${s.startTime} - ${s.endTime}`);
+      if (strList.length > 0) {
+        if (!this.selectedTimeSlot() || !strList.includes(this.selectedTimeSlot())) {
+          this.selectedTimeSlot.set(strList[0]);
+        }
+      } else {
+        this.selectedTimeSlot.set('');
       }
     });
   }
@@ -190,6 +229,7 @@ export class LabBookingPageComponent implements OnInit {
 
         if (data.length > 0 && (!this.selectedLabId() || !data.some((l) => l.id === this.selectedLabId()))) {
           this.selectedLabId.set(data[0].id);
+          this.loadAvailableTimeSlots();
           this.loadLayout();
         }
       },
@@ -200,12 +240,14 @@ export class LabBookingPageComponent implements OnInit {
   public onLabChange(labId: number): void {
     this.selectedLabId.set(labId);
     this.selectedSeat.set(null);
+    this.loadAvailableTimeSlots();
     this.loadLayout();
   }
 
   public onDateChange(dateStr: string): void {
     this.selectedDate.set(dateStr);
     this.selectedSeat.set(null);
+    this.loadAvailableTimeSlots();
     this.loadLayout();
   }
 

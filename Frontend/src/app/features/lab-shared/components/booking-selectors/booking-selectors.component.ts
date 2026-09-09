@@ -1,4 +1,4 @@
-﻿import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Lab } from '../../../../core/models/lab/lab.model';
@@ -15,7 +15,8 @@ export class BookingSelectorsComponent {
   public readonly labs = input<Lab[]>([]);
   public readonly selectedLabId = input<number>(0);
   public readonly selectedDate = input<string>('');
-  public readonly selectedTimeSlot = input<string>('09:00 - 11:00 AM');
+  public readonly selectedTimeSlot = input<string>('');
+  public readonly timeSlotsInput = input<string[] | undefined>(undefined, { alias: 'timeSlots' });
   public readonly isLoading = input<boolean>(false);
   public readonly allowPastDates = input<boolean>(false);
 
@@ -23,12 +24,9 @@ export class BookingSelectorsComponent {
     this.allowPastDates() ? '' : new Date().toISOString().split('T')[0]
   );
 
-  public readonly timeSlots: string[] = [
-    '09:00 - 11:00 AM',
-    '11:00 - 01:00 PM',
-    '02:00 - 04:00 PM',
-    '04:00 - 06:00 PM',
-  ];
+  public readonly timeSlots = computed<string[]>(() => {
+    return this.timeSlotsInput() || [];
+  });
 
   public readonly labChange = output<number>();
   public readonly dateChange = output<string>();

@@ -58,8 +58,17 @@
         (change)="onTimeSlotSelect($event)"
         class="w-full text-xs font-semibold px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 focus:outline-none transition-shadow cursor-pointer"
       >
-        @for (slot of timeSlots; track slot) {
-          <option [value]="slot">{{ slot }}</option>
+        @if (selectedLabId() === 0) {
+          <option value="" disabled selected>-- Select Laboratory First --</option>
+        } @else if (timeSlots().length === 0) {
+          <option value="" disabled selected>-- No Time Slots Available --</option>
+        } @else {
+          @if (!selectedTimeSlot() || !timeSlots().includes(selectedTimeSlot())) {
+            <option value="" disabled selected>-- Select Time Slot --</option>
+          }
+          @for (slot of timeSlots(); track slot) {
+            <option [value]="slot">{{ slot }}</option>
+          }
         }
       </select>
     </div>

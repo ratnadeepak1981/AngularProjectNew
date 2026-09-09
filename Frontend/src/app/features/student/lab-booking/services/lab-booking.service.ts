@@ -4,6 +4,7 @@ import { Observable, catchError, map, of } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { Lab } from '../../../../core/models/lab/lab.model';
+import { LabTimeSlot } from '../../../../core/models/lab/lab-time-slot.model';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
 import { CreateHoldPayload, LabBooking, LabMatrixLayoutResponse } from '../../../../core/models/lab/lab-booking.model';
 
@@ -151,7 +152,7 @@ export class LabBookingService {
           seatId: b.seatId,
           seatNumber: b.seatNumber || (b.seatId ? `PC #${b.seatId}` : 'N/A'),
           bookingDate: b.bookingDate ? b.bookingDate.split('T')[0] : 'N/A',
-          timeSlot: b.timeSlot || '09:00 - 11:00 AM',
+          timeSlot: b.timeSlot || 'N/A',
           status: b.status || 'Confirmed',
           expiresAt: b.expiresAt,
           createdAt: b.createdAt,
@@ -184,6 +185,33 @@ export class LabBookingService {
     return this.api.get<any>('/admin/system-settings/all', undefined, { context }).pipe(
       map((res) => (res?.data || res || {}) as Record<string, string>),
       catchError(() => of({}))
+    );
+  }
+
+  /**
+   * Fetch dynamic available time slots for student booking
+   */
+  getAvailableTimeSlots(labId: number, date: string): Observable<LabTimeSlot[]> {
+    return this.api.get<LabTimeSlot[] | { data: LabTimeSlot[] }>(`/labs/${labId}/time-slots/available?date=${encodeURIComponent(date)}`).pipe(
+      map((res) => {
+        const slots = Array.isArray(res) ? res : (res as { data: LabTimeSlot[] })?.data || [];
+        return slots.map((s: unknown): LabTimeSlot => {
+          const item = s as Record<string, any>;
+          return {
+            id: item['id'] ?? item['Id'] ?? 0,
+            labId: item['labId'] ?? item['LabId'] ?? labId,
+            startTime: item['startTime'] ?? item['StartTime'] ?? '',
+            endTime: item['endTime'] ?? item['EndTime'] ?? '',
+            isActive: item['isActive'] ?? item['IsActive'] ?? true,
+            displayOrder: item['displayOrder'] ?? item['DisplayOrder'] ?? 0,
+            isAvailable: item['isAvailable'] ?? item['IsAvailable'] ?? true,
+          };
+        });
+      }),
+      catchError((err: unknown) => {
+        console.error('Failed to fetch available time slots:', err);
+        return of([]);
+      })
     );
   }
 }

@@ -4,17 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { TabComponent, TabItem } from '../../../../shared/components/tab-component/tab.component';
 import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
-import { DatePickerComponent } from '../../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 
 import { Lab } from '../../../../core/models/lab/lab.model';
 import { LabSeat } from '../../../../core/models/lab/lab-seat.model';
-import { LabBookingRecord, LabManagementService } from '../services/lab-management.service';
+import { LabBooking } from '../../../../core/models/lab/lab-booking.model';
+import { LabManagementService } from '../services/lab-management.service';
 import { LabDetailsComponent } from '../components/lab-details/lab-details.component';
 import { LabGridMatrixComponent } from '../../../lab-shared/components/lab-grid-matrix/lab-grid-matrix.component';
 import { BookingSelectorsComponent } from '../../../lab-shared/components/booking-selectors/booking-selectors.component';
 import { LabBookingsHistoryComponent } from '../components/lab-bookings-history/lab-bookings-history.component';
+import { LabTimeSlotsManagementComponent } from '../components/lab-time-slots-management/lab-time-slots-management.component';
 
 @Component({
   selector: 'app-lab-management-page',
@@ -25,11 +26,11 @@ import { LabBookingsHistoryComponent } from '../components/lab-bookings-history/
     PageHeaderComponent,
     TabComponent,
     ActionButtonComponent,
-    DatePickerComponent,
     LabDetailsComponent,
     LabGridMatrixComponent,
     BookingSelectorsComponent,
     LabBookingsHistoryComponent,
+    LabTimeSlotsManagementComponent,
   ],
   templateUrl: './lab-management-page.component.html',
   styleUrl: './lab-management-page.component.css',
@@ -43,7 +44,7 @@ export class LabManagementPageComponent implements OnInit {
   public readonly labs = signal<Lab[]>([]);
   public readonly selectedLab = signal<Lab | null>(null);
   public readonly seats = signal<LabSeat[]>([]);
-  public readonly bookingsHistory = signal<LabBookingRecord[]>([]);
+  public readonly bookingsHistory = signal<LabBooking[]>([]);
   public readonly isLoading = signal(false);
   public readonly pageSize = signal<number>(5);
 
@@ -54,6 +55,7 @@ export class LabManagementPageComponent implements OnInit {
   public readonly tabs: TabItem[] = [
     { id: 'general-layout', label: 'General Lab Layout', icon: '🗺️' },
     { id: 'datewise-layout', label: 'Date-wise Lab Layout', icon: '📅' },
+    { id: 'time-slots', label: 'Time Slot Management', icon: '⏰' },
     { id: 'bookings-history', label: 'Booking History', icon: '📋' },
   ];
 
@@ -65,7 +67,8 @@ export class LabManagementPageComponent implements OnInit {
   public readonly datewiseDate = signal<string>('');
   public readonly datewiseSeats = signal<LabSeat[]>([]);
   public readonly datewiseSelectedLab = signal<Lab | null>(null);
-  public readonly datewiseTimeSlot = signal<string>('09:00 - 11:00 AM');
+  public readonly datewiseTimeSlot = signal<string>('');
+  public readonly datewiseTimeSlotsList = signal<string[]>([]);
 
   ngOnInit(): void {
     this.settingsService.getAllSettings().subscribe({
@@ -232,16 +235,33 @@ export class LabManagementPageComponent implements OnInit {
     const lab = this.labs().find((l) => l.id === labId);
     if (lab) {
       this.datewiseSelectedLab.set(lab);
-      if (this.datewiseDate()) {
-        this.loadDatewiseLayout(lab.id, this.datewiseDate(), this.datewiseTimeSlot());
-      }
+      this.labService.getTimeSlots(labId).subscribe((slots) => {
+        if (slots && slots.length > 0) {
+          const active = slots.filter((s) => s.isActive).map((s) => `${s.startTime} - ${s.endTime}`);
+          this.datewiseTimeSlotsList.set(active);
+          if (active.length > 0) {
+            if (!this.datewiseTimeSlot() || !active.includes(this.datewiseTimeSlot())) {
+              this.datewiseTimeSlot.set(active[0]);
+            }
+          } else {
+            this.datewiseTimeSlot.set('');
+          }
+        } else {
+          this.datewiseTimeSlotsList.set([]);
+          this.datewiseTimeSlot.set('');
+        }
+
+        if (this.datewiseDate() && this.datewiseTimeSlot()) {
+          this.loadDatewiseLayout(lab.id, this.datewiseDate(), this.datewiseTimeSlot());
+        }
+      });
     }
   }
 
   onDatewiseDateChange(date: string): void {
     this.datewiseDate.set(date);
     const lab = this.datewiseSelectedLab();
-    if (lab && date) {
+    if (lab && date && this.datewiseTimeSlot()) {
       this.loadDatewiseLayout(lab.id, date, this.datewiseTimeSlot());
     }
   }
@@ -249,19 +269,20 @@ export class LabManagementPageComponent implements OnInit {
   onDatewiseTimeSlotChange(slot: string): void {
     this.datewiseTimeSlot.set(slot);
     const lab = this.datewiseSelectedLab();
-    if (lab && this.datewiseDate()) {
+    if (lab && this.datewiseDate() && slot) {
       this.loadDatewiseLayout(lab.id, this.datewiseDate(), slot);
     }
   }
 
   onDatewiseRefresh(): void {
     const lab = this.datewiseSelectedLab();
-    if (lab && this.datewiseDate()) {
+    if (lab && this.datewiseDate() && this.datewiseTimeSlot()) {
       this.loadDatewiseLayout(lab.id, this.datewiseDate(), this.datewiseTimeSlot());
     }
   }
 
-  loadDatewiseLayout(labId: number, date: string, timeSlot: string = '09:00 - 11:00 AM'): void {
+  loadDatewiseLayout(labId: number, date: string, timeSlot: string = ''): void {
+    if (!labId || !date || !timeSlot) return;
     this.labService.getLabLayoutForDate(labId, date, timeSlot).subscribe((layout) => {
       this.datewiseSeats.set(layout.seats);
       const current = this.datewiseSelectedLab();

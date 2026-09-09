@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DataTableComponent } from '../../../../../shared/components/data-table/data-table.component';
 import { TableColumn } from '../../../../../shared/components/data-table/models/table-column.model';
-import { LabBookingRecord } from '../../services/lab-management.service';
+import { LabBooking } from '../../../../../core/models/lab/lab-booking.model';
 
 @Component({
   selector: 'app-lab-bookings-history',
@@ -12,24 +12,25 @@ import { LabBookingRecord } from '../../services/lab-management.service';
   styleUrl: './lab-bookings-history.component.css',
 })
 export class LabBookingsHistoryComponent {
-  @Input() bookings: LabBookingRecord[] = [];
+  @Input() bookings: LabBooking[] = [];
   @Input() loading: boolean = false;
   @Input() pageSize: number = 5;
 
   public readonly columns: TableColumn[] = [
-    { key: 'id', header: 'Booking Ref', sortable: true, filterable: true, type: 'text' },
-    { key: 'labName', header: 'Campus Laboratory', sortable: true, filterable: true, type: 'text' },
-    { key: 'studentName', header: 'Student Name', sortable: true, filterable: true, type: 'text' },
-    { key: 'studentId', header: 'Student Index', sortable: true, filterable: true, type: 'text' },
-    { key: 'seatNumber', header: 'Station / Seat ID', sortable: true, filterable: true, type: 'text' },
-    { key: 'bookingDate', header: 'Booking Date', sortable: true, filterable: true, type: 'text' },
-    { key: 'timeSlot', header: 'Reservation Slot', sortable: true, filterable: true, type: 'text' },
+    { key: 'id', header: 'Booking Ref', sortable: true, filterable: true, type: 'text', align: 'left', width: '90px' },
+    { key: 'labName', header: 'Campus Laboratory', sortable: true, filterable: true, type: 'custom', align: 'left' },
+    { key: 'studentName', header: 'Student Name', sortable: true, filterable: true, type: 'text', align: 'left' },
+    { key: 'studentId', header: 'Student Index', sortable: true, filterable: true, type: 'text', align: 'left' },
+    { key: 'seatNumber', header: 'Station / Seat ID', sortable: true, filterable: true, type: 'custom', align: 'left' },
+    { key: 'bookingDate', header: 'Booking Date', sortable: true, filterable: true, type: 'text', align: 'left' },
+    { key: 'timeSlot', header: 'Reservation Slot', sortable: true, filterable: true, type: 'text', align: 'left' },
     {
       key: 'status',
       header: 'Reservation Status',
       sortable: true,
       filterable: true,
       type: 'badge',
+      align: 'left',
       badgeMap: {
         Confirmed: {
           label: '✓ Confirmed',
@@ -50,4 +51,11 @@ export class LabBookingsHistoryComponent {
       },
     },
   ];
+
+  public isScienceLab(row: LabBooking): boolean {
+    const type = (row.labType || '').toLowerCase();
+    const name = (row.labName || '').toLowerCase();
+    const seat = (row.seatNumber || '').toLowerCase();
+    return type.includes('science') || name.includes('science') || seat.includes('bench') || seat === 'n/a';
+  }
 }
