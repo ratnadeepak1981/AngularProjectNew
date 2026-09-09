@@ -861,12 +861,35 @@ export class StudentMasterPageComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const result = this.studentMasterService.validateCsvContent(text);
-      this.parsedCsvRows.set(result.rows);
-      this.validRowCount.set(result.validCount);
-      this.errorRowCount.set(result.errorCount);
-      this.csvHeaderError.set(result.headerError);
-      this.isParsingCsv.set(false);
+      this.studentMasterService.loadAllMasterRecords().subscribe({
+        next: (allRecords) => {
+          const combinedRecords = allRecords.length > 0 ? allRecords : this.masterRecords();
+          const existingDbIndices = new Set<string>(
+            combinedRecords
+              .map((r: any) => (r.indexNumber || r.IndexNumber || '').toUpperCase().trim())
+              .filter(Boolean)
+          );
+          const result = this.studentMasterService.validateCsvContent(text, existingDbIndices);
+          this.parsedCsvRows.set(result.rows);
+          this.validRowCount.set(result.validCount);
+          this.errorRowCount.set(result.errorCount);
+          this.csvHeaderError.set(result.headerError);
+          this.isParsingCsv.set(false);
+        },
+        error: () => {
+          const existingDbIndices = new Set<string>(
+            this.masterRecords()
+              .map((r: any) => (r.indexNumber || r.IndexNumber || '').toUpperCase().trim())
+              .filter(Boolean)
+          );
+          const result = this.studentMasterService.validateCsvContent(text, existingDbIndices);
+          this.parsedCsvRows.set(result.rows);
+          this.validRowCount.set(result.validCount);
+          this.errorRowCount.set(result.errorCount);
+          this.csvHeaderError.set(result.headerError);
+          this.isParsingCsv.set(false);
+        },
+      });
     };
 
     reader.onerror = () => {
@@ -902,8 +925,12 @@ export class StudentMasterPageComponent implements OnInit {
     this.studentMasterService.uploadMasterCsv(file).subscribe({
       next: (res) => {
         this.isUploading.set(false);
-        const count = res.data || this.validRowCount();
-        this.toast.success(`Successfully imported ${count} student master records!`);
+        const count = res.data ?? 0;
+        if (count > 0) {
+          this.toast.success(`Successfully imported ${count} new student master record(s)!`);
+        } else {
+          this.toast.info('All records in the CSV file already exist in the database master list.');
+        }
         this.closeImportModal();
         this.loadMasterList();
       },

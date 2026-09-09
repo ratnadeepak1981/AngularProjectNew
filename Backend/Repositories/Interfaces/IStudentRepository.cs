@@ -23,7 +23,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
 
         Task<IEnumerable<StudentMasterList>> SearchMasterListAsync(string? search);
         Task<HashSet<string>> GetRegisteredIndexNumbersAsync();
-        Task BulkImportMasterListAsync(IEnumerable<StudentMasterList> masterRecords);
+        Task<int> BulkImportMasterListAsync(IEnumerable<StudentMasterList> masterRecords);
 
 
         // Safety & Validation checks for Deactivation
