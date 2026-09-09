@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace CampusServicesPortal.Models;
 
@@ -27,4 +27,5 @@ public class Lab
 
     // Navigation property for Entity Framework Core relationship mapping
     public ICollection<LabSeat> Seats { get; set; } = new List<LabSeat>();
+    public ICollection<LabBookingTimeSlot> TimeSlots { get; set; } = new List<LabBookingTimeSlot>();
 }

@@ -1,0 +1,50 @@
+<div>
+  @if (showLabel() && label()) {
+    <label class="block text-2xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+      <span>{{ icon() }}</span> {{ label() }}
+    </label>
+  }
+  
+  <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-1">
+    <!-- Hour Select -->
+    <select
+      [ngModel]="hour()"
+      (ngModelChange)="onHourChange($event)"
+      [disabled]="disabled()"
+      class="bg-transparent text-xs font-bold text-slate-900 dark:text-white px-2 py-1 focus:outline-none cursor-pointer rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      aria-label="Hour"
+    >
+      @for (h of hoursList; track h) {
+        <option [value]="h" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{{ h }}</option>
+      }
+    </select>
+
+    <span class="text-xs font-bold text-slate-400 dark:text-slate-500 select-none">:</span>
+
+    <!-- Minute Select -->
+    <select
+      [ngModel]="minute()"
+      (ngModelChange)="onMinuteChange($event)"
+      [disabled]="disabled()"
+      class="bg-transparent text-xs font-bold text-slate-900 dark:text-white px-2 py-1 focus:outline-none cursor-pointer rounded hover:bg-slate-200/50 dark:hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      aria-label="Minute"
+    >
+      @for (m of minutesList(); track m) {
+        <option [value]="m" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{{ m }}</option>
+      }
+    </select>
+
+    <!-- Period Select (AM / PM) -->
+    <select
+      [ngModel]="period()"
+      (ngModelChange)="onPeriodChange($event)"
+      [disabled]="disabled()"
+      class="bg-transparent text-xs font-extrabold text-blue-600 dark:text-blue-400 px-2 py-1 focus:outline-none cursor-pointer rounded hover:bg-blue-50 dark:hover:bg-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed"
+      aria-label="Period AM/PM"
+    >
+      @for (p of periodsList; track p) {
+        <option [value]="p" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">{{ p }}</option>
+      }
+    </select>
+  </div>
+</div>

@@ -1,3 +1,5 @@
+import { LabTimeSlot } from './lab-time-slot.model';
+
 export interface Lab {
   id: number;
   name: string;
@@ -9,4 +11,6 @@ export interface Lab {
   requiresSeatSelection?: boolean;
   seatsCount?: number;
   seatsBuilt?: number;
+  timeSlots?: LabTimeSlot[];
 }
+

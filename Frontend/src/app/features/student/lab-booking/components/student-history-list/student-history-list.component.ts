@@ -21,13 +21,20 @@ export class StudentHistoryListComponent {
   public readonly refresh = output<void>();
 
   public readonly bookingColumns: TableColumn<LabBooking>[] = [
-    { key: 'labName', header: 'Laboratory', sortable: true, filterable: true },
-    { key: 'seatNumber', header: 'Workstation Seat', sortable: true, filterable: true },
+    { key: 'labName', header: 'Laboratory', sortable: true, filterable: true, type: 'custom' },
+    { key: 'seatNumber', header: 'Workstation Seat / Slot', sortable: true, filterable: true, type: 'custom' },
     { key: 'bookingDate', header: 'Booking Date', sortable: true, filterable: true },
     { key: 'timeSlot', header: 'Session Time Slot', sortable: true, filterable: true },
     { key: 'status', header: 'Status', sortable: true, filterable: true, type: 'badge' },
     { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions', align: 'right' },
   ];
+
+  public isScienceLab(row: LabBooking): boolean {
+    const type = (row.labType || '').toLowerCase();
+    const name = (row.labName || '').toLowerCase();
+    const seat = (row.seatNumber || '').toLowerCase();
+    return type.includes('science') || name.includes('science') || seat.includes('bench') || seat === 'n/a';
+  }
 
   public onCancelClick(booking: LabBooking): void {
     this.cancelBooking.emit(booking);

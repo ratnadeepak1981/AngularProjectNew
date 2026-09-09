@@ -1,3 +1,4 @@
+using CampusServicesPortal.DTOs.Requests.Labs;
 using CampusServicesPortal.DTOs.Responses.Labs;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Interfaces;
@@ -74,7 +75,7 @@ public class LabService : ILabService
         return await _labRepo.SaveChangesAsync();
     }
 
-   public async Task<IEnumerable<LabMinimalResponseDto>> GetAllLabsAsync()
+    public async Task<IEnumerable<LabMinimalResponseDto>> GetAllLabsAsync()
     {
         var labs = await _labRepo.GetAllAsync();
         return labs.Select(l => new LabMinimalResponseDto
@@ -87,4 +88,177 @@ public class LabService : ILabService
         });
     }
 
+    // Time Slot Management Implementations
+    public async Task<IEnumerable<LabTimeSlotResponseDto>> GetLabTimeSlotsAsync(int labId, bool activeOnly = false)
+    {
+        var slots = (await _labRepo.GetTimeSlotsByLabIdAsync(labId, activeOnly)).ToList();
+        if (!slots.Any())
+        {
+            var defaultSlots = new List<LabBookingTimeSlot>
+            {
+                new LabBookingTimeSlot { LabId = labId, StartTime = "09:00 AM", EndTime = "11:00 AM", DisplayOrder = 1, IsActive = true, CreatedAt = DateTime.UtcNow },
+                new LabBookingTimeSlot { LabId = labId, StartTime = "11:00 AM", EndTime = "01:00 PM", DisplayOrder = 2, IsActive = true, CreatedAt = DateTime.UtcNow },
+                new LabBookingTimeSlot { LabId = labId, StartTime = "02:00 PM", EndTime = "04:00 PM", DisplayOrder = 3, IsActive = true, CreatedAt = DateTime.UtcNow },
+                new LabBookingTimeSlot { LabId = labId, StartTime = "04:00 PM", EndTime = "06:00 PM", DisplayOrder = 4, IsActive = true, CreatedAt = DateTime.UtcNow }
+            };
+
+            foreach (var s in defaultSlots)
+            {
+                await _labRepo.AddTimeSlotAsync(s);
+            }
+            await _labRepo.SaveChangesAsync();
+
+            slots = (await _labRepo.GetTimeSlotsByLabIdAsync(labId, activeOnly)).ToList();
+        }
+
+        return slots.Select(s => new LabTimeSlotResponseDto
+        {
+            Id = s.Id,
+            LabId = s.LabId,
+            StartTime = s.StartTime,
+            EndTime = s.EndTime,
+            IsActive = s.IsActive,
+            DisplayOrder = s.DisplayOrder,
+            IsAvailable = true
+        });
+    }
+
+    public async Task<IEnumerable<LabTimeSlotResponseDto>> GetAvailableTimeSlotsAsync(int labId, DateTime date)
+    {
+        return await GetLabTimeSlotsAsync(labId, activeOnly: true);
+    }
+
+    public async Task<LabTimeSlotResponseDto> CreateLabTimeSlotAsync(CampusServicesPortal.DTOs.Requests.Labs.CreateLabTimeSlotDto dto)
+    {
+        var lab = await _labRepo.GetByIdAsync(dto.LabId);
+        if (lab == null) throw new KeyNotFoundException("Laboratory not found.");
+
+        var formattedStart = FormatTime12Hour(dto.StartTime);
+        var formattedEnd = FormatTime12Hour(dto.EndTime);
+
+        var startTs = ParseTimeSpan(formattedStart);
+        var endTs = ParseTimeSpan(formattedEnd);
+
+        if (endTs <= startTs)
+        {
+            throw new ArgumentException("End time must be after start time.");
+        }
+
+        bool isOverlapping = await _labRepo.HasOverlappingTimeSlotAsync(dto.LabId, formattedStart, formattedEnd);
+        if (isOverlapping)
+        {
+            throw new InvalidOperationException("An active time slot with an overlapping time range already exists for this laboratory.");
+        }
+
+        var newSlot = new LabBookingTimeSlot
+        {
+            LabId = dto.LabId,
+            StartTime = formattedStart,
+            EndTime = formattedEnd,
+            DisplayOrder = dto.DisplayOrder,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _labRepo.AddTimeSlotAsync(newSlot);
+        await _labRepo.SaveChangesAsync();
+
+        return new LabTimeSlotResponseDto
+        {
+            Id = newSlot.Id,
+            LabId = newSlot.LabId,
+            StartTime = newSlot.StartTime,
+            EndTime = newSlot.EndTime,
+            IsActive = newSlot.IsActive,
+            DisplayOrder = newSlot.DisplayOrder,
+            IsAvailable = true
+        };
+    }
+
+    public async Task<LabTimeSlotResponseDto> UpdateLabTimeSlotAsync(int slotId, CampusServicesPortal.DTOs.Requests.Labs.UpdateLabTimeSlotDto dto)
+    {
+        var slot = await _labRepo.GetTimeSlotByIdAsync(slotId);
+        if (slot == null) throw new KeyNotFoundException("Time slot record not found.");
+
+        var formattedStart = FormatTime12Hour(dto.StartTime);
+        var formattedEnd = FormatTime12Hour(dto.EndTime);
+
+        var startTs = ParseTimeSpan(formattedStart);
+        var endTs = ParseTimeSpan(formattedEnd);
+
+        if (endTs <= startTs)
+        {
+            throw new ArgumentException("End time must be after start time.");
+        }
+
+        bool isOverlapping = await _labRepo.HasOverlappingTimeSlotAsync(slot.LabId, formattedStart, formattedEnd, slotId);
+        if (isOverlapping)
+        {
+            throw new InvalidOperationException("An active time slot with an overlapping time range already exists for this laboratory.");
+        }
+
+        slot.StartTime = formattedStart;
+        slot.EndTime = formattedEnd;
+        slot.DisplayOrder = dto.DisplayOrder;
+        slot.IsActive = dto.IsActive;
+        slot.UpdatedAt = DateTime.UtcNow;
+
+        await _labRepo.SaveChangesAsync();
+
+        return new LabTimeSlotResponseDto
+        {
+            Id = slot.Id,
+            LabId = slot.LabId,
+            StartTime = slot.StartTime,
+            EndTime = slot.EndTime,
+            IsActive = slot.IsActive,
+            DisplayOrder = slot.DisplayOrder,
+            IsAvailable = true
+        };
+    }
+
+    private static TimeSpan ParseTimeSpan(string timeStr)
+    {
+        if (string.IsNullOrWhiteSpace(timeStr)) return TimeSpan.Zero;
+        timeStr = timeStr.Trim();
+        if (DateTime.TryParse(timeStr, out var dt)) return dt.TimeOfDay;
+        if (TimeSpan.TryParse(timeStr, out var ts)) return ts;
+        return TimeSpan.Zero;
+    }
+
+    private static string FormatTime12Hour(string timeStr)
+    {
+        if (string.IsNullOrWhiteSpace(timeStr)) return timeStr;
+        timeStr = timeStr.Trim();
+        if (DateTime.TryParse(timeStr, out var dt))
+        {
+            return dt.ToString("hh:mm tt");
+        }
+        return timeStr;
+    }
+
+    public async Task<bool> ToggleTimeSlotActiveAsync(int slotId, bool isActive)
+    {
+        var slot = await _labRepo.GetTimeSlotByIdAsync(slotId);
+        if (slot == null) throw new KeyNotFoundException("Time slot record not found.");
+
+        slot.IsActive = isActive;
+        slot.UpdatedAt = DateTime.UtcNow;
+        return await _labRepo.SaveChangesAsync();
+    }
+
+    public async Task<bool> DeleteLabTimeSlotAsync(int slotId)
+    {
+        var slot = await _labRepo.GetTimeSlotByIdAsync(slotId);
+        if (slot == null) throw new KeyNotFoundException("Time slot record not found.");
+
+        bool hasBookings = await _labRepo.HasBookingsForTimeSlotAsync(slotId);
+        if (hasBookings)
+        {
+            throw new InvalidOperationException("Cannot delete time slot because it has associated active or past bookings. Deactivate the slot instead.");
+        }
+
+        await _labRepo.DeleteTimeSlotAsync(slot);
+        return await _labRepo.SaveChangesAsync();
+    }
 }

@@ -256,12 +256,69 @@ namespace CampusServicesPortal
 
             app.MapControllers();
 
-            // Seed initial Audit Log trail if empty
+            // Seed initial Audit Log trail if empty & ensure database schema extensions
             using (var scope = app.Services.CreateScope())
             {
                 try
                 {
                     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                    // Ensure database schema extensions (LabBookingTimeSlots table & TimeSlotId column) exist
+                    context.Database.ExecuteSqlRaw(@"
+                        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LabBookingTimeSlots')
+                        BEGIN
+                            CREATE TABLE [LabBookingTimeSlots] (
+                                [Id] INT IDENTITY(1,1) NOT NULL,
+                                [LabId] INT NOT NULL,
+                                [StartTime] NVARCHAR(20) NOT NULL,
+                                [EndTime] NVARCHAR(20) NOT NULL,
+                                [IsActive] BIT NOT NULL DEFAULT 1,
+                                [DisplayOrder] INT NOT NULL DEFAULT 0,
+                                [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
+                                [UpdatedAt] DATETIME2 NULL,
+                                CONSTRAINT [PK_LabBookingTimeSlots] PRIMARY KEY ([Id]),
+                                CONSTRAINT [FK_LabBookingTimeSlots_Labs_LabId] FOREIGN KEY ([LabId]) REFERENCES [Labs] ([Id]) ON DELETE CASCADE
+                            );
+
+                            CREATE UNIQUE INDEX [UX_LabBookingTimeSlots_Lab_TimeRange] 
+                            ON [LabBookingTimeSlots] ([LabId], [StartTime], [EndTime]);
+                        END;
+
+                        IF NOT EXISTS (
+                            SELECT * FROM sys.columns 
+                            WHERE object_id = OBJECT_ID(N'[LabBookings]') AND name = N'TimeSlotId'
+                        )
+                        BEGIN
+                            ALTER TABLE [LabBookings] ADD [TimeSlotId] INT NULL;
+
+                            IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LabBookings_LabBookingTimeSlots_TimeSlotId')
+                            BEGIN
+                                ALTER TABLE [LabBookings] ADD CONSTRAINT [FK_LabBookings_LabBookingTimeSlots_TimeSlotId] 
+                                FOREIGN KEY ([TimeSlotId]) REFERENCES [LabBookingTimeSlots] ([Id]) ON DELETE NO ACTION;
+                            END
+                        END;
+
+                        IF EXISTS (SELECT * FROM [Labs])
+                        BEGIN
+                            INSERT INTO [LabBookingTimeSlots] ([LabId], [StartTime], [EndTime], [IsActive], [DisplayOrder], [CreatedAt])
+                            SELECT [l].[Id], N'09:00 AM', N'11:00 AM', 1, 1, GETUTCDATE()
+                            FROM [Labs] AS [l]
+                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id])
+                            UNION ALL
+                            SELECT [l].[Id], N'11:00 AM', N'01:00 PM', 1, 2, GETUTCDATE()
+                            FROM [Labs] AS [l]
+                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id])
+                            UNION ALL
+                            SELECT [l].[Id], N'02:00 PM', N'04:00 PM', 1, 3, GETUTCDATE()
+                            FROM [Labs] AS [l]
+                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id])
+                            UNION ALL
+                            SELECT [l].[Id], N'04:00 PM', N'06:00 PM', 1, 4, GETUTCDATE()
+                            FROM [Labs] AS [l]
+                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id]);
+                        END;
+                    ");
+
                     AuditLogDataSeeder.SeedAuditLogsAsync(context).GetAwaiter().GetResult();
 
                     // Normalize student ContactDetails to store only the clean primary mobile

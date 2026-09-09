@@ -115,6 +115,8 @@ namespace CampusServicesPortal.Controllers
                 {
                     ["InstitutionName"] = "University of Knowledge (UOK)",
                     ["LabBookingHoldMinutes"] = dict.ContainsKey("reservation-hold-minutes") ? dict["reservation-hold-minutes"] : "15",
+                    ["LabBookingSlotDurationMinutes"] = "15",
+                    ["MaxLabBookingsPerStudentPerDay"] = "2",
                     ["MaxDailySlots"] = "2",
                     ["RequireSeatSelection"] = "true",
                     ["AcademicYear"] = "2025/2026",

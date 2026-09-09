@@ -69,11 +69,147 @@
           <span>🛡️</span> Maintenance & Policy Controls
         </h4>
         <div class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
-          <p><strong>Reservation Lock Window:</strong> 10 Minutes Hold Window (BRD Page 12)</p>
+          <p><strong>Reservation Lock Window:</strong> Dynamic Hold Window from System Settings</p>
           <p><strong>Station ID Prefix:</strong> LAB{{ lab.id }}-PC-R(row)C(col)</p>
           <p><strong>Maintenance Status:</strong> Operational (Zero Active Hardware Faults)</p>
         </div>
       </div>
+    </div>
+
+    <!-- Time Slot Management Section -->
+    <div class="mt-5 p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">⏰</span>
+          <div>
+            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+              Lab Booking Time Slots Management
+            </h4>
+            <p class="text-2xs text-slate-500 dark:text-slate-400">
+              Configure allowed booking time ranges, order, and active availability for LAB-{{ lab.id }}.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          (click)="toggleAddSlotForm()"
+          class="px-3 py-1.5 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-colors cursor-pointer flex items-center gap-1 shadow-2xs"
+        >
+          <span>{{ showAddSlotForm() ? '✕ Cancel' : '➕ Add Time Slot' }}</span>
+        </button>
+      </div>
+
+      <!-- Add Time Slot Form -->
+      @if (showAddSlotForm()) {
+        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-3">
+          <h5 class="text-2xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Create New Time Slot</h5>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-2xs font-bold text-slate-600 dark:text-slate-400 mb-1">Start Time (e.g. 09:00)</label>
+              <input
+                type="text"
+                [ngModel]="newSlotStartTime()"
+                (ngModelChange)="newSlotStartTime.set($event)"
+                placeholder="09:00"
+                class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+            <div>
+              <label class="block text-2xs font-bold text-slate-600 dark:text-slate-400 mb-1">End Time (e.g. 09:15)</label>
+              <input
+                type="text"
+                [ngModel]="newSlotEndTime()"
+                (ngModelChange)="newSlotEndTime.set($event)"
+                placeholder="09:15"
+                class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+            <div>
+              <label class="block text-2xs font-bold text-slate-600 dark:text-slate-400 mb-1">Display Order</label>
+              <input
+                type="number"
+                [ngModel]="newSlotDisplayOrder()"
+                (ngModelChange)="newSlotDisplayOrder.set($event)"
+                min="0"
+                class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100"
+              />
+            </div>
+          </div>
+          <div class="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              (click)="submitCreateSlot()"
+              class="px-3.5 py-1.5 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer transition-colors"
+            >
+              Save Time Slot
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Time Slots Table / List -->
+      @if (isLoadingSlots()) {
+        <div class="py-4 text-center text-xs text-slate-400">Loading configured time slots...</div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 text-2xs uppercase tracking-wider">
+                <th class="py-2 px-3">Order</th>
+                <th class="py-2 px-3">Start Time</th>
+                <th class="py-2 px-3">End Time</th>
+                <th class="py-2 px-3">Status</th>
+                <th class="py-2 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              @for (slot of timeSlots(); track slot.id) {
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-2 px-3 font-mono font-bold text-slate-600 dark:text-slate-400">#{{ slot.displayOrder }}</td>
+                  <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-100">{{ slot.startTime }}</td>
+                  <td class="py-2 px-3 font-bold text-slate-800 dark:text-slate-100">{{ slot.endTime }}</td>
+                  <td class="py-2 px-3">
+                    <span
+                      class="px-2 py-0.5 rounded-full text-2xs font-bold"
+                      [ngClass]="slot.isActive ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300' : 'bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300'"
+                    >
+                      {{ slot.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="py-2 px-3 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        (click)="toggleSlotActive(slot)"
+                        title="Toggle Active Status (PATCH)"
+                        class="px-2 py-1 text-2xs font-bold rounded-lg border transition-colors cursor-pointer"
+                        [ngClass]="slot.isActive ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'"
+                      >
+                        {{ slot.isActive ? 'Deactivate' : 'Activate' }}
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteSlot(slot)"
+                        title="Delete Time Slot"
+                        class="px-2 py-1 text-2xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-4 text-center text-xs text-slate-400">
+                    No time slots configured for this lab yet.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   </div>
 </div>

@@ -130,39 +130,21 @@
   <!-- TAB 2: Date-wise Lab Layout -->
   @if (activeTabId() === 'datewise-layout') {
     <div class="space-y-6 animate-fade-in">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>📅</span> Date-wise Lab Layout
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400">
-              View booking/availability status for a specific date. Select a lab and a date.
-            </p>
-          </div>
-          <div class="flex items-center gap-3 flex-wrap">
-            <label class="text-xs font-bold text-slate-600 dark:text-slate-400">Select Lab:</label>
-            <select
-              class="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-600"
-              [ngModel]="datewiseSelectedLab()?.id"
-              (ngModelChange)="onLabSelectForDatewise($event)"
-            >
-              @for (lab of labs(); track lab.id) {
-                <!-- 👇 Added icons to the Date-wise tab loop -->
-                <option [ngValue]="lab.id">
-                  {{ lab.requiresSeatSelection ? '💻' : '🧪' }} {{ lab.name }}
-                </option>
-              }
-            </select>
+      <app-booking-selectors
+        [labs]="labs()"
+        [selectedLabId]="datewiseSelectedLab()?.id || 0"
+        [selectedDate]="datewiseDate()"
+        [selectedTimeSlot]="datewiseTimeSlot()"
+        [timeSlots]="datewiseTimeSlotsList()"
+        [allowPastDates]="true"
+        (labChange)="onLabSelectForDatewise($event)"
+        (dateChange)="onDatewiseDateChange($event)"
+        (timeSlotChange)="onDatewiseTimeSlotChange($event)"
+        (refresh)="onDatewiseRefresh()"
+      ></app-booking-selectors>
 
-            <app-date-picker
-              label="Booking Date"
-              [selectedDate]="datewiseDate()"
-              [minDate]="''"
-              (dateChange)="onDatewiseDateChange($event)"
-            ></app-date-picker>
-          </div>
-        </div>
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+
 
         @if (datewiseSelectedLab() && datewiseDate()) {
           @if (datewiseSelectedLab()?.requiresSeatSelection) {
@@ -261,7 +243,16 @@
     ></app-lab-grid-matrix>
   }
 
-  <!-- TAB 3: Booking History -->
+  <!-- TAB 3: Time Slot Management -->
+  @if (activeTabId() === 'time-slots') {
+    <div class="animate-fade-in">
+      <app-lab-time-slots-management
+        [labs]="labs()"
+      ></app-lab-time-slots-management>
+    </div>
+  }
+
+  <!-- TAB 4: Booking History -->
   @if (activeTabId() === 'bookings-history') {
     <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm animate-fade-in">
       <app-lab-bookings-history
