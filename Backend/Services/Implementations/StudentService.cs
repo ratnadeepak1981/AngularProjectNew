@@ -489,26 +489,43 @@ namespace CampusServicesPortal.Services.Implementations
                     var line = await reader.ReadLineAsync();
                     if (string.IsNullOrWhiteSpace(line)) continue;
 
-                    var parts = line.Split(',');
-                    if (parts.Length >= 3)
+                    var cleanLine = line.TrimEnd('\r', '\n');
+                    var parts = cleanLine.Split(',');
+                    if (parts.Length >= 3 && int.TryParse(parts[2].Trim('"', '\'', ' ', '\t', '\r', '\n'), out int facId))
                     {
-                        masterRecordsList.Add(new StudentMasterList
+                        var cleanIndex = parts[0].Trim('"', '\'', ' ', '\t', '\r', '\n', '\uFEFF');
+                        var cleanName = parts[1].Trim('"', '\'', ' ', '\t', '\r', '\n');
+                        if (!string.IsNullOrWhiteSpace(cleanIndex) && !string.IsNullOrWhiteSpace(cleanName))
                         {
-                            IndexNumber = parts[0].Trim(),
-                            FullName = parts[1].Trim(),
-                            FacultyId = int.Parse(parts[2].Trim())
-                        });
+                            masterRecordsList.Add(new StudentMasterList
+                            {
+                                IndexNumber = cleanIndex,
+                                FullName = cleanName,
+                                FacultyId = facId
+                            });
+                        }
                     }
                 }
 
-                await _studentRepository.BulkImportMasterListAsync(masterRecordsList);
-                await _studentRepository.SaveChangesAsync();
+                int insertedCount = await _studentRepository.BulkImportMasterListAsync(masterRecordsList);
+                if (insertedCount > 0)
+                {
+                    try
+                    {
+                        await _studentRepository.SaveChangesAsync();
+                    }
+                    catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+                    {
+                        return ServiceResult<int>.Success(0, 200);
+                    }
+                }
 
-                return ServiceResult<int>.Success(masterRecordsList.Count, 200);
+                return ServiceResult<int>.Success(insertedCount, 200);
             }
             catch (Exception ex)
             {
-                return ServiceResult<int>.Failure($"An error occurred during file parsing: {ex.Message}", 500);
+                string errorDetail = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return ServiceResult<int>.Failure($"An error occurred during file parsing: {errorDetail}", 400);
             }
         }
 

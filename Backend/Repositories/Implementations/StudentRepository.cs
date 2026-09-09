@@ -240,24 +240,48 @@ namespace CampusServicesPortal.Repositories.Implementations
         public async Task<HashSet<string>> GetRegisteredIndexNumbersAsync()
         {
             var registeredIndices = await _context.Students
+                .Where(s => s.IndexNumber != null && s.IndexNumber != "")
                 .Select(s => s.IndexNumber.ToLower())
                 .ToListAsync();
             return new HashSet<string>(registeredIndices);
         }
 
-        public async Task BulkImportMasterListAsync(IEnumerable<StudentMasterList> masterRecords)
+        public async Task<int> BulkImportMasterListAsync(IEnumerable<StudentMasterList> masterRecords)
         {
+            var rawIndices = await _context.StudentMasterLists
+                .Select(m => m.IndexNumber)
+                .ToListAsync();
+
+            var validFacultyIds = new HashSet<int>(
+                await _context.Faculties.Select(f => f.Id).ToListAsync()
+            );
+
+            var addedInBatch = new HashSet<string>(
+                rawIndices
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .Select(s => System.Text.RegularExpressions.Regex.Replace(s.Trim('"', '\'', ' ', '\t', '\r', '\n', '\uFEFF'), @"\s+", "").ToUpperInvariant()),
+                StringComparer.OrdinalIgnoreCase
+            );
+            int newlyInsertedCount = 0;
+
             foreach (var record in masterRecords)
             {
-                // Only insert if the index number doesn't exist in the database
-                bool exists = await _context.StudentMasterLists
-                    .AnyAsync(m => m.IndexNumber == record.IndexNumber);
+                var rawIdx = record.IndexNumber?.Trim('"', '\'', ' ', '\t', '\r', '\n', '\uFEFF');
+                if (string.IsNullOrWhiteSpace(rawIdx)) continue;
 
-                if (!exists)
+                var normalizedIdx = System.Text.RegularExpressions.Regex.Replace(rawIdx, @"\s+", "").ToUpperInvariant();
+
+                if (!addedInBatch.Contains(normalizedIdx) && validFacultyIds.Contains(record.FacultyId))
                 {
+                    record.IndexNumber = rawIdx;
+                    record.FullName = record.FullName?.Trim('"', '\'', ' ', '\t', '\r', '\n');
+                    addedInBatch.Add(normalizedIdx);
                     await _context.StudentMasterLists.AddAsync(record);
+                    newlyInsertedCount++;
                 }
             }
+
+            return newlyInsertedCount;
         }
 
 

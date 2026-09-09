@@ -59,6 +59,16 @@ export class StudentMasterService {
     );
   }
 
+  loadAllMasterRecords(): Observable<StudentMaster[]> {
+    return this.apiService.get<ApiResponse<any>>(this.apiService.routes.students.masterList).pipe(
+      map((res) => {
+        const payload = res.data || (Array.isArray(res) ? res : []);
+        return Array.isArray(payload) ? payload : (payload.items || []);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   loadFaculties(): Observable<Map<number, string>> {
     return this.apiService.get<ApiResponse<Faculty[]>>(this.apiService.routes.faculties.list).pipe(
       map((res) => {
@@ -116,7 +126,7 @@ export class StudentMasterService {
     );
   }
 
-  validateCsvContent(csvText: string): CsvValidationResult {
+  validateCsvContent(csvText: string, existingDbIndices?: Set<string>): CsvValidationResult {
     const lines = csvText.split(/\r\n|\n/).map((l) => l.trim()).filter((l) => l.length > 0);
 
     if (lines.length < 2) {
@@ -178,7 +188,9 @@ export class StudentMasterService {
 
       const normalizedIndex = indexNumber.toUpperCase();
       if (seenIndexNumbers.has(normalizedIndex)) {
-        rowErrors.push(`Duplicate Index '${indexNumber}' already present in file`);
+        rowErrors.push(`Duplicate Index '${indexNumber}' already present in CSV file`);
+      } else if (existingDbIndices && existingDbIndices.has(normalizedIndex)) {
+        rowErrors.push(`Index Number '${indexNumber}' already exists in University Master Database`);
       } else if (indexNumber) {
         seenIndexNumbers.add(normalizedIndex);
       }

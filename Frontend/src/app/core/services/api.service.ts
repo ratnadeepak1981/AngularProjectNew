@@ -67,7 +67,7 @@ export class ApiService {
       directory: '/students',
       delete: (id: number) => `/students/${id}`,
       resetPassword: (id: number) => `/students/${id}/reset-password`,
-      masterByIndex: (idx: string) => `/student-master/${encodeURIComponent(idx)}`,
+      masterByIndex: (idx: string) => `/student-master/verify/${encodeURIComponent(idx)}`,
       masterList: '/student-master',
       masterImport: '/student-master/import',
     },

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Services.Interfaces;
+using CampusServicesPortal.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,10 +17,16 @@ namespace CampusServicesPortal.Controllers
             _studentService = studentService;
         }
 
-        //GET /api/student-master/{indexNumber} [BRD Page 4]
+        // GET /api/student-master/verify/{indexNumber} or GET /api/student-master/{indexNumber} [BRD Page 4]
+        [HttpGet("verify/{indexNumber}")]
         [HttpGet("{indexNumber}")]
         public async Task<IActionResult> VerifyIndexNumber(string indexNumber)
         {
+            if (string.Equals(indexNumber, "import", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound("Invalid endpoint context.");
+            }
+
             var result = await _studentService.VerifyMasterIndexAsync(indexNumber);
             return ProcessServiceResult(result, "Student master index verification successful.");
         }
