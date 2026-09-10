@@ -1,4 +1,4 @@
-
+﻿
 using Microsoft.EntityFrameworkCore;
 using CampusServicesPortal.Models;
 
@@ -518,14 +518,49 @@ namespace CampusServicesPortal.Data
                 }
             );
 
-            // NOTE:
-            // HostelApplication seed data intentionally removed.
-            // The previous seed referenced Hostels Id 1 and 2 and
-            // Room Id 1, which do not currently exist in the database.
-            //
-            // Hostel applications should be created through the
-            // Hostel module after valid Hostels, Rooms and Students
-            // exist.
+
+            // ========================================================================
+            // 🌟 ARCHITECTURAL SECURITY UPDATE: SYSTEM-WIDE UNIQUENESS CONSTRAINTS
+            // ========================================================================
+
+            // 🔒 Enforce Unique Master Data Names (Module 4 & Module 2 & Module 3)
+            modelBuilder.Entity<Venue>()
+                .HasIndex(v => v.Name)
+                .HasDatabaseName("IX_Venues_Name")
+                .IsUnique();
+
+            modelBuilder.Entity<Hostel>()
+                .HasIndex(h => h.Name)
+                .HasDatabaseName("IX_Hostels_Name")
+                .IsUnique();
+
+            modelBuilder.Entity<Lab>()
+                .HasIndex(l => l.Name)
+                .HasDatabaseName("IX_Labs_Name")
+                .IsUnique();
+
+            // 🔒 Enforce Unique Contact Communications (Module 1)
+            modelBuilder.Entity<StudentPhoneNumber>()
+                .HasIndex(p => p.PhoneNumber) // 🌟 FIXED: Changed from 'Value' to 'PhoneNumber'
+                .HasDatabaseName("IX_StudentPhoneNumbers_PhoneNumber")
+                .IsUnique();
+
+            // 🔒 Enforce Unique Financial Configurations (Module 7)
+            modelBuilder.Entity<FeeType>()
+                .HasIndex(ft => ft.Name)
+                .HasDatabaseName("IX_FeeTypes_Name")
+                .IsUnique();
+
+            // 🔒 COMPOSITE SCHEDULING CONSTRAINT (Module 4)
+            modelBuilder.Entity<Event>()
+                .HasIndex(e => new { e.VenueId, e.StartDateTime })
+                .HasDatabaseName("UX_Events_Venue_Schedule")
+                .IsUnique();
+            modelBuilder.Entity<Room>()
+                .HasIndex(r => new { r.HostelId, r.RoomNumber }) // Adjust property name to 'Number' if your model uses that name
+                .HasDatabaseName("UX_Rooms_Hostel_RoomNumber")
+                .IsUnique();
+
         }
     }
 }
