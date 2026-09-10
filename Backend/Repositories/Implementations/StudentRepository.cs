@@ -23,6 +23,15 @@ namespace CampusServicesPortal.Repositories.Implementations
             return await _context.StudentMasterLists
                 .FirstOrDefaultAsync(m => m.IndexNumber == indexNumber);
         }
+        public async Task<IEnumerable<FeePayment>> GetAllFeeAssignmentsAsync()
+        {
+            return await _context.FeePayments
+                .Include(f => f.FeeType)
+                .Include(f => f.Student) // Includes student metadata so names show up on the admin grid
+                .OrderByDescending(f => f.Id)
+                .ToListAsync();
+        }
+
 
         public async Task<bool> IsIndexRegisteredAsync(string indexNumber)
         {

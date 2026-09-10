@@ -11,6 +11,9 @@ namespace CampusServicesPortal.Services.Interfaces
         // Handles bulk pricing updates or manual balance tracking creations
         Task<ServiceResult<object>> AssignFeeAsync(AssignFeeDto request);
 
+        Task<ServiceResult<IEnumerable<FeePaymentResponseDto>>> GetAllFeeAssignmentsAsync();
+
+
         // Hooks operational rule violations immediately out to financial profiles
         Task<ServiceResult<object>> IssueLabFineAsync(GenerateLabFineDto request);
 

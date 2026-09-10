@@ -96,7 +96,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("Module", "Action");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.CertificateRequest", b =>
@@ -132,7 +135,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("CertificateRequests");
+                    b.ToTable("CertificateRequests", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.CertificateType", b =>
@@ -156,20 +162,9 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("CertificateTypes");
-
-                    b.HasData(
-                        new
+                    b.ToTable("CertificateTypes", t =>
                         {
-                            Id = 1,
-                            IsActive = true,
-                            Name = "Official Academic Transcript"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsActive = true,
-                            Name = "Bonafide Student Status Letter"
+                            t.ExcludeFromMigrations();
                         });
                 });
 
@@ -210,7 +205,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Complaints");
+                    b.ToTable("Complaints", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.ComplaintCategory", b =>
@@ -234,7 +232,10 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("ComplaintCategories");
+                    b.ToTable("ComplaintCategories", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
 
                     b.HasData(
                         new
@@ -282,9 +283,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("VenueId");
+                    b.HasIndex("VenueId", "StartDateTime")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Events_Venue_Schedule");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.EventRegistration", b =>
@@ -315,7 +321,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("EventRegistrations");
+                    b.ToTable("EventRegistrations", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Faculty", b =>
@@ -336,7 +345,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Faculties");
+                    b.ToTable("Faculties", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
 
                     b.HasData(
                         new
@@ -399,7 +411,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("FeePayments");
+                    b.ToTable("FeePayments", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.FeeType", b =>
@@ -420,7 +435,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FeeTypes");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_FeeTypes_Name");
+
+                    b.ToTable("FeeTypes", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
 
                     b.HasData(
                         new
@@ -473,7 +495,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Hostels");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Hostels_Name");
+
+                    b.ToTable("Hostels", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.HostelApplication", b =>
@@ -520,7 +549,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("HostelApplications");
+                    b.ToTable("HostelApplications", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Lab", b =>
@@ -555,7 +587,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Labs");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Labs_Name");
+
+                    b.ToTable("Labs", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
 
                     b.HasData(
                         new
@@ -628,7 +667,10 @@ namespace CampusServicesPortal.Migrations
                         .HasDatabaseName("UX_LabBookings_Student_ActiveSlot")
                         .HasFilter("[Status] = 'Confirmed'");
 
-                    b.ToTable("LabBookings");
+                    b.ToTable("LabBookings", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.LabBookingTimeSlot", b =>
@@ -670,13 +712,16 @@ namespace CampusServicesPortal.Migrations
                         .IsUnique()
                         .HasDatabaseName("UX_LabBookingTimeSlots_Lab_TimeRange");
 
-                    b.ToTable("LabBookingTimeSlots");
+                    b.ToTable("LabBookingTimeSlots", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7523),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8841),
                             DisplayOrder = 1,
                             EndTime = "11:00",
                             IsActive = true,
@@ -686,7 +731,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7531),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8844),
                             DisplayOrder = 2,
                             EndTime = "13:00",
                             IsActive = true,
@@ -696,7 +741,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7532),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8845),
                             DisplayOrder = 3,
                             EndTime = "16:00",
                             IsActive = true,
@@ -706,7 +751,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7534),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8846),
                             DisplayOrder = 4,
                             EndTime = "18:00",
                             IsActive = true,
@@ -716,7 +761,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7535),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8847),
                             DisplayOrder = 1,
                             EndTime = "11:00",
                             IsActive = true,
@@ -726,7 +771,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 6,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7537),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8848),
                             DisplayOrder = 2,
                             EndTime = "13:00",
                             IsActive = true,
@@ -736,7 +781,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 7,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7538),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8849),
                             DisplayOrder = 3,
                             EndTime = "16:00",
                             IsActive = true,
@@ -746,7 +791,7 @@ namespace CampusServicesPortal.Migrations
                         new
                         {
                             Id = 8,
-                            CreatedAt = new DateTime(2026, 9, 10, 5, 48, 34, 4, DateTimeKind.Utc).AddTicks(7539),
+                            CreatedAt = new DateTime(2026, 9, 10, 11, 37, 45, 641, DateTimeKind.Utc).AddTicks(8850),
                             DisplayOrder = 4,
                             EndTime = "18:00",
                             IsActive = true,
@@ -784,7 +829,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("LabId");
 
-                    b.ToTable("LabSeats");
+                    b.ToTable("LabSeats", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Notification", b =>
@@ -818,7 +866,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.PasswordHistory", b =>
@@ -847,7 +898,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("PasswordHistories");
+                    b.ToTable("PasswordHistories", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.PasswordResetToken", b =>
@@ -876,7 +930,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("PasswordResetTokens");
+                    b.ToTable("PasswordResetTokens", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.RefreshToken", b =>
@@ -910,7 +967,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Room", b =>
@@ -937,9 +997,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("HostelId");
+                    b.HasIndex("HostelId", "RoomNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Rooms_Hostel_RoomNumber");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("Rooms", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Student", b =>
@@ -951,7 +1016,7 @@ namespace CampusServicesPortal.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ContactDetails")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime?>("DeactivatedAt")
                         .HasColumnType("datetime2");
@@ -974,19 +1039,31 @@ namespace CampusServicesPortal.Migrations
 
                     b.Property<string>("IndexNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContactDetails")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Students_ContactDetails")
+                        .HasFilter("[ContactDetails] IS NOT NULL");
+
                     b.HasIndex("FacultyId");
+
+                    b.HasIndex("IndexNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Students_IndexNumber");
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.StudentAddress", b =>
@@ -1032,7 +1109,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudentAddresses");
+                    b.ToTable("StudentAddresses", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.StudentMasterList", b =>
@@ -1063,7 +1143,10 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("IndexNumber")
                         .IsUnique();
 
-                    b.ToTable("StudentMasterLists");
+                    b.ToTable("StudentMasterLists", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.StudentPhoneNumber", b =>
@@ -1082,7 +1165,7 @@ namespace CampusServicesPortal.Migrations
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PhoneType")
                         .IsRequired()
@@ -1093,9 +1176,16 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_StudentPhoneNumbers_PhoneNumber");
+
                     b.HasIndex("StudentId");
 
-                    b.ToTable("StudentPhoneNumbers");
+                    b.ToTable("StudentPhoneNumbers", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.SystemSetting", b =>
@@ -1111,7 +1201,10 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("SettingKey");
 
-                    b.ToTable("SystemSettings");
+                    b.ToTable("SystemSettings", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
 
                     b.HasData(
                         new
@@ -1185,7 +1278,10 @@ namespace CampusServicesPortal.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.Venue", b =>
@@ -1214,7 +1310,14 @@ namespace CampusServicesPortal.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Venues");
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Venues_Name");
+
+                    b.ToTable("Venues", t =>
+                        {
+                            t.ExcludeFromMigrations();
+                        });
                 });
 
             modelBuilder.Entity("CampusServicesPortal.Models.CertificateRequest", b =>
