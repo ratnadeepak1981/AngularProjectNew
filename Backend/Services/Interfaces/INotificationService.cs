@@ -1,5 +1,6 @@
 ﻿using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.MasterData;
+using CampusServicesPortal.DTOs.Responses.Notifications;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Wrappers;
 using System.Collections.Generic;
@@ -9,8 +10,7 @@ namespace CampusServicesPortal.Services.Interfaces
 {
     public interface INotificationService
     {
-
-        Task<IEnumerable<Notification>> GetAllNotificationsAsync();
+        Task<IEnumerable<AdminNotificationResponseDto>> GetAllNotificationsAsync();
         // Student Channel: Fetch logs arranged in reverse chronological sequence [PDF: 0.1.16]
         Task<ServiceResult<IEnumerable<NotificationResponseDto>>> GetStudentNotificationsAsync(int studentId);
 
