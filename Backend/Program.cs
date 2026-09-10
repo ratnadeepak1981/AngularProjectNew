@@ -20,7 +20,7 @@ namespace CampusServicesPortal
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -257,106 +257,50 @@ namespace CampusServicesPortal
             app.MapControllers();
 
             // Seed initial Audit Log trail if empty & ensure database schema extensions
+            // Apply migrations and seed data automatically if required
             using (var scope = app.Services.CreateScope())
             {
+                var services = scope.ServiceProvider;
                 try
                 {
-                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    var context = services.GetRequiredService<AppDbContext>();
+                    context.Database.Migrate();
 
-                    // Ensure database schema extensions (LabBookingTimeSlots table & TimeSlotId column) exist
-                    context.Database.ExecuteSqlRaw(@"
-                        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LabBookingTimeSlots')
-                        BEGIN
-                            CREATE TABLE [LabBookingTimeSlots] (
-                                [Id] INT IDENTITY(1,1) NOT NULL,
-                                [LabId] INT NOT NULL,
-                                [StartTime] NVARCHAR(20) NOT NULL,
-                                [EndTime] NVARCHAR(20) NOT NULL,
-                                [IsActive] BIT NOT NULL DEFAULT 1,
-                                [DisplayOrder] INT NOT NULL DEFAULT 0,
-                                [CreatedAt] DATETIME2 NOT NULL DEFAULT GETUTCDATE(),
-                                [UpdatedAt] DATETIME2 NULL,
-                                CONSTRAINT [PK_LabBookingTimeSlots] PRIMARY KEY ([Id]),
-                                CONSTRAINT [FK_LabBookingTimeSlots_Labs_LabId] FOREIGN KEY ([LabId]) REFERENCES [Labs] ([Id]) ON DELETE CASCADE
-                            );
+                    // 🌟 ONE-TIME USE ONLY: Direct execution using your top-generated 'testHash' variable
+                    await Task.Run(async () =>
+                    {
+                        var dbConnection = context.Database.GetDbConnection();
+                        using var command = dbConnection.CreateCommand();
 
-                            CREATE UNIQUE INDEX [UX_LabBookingTimeSlots_Lab_TimeRange] 
-                            ON [LabBookingTimeSlots] ([LabId], [StartTime], [EndTime]);
-                        END;
-
-                        IF NOT EXISTS (
-                            SELECT * FROM sys.columns 
-                            WHERE object_id = OBJECT_ID(N'[LabBookings]') AND name = N'TimeSlotId'
-                        )
-                        BEGIN
-                            ALTER TABLE [LabBookings] ADD [TimeSlotId] INT NULL;
-
-                            IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_LabBookings_LabBookingTimeSlots_TimeSlotId')
+                        command.CommandText = @"
+                            IF NOT EXISTS (SELECT 1 FROM [Users] WHERE [Email] = 'admin@campus.edu')
                             BEGIN
-                                ALTER TABLE [LabBookings] ADD CONSTRAINT [FK_LabBookings_LabBookingTimeSlots_TimeSlotId] 
-                                FOREIGN KEY ([TimeSlotId]) REFERENCES [LabBookingTimeSlots] ([Id]) ON DELETE NO ACTION;
-                            END
-                        END;
+                                INSERT INTO [Users] 
+                                    ([Email], [PasswordHash], [Role], [IsActive], [CreatedAt], [LastPasswordChangedAt], [MustChangePassword], [FailedLoginAttempts])
+                                VALUES 
+                                    ('admin@campus.edu', @GeneratedHash, 'Admin', 1, GETUTCDATE(), GETUTCDATE(), 0, 0);
+                            END";
 
-                        IF EXISTS (SELECT * FROM [Labs])
-                        BEGIN
-                            INSERT INTO [LabBookingTimeSlots] ([LabId], [StartTime], [EndTime], [IsActive], [DisplayOrder], [CreatedAt])
-                            SELECT [l].[Id], N'09:00 AM', N'11:00 AM', 1, 1, GETUTCDATE()
-                            FROM [Labs] AS [l]
-                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id])
-                            UNION ALL
-                            SELECT [l].[Id], N'11:00 AM', N'01:00 PM', 1, 2, GETUTCDATE()
-                            FROM [Labs] AS [l]
-                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id])
-                            UNION ALL
-                            SELECT [l].[Id], N'02:00 PM', N'04:00 PM', 1, 3, GETUTCDATE()
-                            FROM [Labs] AS [l]
-                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id])
-                            UNION ALL
-                            SELECT [l].[Id], N'04:00 PM', N'06:00 PM', 1, 4, GETUTCDATE()
-                            FROM [Labs] AS [l]
-                            WHERE NOT EXISTS (SELECT 1 FROM [LabBookingTimeSlots] [ts] WHERE [ts].[LabId] = [l].[Id]);
-                        END;
-                    ");
+                        // 🔒 Safely maps your top-level 'testHash' string variable directly to the SQL text command
+                        var hashParameter = command.CreateParameter();
+                        hashParameter.ParameterName = "@GeneratedHash";
+                        hashParameter.Value = testHash ?? (object)DBNull.Value; // Fallback to avoid empty parameter errors
+                        command.Parameters.Add(hashParameter);
 
-                    AuditLogDataSeeder.SeedAuditLogsAsync(context).GetAwaiter().GetResult();
+                        if (dbConnection.State == System.Data.ConnectionState.Closed)
+                            await dbConnection.OpenAsync();
 
-                    // Normalize student ContactDetails to store only the clean primary mobile
-                    var studentsWithPhones = context.Students.Include(s => s.PhoneNumbers).ToList();
-                    bool modified = false;
-                    foreach (var st in studentsWithPhones)
-                    {
-                        var primaryPhone = st.PhoneNumbers.FirstOrDefault(p => p.IsPrimary) ?? st.PhoneNumbers.FirstOrDefault();
-                        if (primaryPhone != null && !string.IsNullOrWhiteSpace(primaryPhone.PhoneNumber))
-                        {
-                            string clean = primaryPhone.PhoneNumber.Trim();
-                            if (st.ContactDetails != clean)
-                            {
-                                st.ContactDetails = clean;
-                                modified = true;
-                            }
-                        }
-                        else if (!string.IsNullOrWhiteSpace(st.ContactDetails) && (st.ContactDetails.Contains("|") || st.ContactDetails.Contains(":")))
-                        {
-                            var match = System.Text.RegularExpressions.Regex.Match(st.ContactDetails, @"\+?\d[\d\s\-]{7,15}\d");
-                            if (match.Success)
-                            {
-                                st.ContactDetails = match.Value.Trim();
-                                modified = true;
-                            }
-                        }
-                    }
-                    if (modified)
-                    {
-                        context.SaveChanges();
-                    }
+                        await command.ExecuteNonQueryAsync();
+                        Console.WriteLine(">>>> [ONE-TIME SEED]: Verified and injected Admin account using dynamic runtime hash parameters.");
+                    });
                 }
                 catch (Exception ex)
                 {
-                    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "Error occurred during initial database seeding.");
+                    Console.WriteLine($"Database Migration or Seeding Error context: {ex.Message}");
                 }
             }
+
+            app.Run();
 
             app.Run();
         }
