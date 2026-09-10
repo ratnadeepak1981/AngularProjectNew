@@ -35,6 +35,16 @@ namespace CampusServicesPortal.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<FeePayment>> GetAllFeeAssignmentsAsync()
+        {
+            return await _context.FeePayments
+                .Include(f => f.FeeType)
+                .Include(f => f.Student)
+                .OrderByDescending(f => f.Id)
+                .ToListAsync();
+        }
+
+
         public async Task<IEnumerable<Student>> GetStudentsByFacultyIdAsync(int facultyId)
         {
             // Used to retrieve target student groups for bulk faculty fee assignment runs [PDF: 0.1.15]

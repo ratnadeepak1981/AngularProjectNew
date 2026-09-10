@@ -366,6 +366,13 @@ namespace CampusServicesPortal.Services.Implementations
             return ServiceResult<IEnumerable<FeePaymentResponseDto>>.Success(mappedDtos, 200);
         }
 
+        public async Task<ServiceResult<IEnumerable<FeePaymentResponseDto>>> GetAllFeeAssignmentsAsync()
+        {
+            var historyRecords = await _billingRepo.GetAllFeeAssignmentsAsync();
+            var mappedDtos = historyRecords.Select(MapToResponseDto);
+            return ServiceResult<IEnumerable<FeePaymentResponseDto>>.Success(mappedDtos, 200);
+        }
+
         private static FeePaymentResponseDto MapToResponseDto(FeePayment src)
         {
             return new FeePaymentResponseDto

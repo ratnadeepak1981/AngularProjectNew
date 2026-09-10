@@ -114,6 +114,13 @@ namespace CampusServicesPortal.Middleware
             if (sqlMessage.Contains("UX_Events_Venue_Schedule"))
                 return "Scheduling Collision! This physical venue is already booked for another event at the specified date and time.";
 
+            if (sqlMessage.Contains("IX_Students_IndexNumber"))
+                return "This Student Index Number is already allocated to an active profile container.";
+
+            if (sqlMessage.Contains("IX_Students_ContactDetails"))
+                return "This primary contact telephone number string is already registered to another user profile.";
+
+
             return "A data registration conflict occurred. A record with duplicate unique tracking fields already exists.";
         }
     }

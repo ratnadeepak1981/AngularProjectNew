@@ -7,6 +7,9 @@ namespace CampusServicesPortal.Repositories.Interfaces
     public interface IBillingRepository
     {
         Task<FeePayment?> GetFeePaymentByIdAsync(int id);
+
+        Task<IEnumerable<FeePayment>> GetAllFeeAssignmentsAsync();
+
         Task<IEnumerable<FeePayment>> GetOutstandingFeesByStudentIdAsync(int studentId);
         Task<IEnumerable<Student>> GetStudentsByFacultyIdAsync(int facultyId);
         Task AddFeePaymentAsync(FeePayment payment);

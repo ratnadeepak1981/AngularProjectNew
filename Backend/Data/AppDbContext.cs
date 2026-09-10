@@ -94,6 +94,43 @@ namespace CampusServicesPortal.Data
             base.OnModelCreating(modelBuilder);
 
             // ========================================================
+            // TEMPORARY BYPASS: DO NOT CREATE TABLES (ALREADY IN DB)
+            // ========================================================
+            /*
+            modelBuilder.Entity<User>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<StudentMasterList>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Student>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<StudentPhoneNumber>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<StudentAddress>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<PasswordResetToken>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<PasswordHistory>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<RefreshToken>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Hostel>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Room>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<HostelApplication>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Lab>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<LabSeat>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<LabBooking>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<LabBookingTimeSlot>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Venue>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Event>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<EventRegistration>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<ComplaintCategory>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Complaint>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<CertificateRequest>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<FeeType>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<FeePayment>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Notification>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<Faculty>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<CertificateType>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<SystemSetting>().ToTable(t => t.ExcludeFromMigrations());
+            modelBuilder.Entity<AuditLog>().ToTable(t => t.ExcludeFromMigrations());
+            */
+            // ... The rest of your existing configurations follow here ...
+
+
+
+            // ========================================================
             // MODULE 1: STUDENT PROFILE & AUTHENTICATION
             // ========================================================
 
@@ -501,7 +538,7 @@ namespace CampusServicesPortal.Data
                     IsActive = true
                 }
             );
-
+           
             // Certificate Types
             modelBuilder.Entity<CertificateType>().HasData(
                 new CertificateType
@@ -517,7 +554,7 @@ namespace CampusServicesPortal.Data
                     IsActive = true
                 }
             );
-
+            
 
             // ========================================================================
             // 🌟 ARCHITECTURAL SECURITY UPDATE: SYSTEM-WIDE UNIQUENESS CONSTRAINTS
@@ -560,6 +597,23 @@ namespace CampusServicesPortal.Data
                 .HasIndex(r => new { r.HostelId, r.RoomNumber }) // Adjust property name to 'Number' if your model uses that name
                 .HasDatabaseName("UX_Rooms_Hostel_RoomNumber")
                 .IsUnique();
+
+            // ========================================================================
+            // 🔒 COMPREHENSIVE REPAIR: ADDITIONAL PROFILE CONSTRAINTS (Module 1)
+            // ========================================================================
+
+            // Enforce that active student profile index strings remain completely distinct
+            modelBuilder.Entity<Student>()
+                .HasIndex(s => s.IndexNumber)
+                .HasDatabaseName("IX_Students_IndexNumber")
+                .IsUnique();
+
+            // Enforce that active student contact strings cannot be duplicated across rows
+            modelBuilder.Entity<Student>()
+                .HasIndex(s => s.ContactDetails)
+                .HasDatabaseName("IX_Students_ContactDetails")
+                .IsUnique();
+
 
         }
     }
