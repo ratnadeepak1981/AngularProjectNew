@@ -1,8 +1,9 @@
-using CampusServicesPortal.DTOs.Requests.Nortifcation;
+﻿using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.MasterData;
+using CampusServicesPortal.DTOs.Responses.Notifications; // Core link to the response DTO
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories;
-using CampusServicesPortal.Repositories.Interfaces; // Fixed namespace mapping parameter references
+using CampusServicesPortal.Repositories.Interfaces;
 using CampusServicesPortal.Services.Interfaces;
 using CampusServicesPortal.Wrappers;
 using System;
@@ -21,12 +22,27 @@ namespace CampusServicesPortal.Services.Implementations
             _repository = repository;
         }
 
-        public async Task<IEnumerable<Notification>> GetAllNotificationsAsync()
+        // 🌟 UPDATED ADMIN METHOD: Transforms repository model data into the clean admin response DTO
+        public async Task<IEnumerable<AdminNotificationResponseDto>> GetAllNotificationsAsync()
         {
-            // Calls the new repository tracking data query method we created
-            return await _repository.GetAllAsync();
+            // Calls the new repository method that handles the native database SQL Join
+            var notificationsWithStudents = await _repository.GetAllWithStudentDetailsAsync();
+
+            // Maps the data fields so the Admin UI receives the IndexNumber string
+            var response = notificationsWithStudents.Select(n => new AdminNotificationResponseDto
+            {
+                Id = n.Id,
+                IndexNumber = n.IndexNumber, // String display mapping
+                Type = n.Type,
+                Message = n.Message,
+                IsRead = n.IsRead,
+                CreatedAt = n.CreatedAt
+            });
+
+            return response;
         }
 
+        // 🛡️ STUDENT CHANNEL: Remains safely untouched and uses the standard StudentId property
         public async Task<ServiceResult<IEnumerable<NotificationResponseDto>>> GetStudentNotificationsAsync(int studentId)
         {
             var notifications = await _repository.GetByStudentIdAsync(studentId);
@@ -56,7 +72,6 @@ namespace CampusServicesPortal.Services.Implementations
 
             notification.IsRead = true;
 
-            // Stage modification parameters inside EF tracking memory pool context
             await _repository.UpdateAsync(notification);
             await _repository.SaveChangesAsync();
 
@@ -74,12 +89,7 @@ namespace CampusServicesPortal.Services.Implementations
                 CreatedAt = DateTime.UtcNow
             };
 
-            // 1. Stage the notification insertion into the shared AppDbContext cache pool [INDEX]
             await _repository.AddAsync(notification);
-
-            // 2. FIXED: REMOVED the redundant intermediate SaveChangesAsync() call [INDEX]
-            // This leaves the parent service orchestrator (e.g., HostelService) to commit everything 
-            // together in a single transaction round-trip! [INDEX]
 
             return ServiceResult<object>.Success(new { Message = "Internal system event notification staged safely." }, 201);
         }

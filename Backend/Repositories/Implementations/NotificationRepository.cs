@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -33,6 +33,29 @@ namespace CampusServicesPortal.Repositories
                 .OrderByDescending(n => n.Id) // Sorts system audit ledger latest logs first
                 .ToListAsync();
         }
+
+        public async Task<IEnumerable<NotificationWithStudent>> GetAllWithStudentDetailsAsync()
+        {
+            return await _context.Notifications
+                .AsNoTracking()
+                .Join(
+                    _context.Students,
+                    notification => notification.StudentId, // Matches StudentId in Notifications
+                    student => student.Id,                  // 🌟 CHANGED: Links directly to s.Id just like your working SQL!
+                    (notification, student) => new NotificationWithStudent
+                    {
+                        Id = notification.Id,
+                        IndexNumber = student.IndexNumber, // Pulls the index string perfectly for both students
+                        Type = notification.Type,
+                        Message = notification.Message,
+                        IsRead = notification.IsRead,
+                        CreatedAt = notification.CreatedAt
+                    }
+                )
+                .OrderByDescending(n => n.Id) // Orders by latest logs first
+                .ToListAsync();
+        }
+
 
         public async Task<Notification?> GetByIdAndStudentIdAsync(int id, int studentId)
         {

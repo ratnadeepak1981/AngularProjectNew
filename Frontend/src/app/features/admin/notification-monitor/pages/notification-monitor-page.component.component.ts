@@ -111,7 +111,7 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
 
   // Table Column Definitions
   public readonly tableColumns: TableColumn<any>[] = [
-    { key: 'targetStudentText', header: 'Target Student ID / Index', sortable: true, filterable: true },
+    { key: 'targetStudentText', header: 'Target Student Index No', sortable: true, filterable: true },
     {
       key: 'type',
       header: 'Notification Type',
@@ -170,7 +170,7 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
   public readonly displayAuditRecords = computed(() => {
     let list = this.auditNotifications().map((n) => ({
       ...n,
-      targetStudentText: `Student #${n.studentId}`,
+      targetStudentText: `${n.indexNumber}`,
       deliveryStatusText: n.isRead ? 'READ' : 'UNREAD / DISPATCHED',
       formattedDate: this.formatDate(n.createdAt),
     }));
