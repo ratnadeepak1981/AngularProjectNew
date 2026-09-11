@@ -6,6 +6,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { StudentMaster } from '../../../core/models/student/student-master.model';
+import { Faculty } from '../../../core/models/faculty/faculty.model';
 import { RegisterStudentRequest } from '../../../core/models/student/student-registration.model';
 import { ApiResponse } from '../../../core/models/common/api-response.model';
 import { VerifyEmailRequest } from '../../../core/models/auth/verify-email-request.model';
@@ -61,6 +62,10 @@ export class StudentRegistrationComponent implements OnInit {
   public readonly verificationStatusType = signal<'success' | 'error' | null>(null);
   public readonly registrationErrorMessage = signal<string | null>(null);
 
+  // Faculty Dropdown Data (loaded from API)
+  public readonly faculties = signal<Faculty[]>([]);
+  public readonly isFacultiesLoading = signal<boolean>(false);
+
   // Password Visibility Toggle Signals
   public readonly showPassword = signal<boolean>(false);
   public readonly showConfirmPassword = signal<boolean>(false);
@@ -84,6 +89,26 @@ export class StudentRegistrationComponent implements OnInit {
       },
       error: () => {},
     });
+
+    // Load faculties from database via API
+    this.loadFaculties();
+  }
+
+  private loadFaculties(): void {
+    this.isFacultiesLoading.set(true);
+    this.apiService.get<ApiResponse<Faculty[]>>(this.apiService.routes.faculties.list).subscribe({
+      next: (res) => {
+        const data = res?.data || (res as any);
+        if (Array.isArray(data)) {
+          this.faculties.set(data.filter((f: Faculty) => f.isActive !== false));
+        }
+        this.isFacultiesLoading.set(false);
+      },
+      error: () => {
+        this.isFacultiesLoading.set(false);
+        this.toast.error('Failed to load faculties. Please refresh the page.');
+      },
+    });
   }
 
   // Forms
@@ -103,7 +128,7 @@ export class StudentRegistrationComponent implements OnInit {
       postalCode: [''],
       country: ['Sri Lanka'],
     }),
-    facultyId: [1, [Validators.required]],
+    facultyId: ['', [Validators.required]],
     password: ['', [Validators.required]],
     confirmPassword: ['', [Validators.required]],
   });

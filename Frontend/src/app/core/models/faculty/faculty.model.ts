@@ -3,4 +3,5 @@ export interface Faculty {
   name: string;
   code?: string;
   description?: string;
+  isActive?: boolean;
 }

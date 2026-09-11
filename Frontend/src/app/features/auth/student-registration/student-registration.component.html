@@ -118,10 +118,16 @@
             formControlName="facultyId"
             class="w-full h-10 px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white font-medium cursor-pointer shadow-2xs"
           >
-            <option [value]="1">Faculty of Computing & Technology</option>
-            <option [value]="2">Faculty of Science</option>
-            <option [value]="3">Faculty of Commerce & Management</option>
-            <option [value]="4">Faculty of Humanities</option>
+            @if (isFacultiesLoading()) {
+              <option [value]="''" disabled>Loading faculties...</option>
+            } @else if (faculties().length === 0) {
+              <option [value]="''" disabled>No faculties available</option>
+            } @else {
+              <option [value]="''" disabled>-- Select Faculty --</option>
+              @for (faculty of faculties(); track faculty.id) {
+                <option [value]="faculty.id">{{ faculty.name }}</option>
+              }
+            }
           </select>
         </div>
       </div>

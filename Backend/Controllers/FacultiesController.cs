@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CampusServicesPortal.DTOs.Requests.MasterData;
@@ -18,6 +18,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/faculties — Fetch all university faculties [PDF: 0.1.17]
+        [Authorize(Roles = "Admin,Student")]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
