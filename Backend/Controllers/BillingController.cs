@@ -25,15 +25,15 @@ namespace CampusServicesPortal.Controllers
         [HttpGet("ledger")]
         public async Task<IActionResult> GetMyLedger([FromQuery] int? studentId) // cite: 1
         {
-            // FIX: If the logged-in user is an Admin and no specific studentId is provided, fetch ALL records!
-            if (User.IsInRole("Admin") && !studentId.HasValue)
+            // FIX: If the logged-in user is an Admin/SuperAdmin and no specific studentId is provided, fetch ALL records!
+            if ((User.IsInRole("Admin") || User.IsInRole("SuperAdmin")) && !studentId.HasValue)
             {
                 var globalResult = await _billingService.GetAllFeeAssignmentsAsync();
                 return ProcessServiceResult(globalResult, "Global ledger records retrieved successfully.");
             }
 
             // Keeps your existing single-student lookup logic completely intact for students
-            int targetStudentId = (User.IsInRole("Admin") && studentId.HasValue && studentId.Value > 0)
+            int targetStudentId = ((User.IsInRole("Admin") || User.IsInRole("SuperAdmin")) && studentId.HasValue && studentId.Value > 0)
                 ? studentId.Value
                 : GetCurrentStudentId(); // cite: 1
 
@@ -61,7 +61,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/billing/fees/assign — Admin: Allocate standard fees (Single or Faculty Bulk Run) [PDF: 0.1.15]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("fees/assign")]
         public async Task<IActionResult> AssignFee([FromBody] AssignFeeDto request)
         {
@@ -70,7 +70,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/billing/fines — Admin: Log a laboratory fine sanction track [PDF: 0.1.16]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("fines")]
         public async Task<IActionResult> IssueFine([FromBody] GenerateLabFineDto request)
         {

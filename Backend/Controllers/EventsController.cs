@@ -41,7 +41,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/events — Admin: Schedule an event with layout overlap protections (Rule #6 & #13)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventDto request)
         {
@@ -68,7 +68,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/events/{id}/registrations — Admin: View student registrations for an event
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("{id}/registrations")]
         public async Task<IActionResult> GetEventRegistrations(int id)
         {

@@ -195,6 +195,10 @@ namespace CampusServicesPortal
                 CampusServicesPortal.Services.Interfaces.IReportService,
                 CampusServicesPortal.Services.Implementations.ReportService>();
 
+            // Admin User Management Module (SuperAdmin)
+            builder.Services.AddScoped<IAdminManagementRepository, AdminManagementRepository>();
+            builder.Services.AddScoped<IAdminManagementService, AdminManagementService>();
+
             // Module 3 & 4 Hold Sweeper Daemon Worker [PDF: 0.1.12, 0.1.19]
             builder.Services.AddHostedService<BookingExpiryWorker>();
 
@@ -248,6 +252,7 @@ namespace CampusServicesPortal
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
+            app.UseMiddleware<CampusServicesPortal.Middleware.ExceptionHandlingMiddleware>();
             app.UseHttpsRedirection();
 
             // 🛠️ Fixed Order: UseAuthentication MUST be configured ahead of UseAuthorization middleware
@@ -256,51 +261,66 @@ namespace CampusServicesPortal
 
             app.MapControllers();
 
-            // Seed initial Audit Log trail if empty & ensure database schema extensions
-            // Apply migrations and seed data automatically if required
+            // Seed / Upgrade SuperAdmin account automatically on startup
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
+                var context = services.GetRequiredService<AppDbContext>();
+
+                // 1. Attempt EF Core Schema Migrations (caught independently so duplicate key migration issues won't block seeding)
                 try
                 {
-                    var context = services.GetRequiredService<AppDbContext>();
                     context.Database.Migrate();
-
-                    // 🌟 ONE-TIME USE ONLY: Direct execution using your top-generated 'testHash' variable
-                    await Task.Run(async () =>
-                    {
-                        var dbConnection = context.Database.GetDbConnection();
-                        using var command = dbConnection.CreateCommand();
-
-                        command.CommandText = @"
-                            IF NOT EXISTS (SELECT 1 FROM [Users] WHERE [Email] = 'admin@campus.edu')
-                            BEGIN
-                                INSERT INTO [Users] 
-                                    ([Email], [PasswordHash], [Role], [IsActive], [CreatedAt], [LastPasswordChangedAt], [MustChangePassword], [FailedLoginAttempts])
-                                VALUES 
-                                    ('admin@campus.edu', @GeneratedHash, 'Admin', 1, GETUTCDATE(), GETUTCDATE(), 0, 0);
-                            END";
-
-                        // 🔒 Safely maps your top-level 'testHash' string variable directly to the SQL text command
-                        var hashParameter = command.CreateParameter();
-                        hashParameter.ParameterName = "@GeneratedHash";
-                        hashParameter.Value = testHash ?? (object)DBNull.Value; // Fallback to avoid empty parameter errors
-                        command.Parameters.Add(hashParameter);
-
-                        if (dbConnection.State == System.Data.ConnectionState.Closed)
-                            await dbConnection.OpenAsync();
-
-                        await command.ExecuteNonQueryAsync();
-                        Console.WriteLine(">>>> [ONE-TIME SEED]: Verified and injected Admin account using dynamic runtime hash parameters.");
-                    });
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Database Migration or Seeding Error context: {ex.Message}");
+                    Console.WriteLine($">>>> [DATABASE MIGRATION NOTICE]: {ex.Message}");
+                }
+
+                // 2. SuperAdmin Account Seeding & Upgrade (guaranteed to run)
+                try
+                {
+                    var superAdmins = context.Users.Where(u => u.Role == "SuperAdmin").ToList();
+                    if (!superAdmins.Any())
+                    {
+                        var existingAdmins = context.Users.Where(u => u.Role == "Admin").ToList();
+                        if (existingAdmins.Any())
+                        {
+                            foreach (var admin in existingAdmins)
+                            {
+                                admin.Role = "SuperAdmin";
+                            }
+                            context.SaveChanges();
+                            Console.WriteLine($">>>> [SUPERADMIN SEED SUCCESS]: Upgraded {existingAdmins.Count} existing Admin account(s) to SuperAdmin: {string.Join(", ", existingAdmins.Select(a => a.Email))}.");
+                        }
+                        else
+                        {
+                            var defaultAdmin = new CampusServicesPortal.Models.User
+                            {
+                                Email = "admin@campus.edu",
+                                PasswordHash = testHash,
+                                Role = "SuperAdmin",
+                                IsActive = true,
+                                CreatedAt = DateTime.UtcNow,
+                                LastPasswordChangedAt = DateTime.UtcNow,
+                                MustChangePassword = false,
+                                FailedLoginAttempts = 0
+                            };
+                            context.Users.Add(defaultAdmin);
+                            context.SaveChanges();
+                            Console.WriteLine(">>>> [SUPERADMIN SEED SUCCESS]: Created default SuperAdmin account 'admin@campus.edu'.");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($">>>> [SUPERADMIN SEED VERIFIED]: Active SuperAdmin account(s): {string.Join(", ", superAdmins.Select(u => u.Email))}.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($">>>> [SUPERADMIN SEED ERROR]: {ex.Message}");
                 }
             }
-
-            app.Run();
 
             app.Run();
         }

@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { ApiResponse } from '../../../../core/models/common/api-response.model';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 
 import { HostelRoom } from '../../../../core/models/hostel/room.model';
 import { HostelBuilding } from '../../../../core/models/hostel/hostel.model';
@@ -88,39 +90,48 @@ export class HostelManagementService {
   }
 
   createHostel(name: string): Observable<ApiResponse<HostelBuilding>> {
-    return this.apiService.post<ApiResponse<HostelBuilding>>(this.apiService.routes.hostel.hostels, {
-      name,
-    });
+    return this.apiService.post<ApiResponse<HostelBuilding>>(
+      this.apiService.routes.hostel.hostels,
+      { name },
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   updateHostel(id: number, name: string, location: string = 'Campus Main', isActive: boolean = true): Observable<ApiResponse<HostelBuilding>> {
-    return this.apiService.put<ApiResponse<HostelBuilding>>(this.apiService.routes.hostel.updateHostel(id), {
-      name,
-      location,
-      isActive,
-    });
+    return this.apiService.put<ApiResponse<HostelBuilding>>(
+      this.apiService.routes.hostel.updateHostel(id),
+      { name, location, isActive },
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   deleteHostel(id: number): Observable<ApiResponse<any>> {
-    return this.apiService.delete<ApiResponse<any>>(this.apiService.routes.hostel.deleteHostel(id));
+    return this.apiService.delete<ApiResponse<any>>(
+      this.apiService.routes.hostel.deleteHostel(id),
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   createRoom(hostelId: number, roomNumber: string, maxCapacity: number): Observable<ApiResponse<HostelRoom>> {
-    return this.apiService.post<ApiResponse<HostelRoom>>(this.apiService.routes.hostel.rooms(hostelId), {
-      roomNumber,
-      maxCapacity,
-    });
+    return this.apiService.post<ApiResponse<HostelRoom>>(
+      this.apiService.routes.hostel.rooms(hostelId),
+      { roomNumber, maxCapacity },
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   updateRoom(id: number, roomNumber: string, maxCapacity: number, isActive: boolean = true): Observable<ApiResponse<HostelRoom>> {
-    return this.apiService.put<ApiResponse<HostelRoom>>(this.apiService.routes.hostel.updateRoom(id), {
-      roomNumber,
-      maxCapacity,
-      isActive,
-    });
+    return this.apiService.put<ApiResponse<HostelRoom>>(
+      this.apiService.routes.hostel.updateRoom(id),
+      { roomNumber, maxCapacity, isActive },
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   deleteRoom(id: number): Observable<ApiResponse<any>> {
-    return this.apiService.delete<ApiResponse<any>>(this.apiService.routes.hostel.deleteRoom(id));
+    return this.apiService.delete<ApiResponse<any>>(
+      this.apiService.routes.hostel.deleteRoom(id),
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 }

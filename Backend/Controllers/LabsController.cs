@@ -25,7 +25,7 @@ public class LabsController : ControllerBase
 
     // POST /api/labs - Rule 4: Admin role authorization guard enforced server-side
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> CreateLab([FromBody] CreateLabRequest request)
     {
         var success = await _labService.CreateLabAsync(request.Name, request.LabType, request.Capacity, request.TotalRows, request.TotalColumns);
@@ -35,7 +35,7 @@ public class LabsController : ControllerBase
 
     // POST /api/labs/{id}/seats - Admin only layout configuration setup
     [HttpPost("{id}/seats")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> AddSeat(int id, [FromBody] AddSeatRequest request)
     {
         try
@@ -51,7 +51,7 @@ public class LabsController : ControllerBase
 
     // DELETE /api/labs/{id}/seats/{seatId} - Rule 8: Intercepts if active dependencies exist
     [HttpDelete("{id}/seats/{seatId}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> RemoveSeat(int id, int seatId)
     {
         try
@@ -69,7 +69,7 @@ public class LabsController : ControllerBase
 
     // GET /api/labs/{id}/time-slots
     [HttpGet("{id}/time-slots")]
-    [Authorize(Roles = "Admin,Student")]
+    [Authorize(Roles = "Admin,SuperAdmin,Student")]
     public async Task<IActionResult> GetTimeSlots(int id, [FromQuery] bool activeOnly = false)
     {
         var slots = await _labService.GetLabTimeSlotsAsync(id, activeOnly);
@@ -78,7 +78,7 @@ public class LabsController : ControllerBase
 
     // GET /api/labs/{id}/time-slots/available?date={date}
     [HttpGet("{id}/time-slots/available")]
-    [Authorize(Roles = "Admin,Student")]
+    [Authorize(Roles = "Admin,SuperAdmin,Student")]
     public async Task<IActionResult> GetAvailableTimeSlots(int id, [FromQuery] DateTime? date)
     {
         var targetDate = date ?? DateTime.Today;
@@ -88,7 +88,7 @@ public class LabsController : ControllerBase
 
     // POST /api/labs/{id}/time-slots
     [HttpPost("{id}/time-slots")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> CreateTimeSlot(int id, [FromBody] CampusServicesPortal.DTOs.Requests.Labs.CreateLabTimeSlotDto request)
     {
         try
@@ -104,7 +104,7 @@ public class LabsController : ControllerBase
 
     // PUT /api/labs/time-slots/{slotId}
     [HttpPut("time-slots/{slotId}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> UpdateTimeSlot(int slotId, [FromBody] CampusServicesPortal.DTOs.Requests.Labs.UpdateLabTimeSlotDto request)
     {
         try
@@ -119,7 +119,7 @@ public class LabsController : ControllerBase
 
     // PATCH /api/labs/time-slots/{slotId}/toggle-active
     [HttpPatch("time-slots/{slotId}/toggle-active")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> ToggleTimeSlotActive(int slotId, [FromBody] ToggleTimeSlotActiveRequest request)
     {
         try
@@ -132,7 +132,7 @@ public class LabsController : ControllerBase
 
     // DELETE /api/labs/time-slots/{slotId}
     [HttpDelete("time-slots/{slotId}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<IActionResult> DeleteTimeSlot(int slotId)
     {
         try

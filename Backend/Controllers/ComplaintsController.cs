@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -43,7 +43,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/complaints — Admin: Review structural workflows [PDF: 0.1.7]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet]
         public async Task<IActionResult> GetComplaints([FromQuery] string? status)
         {
@@ -52,7 +52,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/complaints/{id}/status — Admin: Update grievance statuses [PDF: 0.1.7]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id:int}/status")]
         public async Task<IActionResult> UpdateComplaintStatus(int id, [FromBody] UpdateComplaintStatusDto request)
         {

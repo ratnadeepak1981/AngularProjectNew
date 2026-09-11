@@ -33,7 +33,7 @@ namespace CampusServicesPortal.Controllers
 
         // GET /api/student-master?search= [BRD Page 4]
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> SearchMasterList([FromQuery] string? search)
         {
             var result = await _studentService.SearchMasterRecordsAsync(search);
@@ -42,7 +42,7 @@ namespace CampusServicesPortal.Controllers
 
         // POST /api/student-master/import [BRD Page 4]
         [HttpPost("import")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         public async Task<IActionResult> BulkImportMasterList(IFormFile file)
         {
             var result = await _studentService.BulkImportMasterRecordsAsync(file);

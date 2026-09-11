@@ -28,7 +28,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/fee-types - Admin create new fee type (BRD Page 15)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost]
         public async Task<IActionResult> CreateFeeType([FromBody] CreateFeeTypeDto request)
         {
@@ -37,7 +37,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/fee-types/{id} - Admin amend fee type details (BRD Page 15)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateFeeType(int id, [FromBody] UpdateFeeTypeDto request)
         {
@@ -46,7 +46,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/fee-types/{id}/toggle-status - Admin toggle active/deactive status
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id:int}/toggle-status")]
         public async Task<IActionResult> ToggleFeeTypeStatus(int id)
         {
@@ -55,7 +55,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // DELETE /api/fee-types/{id} - Admin soft-deactivate fee type (BRD Page 15)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteFeeType(int id)
         {

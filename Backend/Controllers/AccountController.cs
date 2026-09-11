@@ -54,7 +54,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/account/deactivate-check/{studentId} or /api/auth/deactivate-check/{studentId}
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("deactivate-check/{studentId}")]
         public async Task<IActionResult> CheckDeactivation(int studentId)
         {
@@ -63,7 +63,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/account/deactivate/{studentId} or /api/auth/deactivate/{studentId}
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("deactivate/{studentId}")]
         public async Task<IActionResult> DeactivateAccount(int studentId)
         {
@@ -72,7 +72,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/account/reactivate/{studentId} or /api/auth/reactivate/{studentId}
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("reactivate/{studentId}")]
         public async Task<IActionResult> ReactivateAccount(int studentId)
         {
