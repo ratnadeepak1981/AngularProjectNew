@@ -322,11 +322,11 @@ namespace CampusServicesPortal.Repositories.Implementations
         }
 
 
-        // Rule 11: Block if student has an active hostel allocation ('Approved' or 'Room Assigned') [Index 0.1.5, 0.1.19]
+        // Rule 11: Block if student has an active hostel allocation ('Approved' or 'Room Assigned' or 'RoomAssigned') [Index 0.1.5, 0.1.19]
         public async Task<bool> HasActiveHostelAllocationAsync(int studentId)
         {
             return await _context.HostelApplications
-                .AnyAsync(h => h.StudentId == studentId && (h.Status == "Approved" || h.Status == "Room Assigned"));
+                .AnyAsync(h => h.StudentId == studentId && (h.Status == "Approved" || h.Status == "Room Assigned" || h.Status == "RoomAssigned"));
         }
 
         // Rule 11: Block if student has future-dated lab bookings ('Held' or 'Confirmed') [Index 0.1.5, 0.1.19]
@@ -356,7 +356,7 @@ namespace CampusServicesPortal.Repositories.Implementations
         public async Task<bool> HasUnpaidFeesAsync(int studentId)
         {
             return await _context.FeePayments
-                .AnyAsync(f => f.StudentId == studentId && f.Status == "Outstanding");
+                .AnyAsync(f => f.StudentId == studentId && (f.Status == "Outstanding" || f.Status == "Unpaid"));
         }
 
         public async Task SaveChangesAsync()

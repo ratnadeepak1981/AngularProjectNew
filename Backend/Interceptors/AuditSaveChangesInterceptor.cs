@@ -80,7 +80,8 @@ namespace CampusServicesPortal.Interceptors
 
             if (httpContext != null)
             {
-                var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                var userIdClaim = httpContext.User.FindFirst("UserId")?.Value
+                                  ?? httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
                                   ?? httpContext.User.FindFirst("sub")?.Value;
                 if (int.TryParse(userIdClaim, out var parsedId))
                 {

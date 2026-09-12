@@ -29,14 +29,16 @@ export class ActionButtonComponent {
   @Input({ transform: booleanAttribute }) fullWidth: boolean = false;
 
   @Output() btnClick = new EventEmitter<MouseEvent>();
+  @Output('click') clickEmitter = new EventEmitter<MouseEvent>();
 
   onClick(event: MouseEvent): void {
-    event.stopPropagation();
     if (this.disabled || this.loading) {
       event.preventDefault();
+      event.stopPropagation();
       return;
     }
     this.btnClick.emit(event);
+    this.clickEmitter.emit(event);
   }
 
   get buttonClasses(): string {
