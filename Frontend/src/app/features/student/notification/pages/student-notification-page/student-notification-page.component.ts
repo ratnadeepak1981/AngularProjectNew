@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { StudentNotificationService } from '../../services/student-notification.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { SystemSettingsService } from '../../../../../core/services/system-settings.service';
 import { Notification } from '../../../../../core/models/system/notification.model';
 import { PageHeaderComponent } from '../../../../../shared/components/page-header/page-header.component';
 import { TabComponent, TabItem } from '../../../../../shared/components/tab-component/tab.component';
@@ -26,6 +27,7 @@ export class StudentNotificationPageComponent implements OnInit {
   private readonly notificationService = inject(StudentNotificationService);
   private readonly toast = inject(ToastService);
   private readonly authService = inject(AuthService);
+  private readonly systemSettings = inject(SystemSettingsService, { optional: true });
 
   // State Signals
   public readonly notifications = signal<Notification[]>([]);
@@ -35,7 +37,7 @@ export class StudentNotificationPageComponent implements OnInit {
 
   // Pagination Signals
   public readonly currentPage = signal<number>(1);
-  public readonly pageSize = signal<number>(5);
+  public readonly pageSize = signal<number>(this.systemSettings?.defaultPageSize() || 5);
 
   // Computed Filter Tabs
   public readonly notificationTabs = computed<TabItem[]>(() => {
@@ -73,6 +75,10 @@ export class StudentNotificationPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    const sysSize = this.systemSettings?.defaultPageSize();
+    if (sysSize && sysSize > 0) {
+      this.pageSize.set(sysSize);
+    }
     this.loadNotifications();
   }
 

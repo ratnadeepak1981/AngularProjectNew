@@ -9,6 +9,8 @@ import {
   SimpleChanges,
   signal,
   computed,
+  inject,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +18,7 @@ import { TableColumn } from './models/table-column.model';
 import { TableSortState } from './models/table-sort.model';
 import { PaginationComponent } from '../tables-utilities/pagination/pagination.component';
 import { StatusBadgeComponent } from '../status-badge/status-badge.component';
+import { SystemSettingsService } from '../../../core/services/system-settings.service';
 
 @Component({
   selector: 'app-data-table',
@@ -62,6 +65,21 @@ export class DataTableComponent implements OnChanges {
   public readonly clientCurrentPage = signal<number>(1);
   public readonly clientPageSize = signal<number>(5);
 
+  private readonly systemSettings = inject(SystemSettingsService, { optional: true });
+  private hasUserChangedPageSize = false;
+
+  constructor() {
+    if (this.systemSettings) {
+      effect(() => {
+        const sysSize = this.systemSettings!.defaultPageSize();
+        // If user hasn't manually overridden the page size on this table and pageSize input is default/not provided
+        if (!this.hasUserChangedPageSize && (!this.pageSize || this.pageSize === 5) && sysSize > 0) {
+          this.clientPageSize.set(sysSize);
+        }
+      });
+    }
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['data']) {
       this.inputDataSignal.set(this.data || []);
@@ -76,7 +94,12 @@ export class DataTableComponent implements OnChanges {
       this.clientCurrentPage.set(this.currentPage || 1);
     }
     if (changes['pageSize']) {
-      this.clientPageSize.set(this.pageSize || 5);
+      if (this.pageSize && this.pageSize > 0) {
+        this.clientPageSize.set(this.pageSize);
+      } else {
+        const sysSize = this.systemSettings?.defaultPageSize() || 5;
+        this.clientPageSize.set(sysSize);
+      }
     }
     if (changes['totalRecords'] || changes['data'] || changes['pageSize']) {
       const total = this.serverSide ? (this.totalRecords || 0) : (this.data?.length || 0);
@@ -169,11 +192,15 @@ export class DataTableComponent implements OnChanges {
 
   public readonly pagedData = computed(() => {
     const list = this.processedData();
-    if (this.serverSide) {
+    const size = this.clientPageSize() || 5;
+
+    // Defensive Safeguard: In true serverSide mode, the server returns at most 'size' items.
+    // If serverSide is true BUT the list passed has more items than 'size' (e.g. an unpaginated payload),
+    // we defensively slice it so the UI table never overflows beyond the selected page size.
+    if (this.serverSide && list.length <= size) {
       return list;
     }
 
-    const size = this.clientPageSize();
     const maxPage = Math.max(1, Math.ceil(list.length / size));
     const page = Math.min(this.clientCurrentPage(), maxPage);
     const start = (page - 1) * size;
@@ -213,6 +240,7 @@ export class DataTableComponent implements OnChanges {
   }
 
   onPageSizeChange(newSize: number): void {
+    this.hasUserChangedPageSize = true;
     this.clientPageSize.set(newSize);
     this.clientCurrentPage.set(1);
     this.pageSizeChange.emit(newSize);
