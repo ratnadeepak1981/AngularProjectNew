@@ -93,6 +93,8 @@ export class StudentDashboardPageComponent implements OnInit {
       this.createPhoneControl('Primary Mobile')
     ]),
     address: this.fb.group({
+      id: [0],
+      addressType: ['Permanent'],
       addressLine1: ['', [Validators.required]],
       addressLine2: [''],
       city: ['', [Validators.required]],
@@ -247,6 +249,8 @@ export class StudentDashboardPageComponent implements OnInit {
           if (addressList && addressList.length > 0) {
             const primAddr = addressList.find(a => a.isPrimary) || addressList[0];
             this.addressGroup.patchValue({
+              id: primAddr.id || 0,
+              addressType: primAddr.addressType || 'Permanent',
               addressLine1: primAddr.addressLine1 || '',
               addressLine2: primAddr.addressLine2 || '',
               city: primAddr.city || '',
@@ -307,7 +311,8 @@ export class StudentDashboardPageComponent implements OnInit {
         isVerified: p.isVerified ?? false
       })),
       addresses: addr?.addressLine1 ? [{
-        addressType: 'Permanent',
+        id: addr.id || 0,
+        addressType: addr.addressType || 'Permanent',
         addressLine1: addr.addressLine1.trim(),
         addressLine2: addr.addressLine2?.trim(),
         city: addr.city.trim(),

@@ -207,6 +207,11 @@ namespace CampusServicesPortal.Repositories.Implementations
                                              string.Equals(e.AddressType, incoming.AddressType, StringComparison.OrdinalIgnoreCase));
                 }
 
+                if (existing == null && existingAddresses.Count > 0)
+                {
+                    existing = existingAddresses.FirstOrDefault(e => !matchedExisting.Contains(e.Id));
+                }
+
                 if (existing != null)
                 {
                     // In-place mutation -> EF Core marks entity as Modified with static Primary Key
