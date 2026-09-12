@@ -50,6 +50,16 @@ namespace CampusServicesPortal.Repositories.Implementations
                 .ToListAsync();
         }
 
+        public async Task<bool> HasDuplicatePendingComplaintAsync(int studentId, int categoryId, string description)
+        {
+            string cleanDesc = description.Trim().ToLower();
+            return await _context.Complaints
+                .AnyAsync(c => c.StudentId == studentId
+                            && c.CategoryId == categoryId
+                            && c.Status == "Pending"
+                            && c.Description.ToLower() == cleanDesc);
+        }
+
         public async Task AddComplaintAsync(Complaint complaint)
         {
             await _context.Complaints.AddAsync(complaint);

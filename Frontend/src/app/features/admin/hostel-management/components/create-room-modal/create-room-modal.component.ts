@@ -30,6 +30,10 @@ export class CreateRoomModalComponent implements OnChanges {
   public readonly isSubmitting = signal<boolean>(false);
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isOpen'] && this.isOpen && !this.roomToEdit) {
+      this.roomNumber.set('');
+      this.maxCapacity.set(2);
+    }
     if (changes['roomToEdit'] && this.roomToEdit) {
       this.roomNumber.set(this.roomToEdit.roomNumber || '');
       this.maxCapacity.set(this.roomToEdit.maxCapacity || 2);
@@ -44,6 +48,8 @@ export class CreateRoomModalComponent implements OnChanges {
   }
 
   onSubmit(): void {
+    if (this.isSubmitting()) return;
+
     const roomNum = this.roomNumber().trim();
     const capacity = this.maxCapacity();
     if (!roomNum || capacity <= 0) {

@@ -18,8 +18,14 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<HostelResponseDto>> CreateHostelAsync(CreateHostelRequestDto request)
         {
-            // Removed location assignment
-            var hostel = new Hostel { Name = request.Name, IsActive = true };
+            string cleanName = request.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
+                return ServiceResult<HostelResponseDto>.Failure("Hostel building name is required.", 400);
+
+            if (await _repository.HostelNameExistsAsync(cleanName))
+                return ServiceResult<HostelResponseDto>.Failure($"A hostel building named '{cleanName}' already exists in the system.", 409);
+
+            var hostel = new Hostel { Name = cleanName, IsActive = true };
             await _repository.AddHostelAsync(hostel);
             await _repository.SaveChangesAsync();
 
@@ -32,7 +38,14 @@ namespace CampusServicesPortal.Services.Implementations
             var hostel = await _repository.GetHostelByIdAsync(id);
             if (hostel == null) return ServiceResult<HostelResponseDto>.Failure("Hostel record not found.", 404);
 
-            hostel.Name = request.Name;
+            string cleanName = request.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
+                return ServiceResult<HostelResponseDto>.Failure("Hostel building name is required.", 400);
+
+            if (await _repository.HostelNameExistsAsync(cleanName, id))
+                return ServiceResult<HostelResponseDto>.Failure($"A hostel building named '{cleanName}' already exists in the system.", 409);
+
+            hostel.Name = cleanName;
             hostel.IsActive = request.IsActive;
 
             await _repository.UpdateHostelAsync(hostel);

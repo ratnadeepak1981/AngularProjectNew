@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using CampusServicesPortal.Data;
@@ -25,9 +25,12 @@ namespace CampusServicesPortal.Repositories
             return await _context.CertificateTypes.FindAsync(id);
         }
 
-        public async Task<bool> ExistsByNameAsync(string name)
+        public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null)
         {
-            return await _context.CertificateTypes.AnyAsync(c => c.Name.ToLower() == name.ToLower());
+            var query = _context.CertificateTypes.AsQueryable();
+            if (excludeId.HasValue)
+                query = query.Where(c => c.Id != excludeId.Value);
+            return await query.AnyAsync(c => c.Name.ToLower() == name.ToLower());
         }
 
         public async Task<bool> HasLinkedRequestsAsync(int certificateTypeId)

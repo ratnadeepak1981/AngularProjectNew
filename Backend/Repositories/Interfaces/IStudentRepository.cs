@@ -10,6 +10,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task<StudentMasterList?> GetMasterRecordAsync(string indexNumber);
         Task<bool> IsIndexRegisteredAsync(string indexNumber);
         Task<bool> IsEmailRegisteredAsync(string email);
+        Task<bool> IsPhoneRegisteredAsync(string phoneNumber, int? excludeStudentId = null);
         Task AddStudentAsync(Student student);
         Task UpdateAsync(Student student);
 

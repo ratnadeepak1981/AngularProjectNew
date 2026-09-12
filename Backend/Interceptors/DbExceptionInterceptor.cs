@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Data.SqlClient;
@@ -14,7 +14,13 @@ namespace CampusServicesPortal.Data.Interceptors
             base.SaveChangesFailed(eventData);
         }
 
-        private void EvaluateException(Exception exception)
+        public override Task SaveChangesFailedAsync(DbContextErrorEventData eventData, System.Threading.CancellationToken cancellationToken = default)
+        {
+            EvaluateException(eventData.Exception);
+            return base.SaveChangesFailedAsync(eventData, cancellationToken);
+        }
+
+        private void EvaluateException(Exception? exception)
         {
             if (exception is DbUpdateException dbUpdateException &&
                 dbUpdateException.InnerException is SqlException sqlException)
@@ -34,14 +40,53 @@ namespace CampusServicesPortal.Data.Interceptors
                         if (msg.Contains("UX_LabBookings_Seat_ActiveSlot"))
                             throw new DuplicateBookingException("This specific lab seat is already reserved by another student for this slot.");
 
-                        if (msg.Contains("UQ_StudentPhoneNumbers_PhoneNumber"))
+                        if (msg.Contains("IX_StudentPhoneNumbers_PhoneNumber") || msg.Contains("UQ_StudentPhoneNumbers_PhoneNumber"))
                             throw new DuplicateBookingException("This telephone number is already registered under another account profile.");
+
+                        if (msg.Contains("IX_Students_ContactDetails"))
+                            throw new DuplicateBookingException("This primary contact telephone number is already registered under another user profile.");
 
                         if (msg.Contains("IX_Users_Email"))
                             throw new DuplicateBookingException("A user profile with this email address already exists.");
 
                         if (msg.Contains("IX_StudentMasterLists_IndexNumber"))
                             throw new DuplicateBookingException("This student Index Number is already registered in the master list.");
+
+                        if (msg.Contains("IX_Students_IndexNumber"))
+                            throw new DuplicateBookingException("This Student Index Number is already allocated to an active profile.");
+
+                        if (msg.Contains("IX_Hostels_Name"))
+                            throw new DuplicateBookingException("A hostel building with this name already exists in the administrative list.");
+
+                        if (msg.Contains("UX_Rooms_Hostel_RoomNumber"))
+                            throw new DuplicateBookingException("This specific room number has already been allocated within the chosen hostel building.");
+
+                        if (msg.Contains("IX_Labs_Name"))
+                            throw new DuplicateBookingException("A laboratory facility with this name is already registered.");
+
+                        if (msg.Contains("IX_Venues_Name"))
+                            throw new DuplicateBookingException("An event venue with this exact name already exists in the system master directory.");
+
+                        if (msg.Contains("UX_Events_Venue_Schedule"))
+                            throw new DuplicateBookingException("Scheduling Collision! This physical venue is already booked for another event at the specified date and time.");
+
+                        if (msg.Contains("IX_FeeTypes_Name"))
+                            throw new DuplicateBookingException("A billing ledger fee category configuration with this exact name already exists.");
+
+                        if (msg.Contains("IX_CertificateTypes_Name"))
+                            throw new DuplicateBookingException("A certificate type with this title already exists.");
+
+                        if (msg.Contains("UX_CertificateRequests_Student_Pending"))
+                            throw new DuplicateBookingException("A pending request already exists for this certificate type.");
+
+                        if (msg.Contains("IX_ComplaintCategories_Name"))
+                            throw new DuplicateBookingException("A complaint category with this name already exists.");
+
+                        if (msg.Contains("IX_Faculties_Name"))
+                            throw new DuplicateBookingException("A faculty with this designated title already exists.");
+
+                        if (msg.Contains("UX_EventRegistrations_Event_Student"))
+                            throw new DuplicateBookingException("You are already registered for this event.");
 
                         // Generic unique index fallback
                         throw new DuplicateBookingException("A record with these unique details already exists in the system.");

@@ -9,6 +9,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
     {
         Task<IEnumerable<Venue>> GetAllVenuesAsync();
         Task<Venue?> GetVenueByIdAsync(int venueId);
+        Task<bool> ExistsByNameAsync(string name, int? excludeVenueId = null);
         Task AddVenueAsync(Venue venue);
         void UpdateVenue(Venue venue);
         Task<bool> VenueHasUpcomingEventsAsync(int venueId);

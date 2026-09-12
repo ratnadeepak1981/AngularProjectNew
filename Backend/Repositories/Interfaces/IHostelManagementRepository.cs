@@ -12,6 +12,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task AddRoomAsync(Room room);
         Task UpdateHostelAsync(Hostel hostel);
         Task UpdateRoomAsync(Room room);
+        Task<bool> HostelNameExistsAsync(string name, int? excludeHostelId = null);
         Task<bool> RoomNumberExistsAsync(int hostelId, string roomNumber, int? excludeRoomId = null);
         Task SaveChangesAsync();
     }

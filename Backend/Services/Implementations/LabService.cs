@@ -18,6 +18,13 @@ public class LabService : ILabService
 
     public async Task<bool> CreateLabAsync(string name, string labType, int capacity, int? totalRows = 4, int? totalColumns = 3)
     {
+        string cleanName = name?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(cleanName))
+            throw new ArgumentException("Laboratory name is required.");
+
+        if (await _labRepo.ExistsByNameAsync(cleanName))
+            throw new CampusServicesPortal.Exceptions.DuplicateBookingException($"A laboratory facility named '{cleanName}' already exists.");
+
         int finalCapacity = capacity;
         if (labType.Equals("Computer", StringComparison.OrdinalIgnoreCase) && totalRows.HasValue && totalColumns.HasValue)
         {
@@ -26,7 +33,7 @@ public class LabService : ILabService
 
         var newLab = new Lab 
         { 
-            Name = name, 
+            Name = cleanName, 
             LabType = labType, 
             Capacity = finalCapacity,
             TotalRows = totalRows ?? 4,

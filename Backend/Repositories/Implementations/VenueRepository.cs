@@ -29,6 +29,14 @@ namespace CampusServicesPortal.Repositories.Implementations
             return await _context.Venues.FindAsync(venueId);
         }
 
+        public async Task<bool> ExistsByNameAsync(string name, int? excludeVenueId = null)
+        {
+            string cleanName = name.Trim().ToLower();
+            var query = _context.Venues.Where(v => v.Name.ToLower() == cleanName);
+            if (excludeVenueId.HasValue) query = query.Where(v => v.Id != excludeVenueId.Value);
+            return await query.AnyAsync();
+        }
+
         public async Task AddVenueAsync(Venue venue)
         {
             await _context.Venues.AddAsync(venue);

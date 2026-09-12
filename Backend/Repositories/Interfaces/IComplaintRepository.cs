@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using CampusServicesPortal.Models;
 
@@ -12,6 +12,8 @@ namespace CampusServicesPortal.Repositories.Interfaces
 
         Task<IEnumerable<Complaint>> GetComplaintsByStudentIdAsync(int studentId);
         Task<IEnumerable<Complaint>> GetComplaintsAsync(string? status);
+
+        Task<bool> HasDuplicatePendingComplaintAsync(int studentId, int categoryId, string description);
 
         Task AddComplaintAsync(Complaint complaint);
 

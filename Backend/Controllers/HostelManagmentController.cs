@@ -1,6 +1,8 @@
 using CampusServicesPortal.DTOs.Requests.Hostel;
 using CampusServicesPortal.DTOs.Requests.Hostel.Managment;
+using CampusServicesPortal.Exceptions;
 using CampusServicesPortal.Services.Interfaces;
+using CampusServicesPortal.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
@@ -21,15 +23,29 @@ namespace CampusServicesPortal.Controllers
         [HttpPost("hostels")]
         public async Task<IActionResult> CreateHostel([FromBody] CreateHostelRequestDto request)
         {
-            var result = await _service.CreateHostelAsync(request);
-            return ProcessServiceResult(result, "Hostel record created successfully.");
+            try
+            {
+                var result = await _service.CreateHostelAsync(request);
+                return ProcessServiceResult(result, "Hostel record created successfully.");
+            }
+            catch (DuplicateBookingException dupEx)
+            {
+                return StatusCode(409, new ApiResponse<object>(dupEx.Message));
+            }
         }
 
         [HttpPut("hostels/{id}")]
         public async Task<IActionResult> UpdateHostel(int id, [FromBody] UpdateHostelRequestDto request)
         {
-            var result = await _service.UpdateHostelAsync(id, request);
-            return ProcessServiceResult(result, "Hostel properties modified successfully.");
+            try
+            {
+                var result = await _service.UpdateHostelAsync(id, request);
+                return ProcessServiceResult(result, "Hostel properties modified successfully.");
+            }
+            catch (DuplicateBookingException dupEx)
+            {
+                return StatusCode(409, new ApiResponse<object>(dupEx.Message));
+            }
         }
 
         [HttpDelete("hostels/{id}")]
@@ -42,15 +58,29 @@ namespace CampusServicesPortal.Controllers
         [HttpPost("hostels/{hostelId}/rooms")]
         public async Task<IActionResult> CreateRoom(int hostelId, [FromBody] CreateRoomRequestDto request)
         {
-            var result = await _service.CreateRoomAsync(hostelId, request);
-            return ProcessServiceResult(result, "Hostel room unit added successfully.");
+            try
+            {
+                var result = await _service.CreateRoomAsync(hostelId, request);
+                return ProcessServiceResult(result, "Hostel room unit added successfully.");
+            }
+            catch (DuplicateBookingException dupEx)
+            {
+                return StatusCode(409, new ApiResponse<object>(dupEx.Message));
+            }
         }
 
         [HttpPut("rooms/{id}")]
         public async Task<IActionResult> UpdateRoom(int id, [FromBody] UpdateRoomRequestDto request)
         {
-            var result = await _service.UpdateRoomAsync(id, request);
-            return ProcessServiceResult(result, "Hostel room properties modified successfully.");
+            try
+            {
+                var result = await _service.UpdateRoomAsync(id, request);
+                return ProcessServiceResult(result, "Hostel room properties modified successfully.");
+            }
+            catch (DuplicateBookingException dupEx)
+            {
+                return StatusCode(409, new ApiResponse<object>(dupEx.Message));
+            }
         }
 
         [HttpDelete("rooms/{id}")]

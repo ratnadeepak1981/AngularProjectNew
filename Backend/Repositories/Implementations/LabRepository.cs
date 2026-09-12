@@ -28,6 +28,14 @@ public class LabRepository : ILabRepository
             && b.BookingDate >= DateTime.Today
             && (b.Status == "Confirmed" || b.Status == "Held"));
 
+    public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null)
+    {
+        string cleanName = name.Trim().ToLower();
+        var query = _context.Labs.Where(l => l.Name.ToLower() == cleanName);
+        if (excludeId.HasValue) query = query.Where(l => l.Id != excludeId.Value);
+        return await query.AnyAsync();
+    }
+
     public async Task AddLabAsync(Lab lab) =>
         await _context.Labs.AddAsync(lab);
 

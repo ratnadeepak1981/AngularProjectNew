@@ -45,6 +45,29 @@ namespace CampusServicesPortal.Repositories.Implementations
                 .AnyAsync(u => u.Email.ToLower() == email.ToLower());
         }
 
+        public async Task<bool> IsPhoneRegisteredAsync(string phoneNumber, int? excludeStudentId = null)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber)) return false;
+            string cleanPhone = phoneNumber.Trim();
+
+            var phoneQuery = _context.StudentPhoneNumbers.AsQueryable();
+            if (excludeStudentId.HasValue)
+            {
+                phoneQuery = phoneQuery.Where(p => p.StudentId != excludeStudentId.Value);
+            }
+            if (await phoneQuery.AnyAsync(p => p.PhoneNumber == cleanPhone))
+            {
+                return true;
+            }
+
+            var studentQuery = _context.Students.AsQueryable();
+            if (excludeStudentId.HasValue)
+            {
+                studentQuery = studentQuery.Where(s => s.Id != excludeStudentId.Value);
+            }
+            return await studentQuery.AnyAsync(s => s.ContactDetails == cleanPhone);
+        }
+
         public async Task AddStudentAsync(Student student)
         {
             await _context.Students.AddAsync(student);

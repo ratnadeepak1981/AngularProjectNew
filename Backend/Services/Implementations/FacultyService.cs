@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Application.Interfaces.Repositories;
+using CampusServicesPortal.Application.Interfaces.Repositories;
 using CampusServicesPortal.Data;
 using CampusServicesPortal.DTOs.Requests.MasterData;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
@@ -42,12 +42,16 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<FacultyResponseDto>> CreateFacultyAsync(CreateFacultyRequestDto request)
         {
-            if (await _facultyRepository.ExistsByNameAsync(request.Name))
-                return ServiceResult<FacultyResponseDto>.Failure("A faculty with this designated title already exists.", 400);
+            string cleanName = request.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
+                return ServiceResult<FacultyResponseDto>.Failure("Faculty title is required.", 400);
+
+            if (await _facultyRepository.ExistsByNameAsync(cleanName))
+                return ServiceResult<FacultyResponseDto>.Failure($"A faculty with designated title '{cleanName}' already exists.", 409);
 
             var faculty = new Faculty
             {
-                Name = request.Name,
+                Name = cleanName,
                 IsActive = true
             };
 
@@ -64,7 +68,14 @@ namespace CampusServicesPortal.Services.Implementations
             if (faculty == null)
                 return ServiceResult<FacultyResponseDto>.Failure("Target faculty master record not found.", 404);
 
-            faculty.Name = request.Name;
+            string cleanName = request.Name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
+                return ServiceResult<FacultyResponseDto>.Failure("Faculty title is required.", 400);
+
+            if (await _facultyRepository.ExistsByNameAsync(cleanName, id))
+                return ServiceResult<FacultyResponseDto>.Failure($"A faculty with designated title '{cleanName}' already exists.", 409);
+
+            faculty.Name = cleanName;
             faculty.IsActive = request.IsActive;
 
             await _facultyRepository.UpdateAsync(faculty);

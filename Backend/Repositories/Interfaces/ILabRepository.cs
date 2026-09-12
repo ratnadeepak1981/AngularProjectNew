@@ -8,6 +8,7 @@ public interface ILabRepository
     Task<IEnumerable<Lab>> GetAllAsync();
     Task<IEnumerable<LabSeat>> GetSeatsByLabIdAsync(int labId);
     Task<bool> HasFutureBookingsForSeatAsync(int seatId);
+    Task<bool> ExistsByNameAsync(string name, int? excludeId = null);
     Task AddLabAsync(Lab lab);
     Task AddSeatAsync(LabSeat seat);
     Task DeleteSeatAsync(LabSeat seat);
