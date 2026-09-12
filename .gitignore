@@ -16,9 +16,6 @@
 *.log
 *.tmp
 
-# --- Local SQL Server Database Backups & Dumps ---
-*.bak
-CampusServicesPortal.bak
 
 # --- Angular & Node.js Build & Cache Directories ---
 **/node_modules/
