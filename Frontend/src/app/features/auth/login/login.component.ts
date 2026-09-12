@@ -93,7 +93,7 @@ export class LoginComponent {
         
         const role = data?.role;
         setTimeout(() => {
-          if (role === 'Admin') {
+          if (role === 'Admin' || role === 'SuperAdmin') {
             this.router.navigate(['/admin/dashboard']);
           } else {
             this.router.navigate(['/student/dashboard']);

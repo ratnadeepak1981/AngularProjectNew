@@ -2,11 +2,13 @@ using CampusServicesPortal.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using CampusServicesPortal.Wrappers;
+
 namespace CampusServicesPortal.Controllers;
 
 [ApiController]
 [Route("api/labs")]
-public class LabsController : ControllerBase
+public class LabsController : BaseApiController
 {
     private readonly ILabService _labService;
 
@@ -20,7 +22,7 @@ public class LabsController : ControllerBase
     public async Task<IActionResult> GetLabs()
     {
         var labs = await _labService.GetAllLabsAsync();
-        return Ok(labs);
+        return ProcessServiceResult(ServiceResult<object>.Success(labs, 200), "Laboratories list retrieved successfully.");
     }
 
     // POST /api/labs - Rule 4: Admin role authorization guard enforced server-side
@@ -73,7 +75,7 @@ public class LabsController : ControllerBase
     public async Task<IActionResult> GetTimeSlots(int id, [FromQuery] bool activeOnly = false)
     {
         var slots = await _labService.GetLabTimeSlotsAsync(id, activeOnly);
-        return Ok(slots);
+        return ProcessServiceResult(ServiceResult<object>.Success(slots, 200), "Lab time slots retrieved successfully.");
     }
 
     // GET /api/labs/{id}/time-slots/available?date={date}
@@ -83,7 +85,7 @@ public class LabsController : ControllerBase
     {
         var targetDate = date ?? DateTime.Today;
         var slots = await _labService.GetAvailableTimeSlotsAsync(id, targetDate);
-        return Ok(slots);
+        return ProcessServiceResult(ServiceResult<object>.Success(slots, 200), "Available lab time slots retrieved successfully.");
     }
 
     // POST /api/labs/{id}/time-slots
