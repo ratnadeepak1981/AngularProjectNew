@@ -117,9 +117,37 @@
               (selectionChange)="selectedFacultyId.set(+$event)"
             ></app-select-dropdown>
 
-            <p class="text-2xs text-amber-600 dark:text-amber-400 mt-1 font-medium">
-              ⚠️ Warning: Bulk run will issue this fee to ALL students enrolled in the selected faculty.
-            </p>
+            @if (selectedFacultyId() > 0) {
+              @if (selectedFacultyStudentCount() > 0) {
+                <div class="mt-2 p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">👥</span>
+                    <span class="font-semibold text-blue-900 dark:text-blue-200">
+                      {{ selectedFacultyStudentCount() }} active student{{ selectedFacultyStudentCount() === 1 ? '' : 's' }} enrolled in {{ selectedFacultyName() }}.
+                    </span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300">
+                    Ready for Run
+                  </span>
+                </div>
+              } @else {
+                <div class="mt-2 p-2.5 rounded-xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">🚫</span>
+                    <span class="font-semibold text-rose-800 dark:text-rose-200">
+                      No active students are currently enrolled in {{ selectedFacultyName() }}.
+                    </span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-900 text-rose-700 dark:text-rose-300">
+                    0 Eligible
+                  </span>
+                </div>
+              }
+            } @else {
+              <p class="text-2xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
+                Select a faculty cohort to automatically issue this fee to all currently enrolled students.
+              </p>
+            }
           </div>
         }
 
@@ -193,7 +221,7 @@
           icon="card"
           variant="primary"
           [loading]="isSubmitting()"
-          [disabled]="isSubmitting() || (scopeMode() === 'single' && selectedStudentId() === 0) || (scopeMode() === 'faculty' && selectedFacultyId() === 0) || selectedFeeTypeId() === 0 || amount() <= 0 || !dueDate()"
+          [disabled]="isSubmitting() || (scopeMode() === 'single' && selectedStudentId() === 0) || (scopeMode() === 'faculty' && (selectedFacultyId() === 0 || selectedFacultyStudentCount() === 0)) || selectedFeeTypeId() === 0 || amount() <= 0 || !dueDate()"
           tooltip="Assign fee/fine to student or faculty group"
           (btnClick)="onSubmit()"
         ></app-action-button>

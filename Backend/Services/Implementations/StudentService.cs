@@ -404,6 +404,7 @@ namespace CampusServicesPortal.Services.Implementations
                 EmailVerified = student.EmailVerified,
                 PhoneVerified = student.PhoneNumbers.Any(p => p.IsPrimary && p.IsVerified),
                 IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
+                FacultyId = student.FacultyId,
                 FacultyName = student.Faculty?.Name ?? "Unassigned",
                 PhoneNumbers = phoneDtos,
                 Addresses = addressDtos
