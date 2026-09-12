@@ -4,16 +4,9 @@ import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../../core/services/api.service';
 import { Notification } from '../../../../core/models/system/notification.model';
 import { UpdateStudentProfileRequest } from '../../../../core/models/auth/student-profile.model';
+import { StudentDashboardMetricsSummary } from '../../../../core/models/dashboard/student-dashboard-metrics.model';
 
-export interface StudentDashboardMetricsSummary {
-  hostelStatus: string;
-  activeLabBookings: number;
-  registeredEvents: number;
-  outstandingFees: number;
-  certificateStatus: string;
-  complaintStatus: string;
-  recentNotifications: Notification[];
-}
+export type { StudentDashboardMetricsSummary };
 
 @Injectable({
   providedIn: 'root',

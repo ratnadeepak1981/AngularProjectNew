@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { Observable, catchError, of, tap } from 'rxjs';
 import { ApiService } from './api.service';
 import { ApiResponse } from '../models/common/api-response.model';
 
@@ -10,32 +10,42 @@ export class SystemSettingsService {
   private readonly api = inject(ApiService);
 
   public readonly defaultPageSize = signal<number>(5);
+  public readonly isLoaded = signal<boolean>(false);
 
   constructor() {
-    this.loadDefaultPageSize();
+    if (this.hasAuthToken()) {
+      this.loadDefaultPageSize();
+    }
+  }
+
+  private hasAuthToken(): boolean {
+    return typeof window !== 'undefined' && !!localStorage.getItem('portal_jwt_token');
   }
 
   public loadDefaultPageSize(): void {
+    if (!this.hasAuthToken()) return;
+
     this.getDefaultPageSize().subscribe({
-      next: (res: any) => {
-        const size = res?.data?.pageSize ?? res?.pageSize;
-        if (size && typeof size === 'number' && size > 0) {
-          this.defaultPageSize.set(size);
-        }
+      next: () => {
+        this.isLoaded.set(true);
       },
       error: () => {
-        // Fallback default remains 5
+        this.isLoaded.set(true);
       },
     });
   }
 
-  public getDefaultPageSize(): Observable<ApiResponse<{ pageSize: number }>> {
+  public getDefaultPageSize(): Observable<ApiResponse<{ pageSize: number }> | null> {
     return this.api.get<ApiResponse<{ pageSize: number }>>(this.api.routes.system.pageSize).pipe(
       tap((res: any) => {
         const size = res?.data?.pageSize ?? res?.pageSize;
         if (size && typeof size === 'number' && size > 0) {
           this.defaultPageSize.set(size);
         }
+      }),
+      catchError((err) => {
+        console.warn('SystemSettingsService: Could not load default page size setting, using fallback (5).', err?.message);
+        return of(null);
       })
     );
   }

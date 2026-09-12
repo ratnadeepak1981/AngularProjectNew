@@ -38,6 +38,7 @@
           size="sm"
           icon="🚫"
           label="Release Hold"
+          (btnClick)="onCancelClick()"
           (click)="onCancelClick()"
           [disabled]="isSubmitting()"
         ></app-action-button>
@@ -47,6 +48,7 @@
           size="sm"
           icon="✅"
           label="Confirm Seat Reservation"
+          (btnClick)="onConfirmClick()"
           (click)="onConfirmClick()"
           [loading]="isSubmitting()"
         ></app-action-button>

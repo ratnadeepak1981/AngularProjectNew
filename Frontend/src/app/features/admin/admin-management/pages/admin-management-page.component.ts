@@ -68,7 +68,7 @@ export class AdminManagementPageComponent implements OnInit {
       badgeMap: {
         Admin: {
           label: 'ADMINISTRATOR',
-          class: 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-700',
+          class: 'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold theme-badge-role shadow-2xs',
         },
       },
     },

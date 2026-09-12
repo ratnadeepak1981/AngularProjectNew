@@ -19,8 +19,6 @@ import { StudentAddress } from '../../../../core/models/student/student-address.
 import { UpdateStudentProfileRequest } from '../../../../core/models/auth/student-profile.model';
 import { ApiResponse } from '../../../../core/models/common/api-response.model';
 
-export type NotificationItem = Notification;
-
 @Component({
   selector: 'app-student-dashboard-page',
   standalone: true,
@@ -73,7 +71,7 @@ export class StudentDashboardPageComponent implements OnInit {
   public readonly complaintStatus = signal<string>('Checking...');
 
   // Recent Notifications Signal & Filter State
-  public readonly recentNotifications = signal<NotificationItem[]>([]);
+  public readonly recentNotifications = signal<Notification[]>([]);
   public readonly feedFilter = signal<string>('ALL');
 
   public readonly filteredNotifications = computed(() => {
@@ -164,7 +162,7 @@ export class StudentDashboardPageComponent implements OnInit {
 
   ngOnInit(): void {
     const profile = this.authService.userProfile();
-    const storedId = profile?.id || Number(localStorage.getItem('studentId')) || 0;
+    const storedId = profile?.id || 0;
     this.studentId.set(storedId);
 
     if (profile) {

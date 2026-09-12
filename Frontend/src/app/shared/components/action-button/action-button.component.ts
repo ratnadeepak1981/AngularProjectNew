@@ -29,14 +29,16 @@ export class ActionButtonComponent {
   @Input({ transform: booleanAttribute }) fullWidth: boolean = false;
 
   @Output() btnClick = new EventEmitter<MouseEvent>();
+  @Output('click') clickEmitter = new EventEmitter<MouseEvent>();
 
   onClick(event: MouseEvent): void {
-    event.stopPropagation();
     if (this.disabled || this.loading) {
       event.preventDefault();
+      event.stopPropagation();
       return;
     }
     this.btnClick.emit(event);
+    this.clickEmitter.emit(event);
   }
 
   get buttonClasses(): string {
@@ -181,17 +183,8 @@ export class ActionButtonComponent {
       case 'primary':
       default:
         classes.push(
-          'bg-gradient-to-r',
-          'from-blue-600',
-          'to-indigo-600',
-          'hover:from-blue-500',
-          'hover:to-indigo-500',
-          'text-white',
-          'border-blue-500/80',
-          'shadow-sm',
-          'shadow-blue-600/30',
-          'hover:shadow-blue-500/40',
-          'focus:ring-blue-500'
+          'theme-btn-primary',
+          'shadow-sm'
         );
         break;
     }

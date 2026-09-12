@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { EventService, StudentEventDto } from '../services/event.service';
+import { EventService } from '../services/event.service';
+import { CampusEvent } from '../../../../core/models/event/event.model';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
@@ -30,7 +31,7 @@ export class StudentEventPageComponent implements OnInit {
   private readonly toast = inject(ToastService);
 
   // Core Data Signals
-  public readonly rawEvents = signal<StudentEventDto[]>([]);
+  public readonly rawEvents = signal<CampusEvent[]>([]);
   public readonly isLoading = signal<boolean>(true);
   public readonly isActionProcessing = signal<boolean>(false);
   public readonly processingEventId = signal<number | null>(null);

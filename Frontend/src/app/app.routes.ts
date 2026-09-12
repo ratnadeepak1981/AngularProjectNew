@@ -123,8 +123,8 @@ export const routes: Routes = [
         path: 'admin/notification-monitor',
         loadComponent: () =>
           import(
-            './features/admin/notification-monitor/pages/notification-monitor-page.component.component'
-          ).then((m) => m.NotificationMonitorPageComponentComponent),
+            './features/admin/notification-monitor/pages/notification-monitor-page.component'
+          ).then((m) => m.NotificationMonitorPageComponent),
         canActivate: [adminGuard],
       },
       {

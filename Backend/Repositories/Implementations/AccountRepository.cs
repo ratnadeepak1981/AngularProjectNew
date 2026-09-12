@@ -56,7 +56,7 @@ namespace CampusServicesPortal.Repositories.Implementations
         public async Task<bool> HasActiveHostelRoomAsync(int studentId)
         {
             return await _context.HostelApplications
-                .AnyAsync(h => h.StudentId == studentId && (h.Status == "Approved" || h.Status == "Room Assigned"));
+                .AnyAsync(h => h.StudentId == studentId && (h.Status == "Approved" || h.Status == "Room Assigned" || h.Status == "RoomAssigned"));
         }
 
         public async Task<bool> HasUpcomingLabBookingsAsync(int studentId)
@@ -81,7 +81,7 @@ namespace CampusServicesPortal.Repositories.Implementations
         public async Task<bool> HasOutstandingFeesAsync(int studentId)
         {
             return await _context.FeePayments
-                .AnyAsync(f => f.StudentId == studentId && f.Status == "Unpaid");
+                .AnyAsync(f => f.StudentId == studentId && (f.Status == "Outstanding" || f.Status == "Unpaid"));
         }
 
         public async Task DeactivateStudentAccountAsync(int studentId)

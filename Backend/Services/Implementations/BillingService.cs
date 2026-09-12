@@ -157,7 +157,7 @@ namespace CampusServicesPortal.Services.Implementations
             var feePayment = new FeePayment
             {
                 StudentId = request.StudentId,
-                FeeTypeId = 4, // Defaults to your system's master Lab Fine Type Id database row entry [INDEX]
+                FeeTypeId = 2, // Lab Fine / Equipment Fee (AppDbContext FeeTypeId = 2) [INDEX]
                 Amount = request.Amount,
                 BillingPeriod = DateTime.UtcNow.Year.ToString() + " - Fine",
                 Description = request.Reason.Trim(), // Maps cleanly to your model's Reason property field

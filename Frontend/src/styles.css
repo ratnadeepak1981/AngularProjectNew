@@ -4,6 +4,7 @@
 
 /* ==========================================================================
    Campus Services Portal - 5 University Themes × Dual Light/Dark Modes
+   Eye-Comfort Optimized: Soft Elevated Canvas & Harmonized Theme Accents
    ========================================================================== */
 
 /* 🏛️ 1. Oxford Royal Navy */
@@ -16,12 +17,30 @@
   --accent-gold: #D97706;
   --bg-body: #F8FAFC;
   --bg-surface: #FFFFFF;
-  --bg-sidebar: #0F2C59;
+  --bg-sidebar: #0B1E3B;
+  --border-sidebar: #1E3A6E;
+  --text-sidebar-heading: #93C5FD;
+  --text-sidebar-link: #CBD5E1;
+  --text-sidebar-hover-bg: rgba(255, 255, 255, 0.08);
+  --text-sidebar-hover: #FFFFFF;
+  --active-sidebar-bg: #0C3866;
+  --active-sidebar-text: #38BDF8;
+  --active-sidebar-border: #38BDF8;
   --bg-card: #FFFFFF;
   --border-color: #E2E8F0;
   --text-primary: #0F172A;
   --text-secondary: #334155;
   --glow-color: rgba(37, 99, 235, 0.15);
+
+  /* Theme Button & Accent Synchronizer */
+  --btn-primary-bg-from: #2563EB;
+  --btn-primary-bg-to: #1D4ED8;
+  --btn-primary-hover-from: #1D4ED8;
+  --btn-primary-hover-to: #1E40AF;
+  --btn-primary-border: #3B82F6;
+  --badge-role-bg: #EFF6FF;
+  --badge-role-text: #1E40AF;
+  --badge-role-border: #BFDBFE;
 }
 
 body {
@@ -41,14 +60,31 @@ body {
   --primary-blue-hover: #0EA5E9;
   --primary-light-blue: rgba(56, 189, 248, 0.12);
   --accent-gold: #F59E0B;
-  --bg-body: #070D18;
-  --bg-surface: #0E1726;
+  --bg-body: #0F172A;
+  --bg-surface: #1E293B;
   --bg-sidebar: #091222;
-  --bg-card: #111D33;
-  --border-color: #1E2E4A;
-  --text-primary: #F1F5F9;
+  --border-sidebar: #1E2E4A;
+  --text-sidebar-heading: #94A3B8;
+  --text-sidebar-link: #CBD5E1;
+  --text-sidebar-hover-bg: rgba(56, 189, 248, 0.1);
+  --text-sidebar-hover: #F8FAFC;
+  --active-sidebar-bg: rgba(56, 189, 248, 0.15);
+  --active-sidebar-text: #38BDF8;
+  --active-sidebar-border: #38BDF8;
+  --bg-card: #1E293B;
+  --border-color: #334155;
+  --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --glow-color: rgba(56, 189, 248, 0.25);
+
+  --btn-primary-bg-from: #0284C7;
+  --btn-primary-bg-to: #0369A1;
+  --btn-primary-hover-from: #0369A1;
+  --btn-primary-hover-to: #075985;
+  --btn-primary-border: #38BDF8;
+  --badge-role-bg: rgba(56, 189, 248, 0.15);
+  --badge-role-text: #38BDF8;
+  --badge-role-border: rgba(56, 189, 248, 0.35);
 }
 
 /* 🌲 2. Cambridge Emerald */
@@ -62,11 +98,28 @@ body {
   --bg-body: #F4F7F6;
   --bg-surface: #FFFFFF;
   --bg-sidebar: #0A3622;
+  --border-sidebar: #134E31;
+  --text-sidebar-heading: #A7F3D0;
+  --text-sidebar-link: #D1FAE5;
+  --text-sidebar-hover-bg: rgba(255, 255, 255, 0.12);
+  --text-sidebar-hover: #FFFFFF;
+  --active-sidebar-bg: rgba(5, 150, 105, 0.35);
+  --active-sidebar-text: #6EE7B7;
+  --active-sidebar-border: #10B981;
   --bg-card: #FFFFFF;
   --border-color: #D1E7DD;
   --text-primary: #0F172A;
   --text-secondary: #475569;
   --glow-color: rgba(5, 150, 105, 0.15);
+
+  --btn-primary-bg-from: #059669;
+  --btn-primary-bg-to: #047857;
+  --btn-primary-hover-from: #047857;
+  --btn-primary-hover-to: #065F46;
+  --btn-primary-border: #10B981;
+  --badge-role-bg: #ECFDF5;
+  --badge-role-text: #065F46;
+  --badge-role-border: #A7F3D0;
 }
 
 :root[data-theme="cambridge-emerald"].dark, :root[data-theme="cambridge-emerald"][data-mode="dark"] {
@@ -76,14 +129,31 @@ body {
   --primary-blue-hover: #059669;
   --primary-light-blue: rgba(16, 185, 129, 0.12);
   --accent-gold: #34D399;
-  --bg-body: #04120B;
-  --bg-surface: #091E14;
-  --bg-sidebar: #051910;
-  --bg-card: #0D2B1D;
-  --border-color: #17402C;
-  --text-primary: #ECFDF5;
-  --text-secondary: #86EFAC;
+  --bg-body: #0C1D15;
+  --bg-surface: #143023;
+  --bg-sidebar: #071710;
+  --border-sidebar: #1B4532;
+  --text-sidebar-heading: #34D399;
+  --text-sidebar-link: #D1FAE5;
+  --text-sidebar-hover-bg: rgba(16, 185, 129, 0.15);
+  --text-sidebar-hover: #ECFDF5;
+  --active-sidebar-bg: rgba(16, 185, 129, 0.25);
+  --active-sidebar-text: #34D399;
+  --active-sidebar-border: #10B981;
+  --bg-card: #143023;
+  --border-color: #23583F;
+  --text-primary: #F2FBF6;
+  --text-secondary: #A7F3D0;
   --glow-color: rgba(16, 185, 129, 0.25);
+
+  --btn-primary-bg-from: #10B981;
+  --btn-primary-bg-to: #059669;
+  --btn-primary-hover-from: #059669;
+  --btn-primary-hover-to: #047857;
+  --btn-primary-border: #34D399;
+  --badge-role-bg: rgba(16, 185, 129, 0.15);
+  --badge-role-text: #34D399;
+  --badge-role-border: rgba(16, 185, 129, 0.35);
 }
 
 /* 📜 3. Harvard Crimson */
@@ -97,11 +167,28 @@ body {
   --bg-body: #FDFBF7;
   --bg-surface: #FFFFFF;
   --bg-sidebar: #701C1C;
+  --border-sidebar: #991B1B;
+  --text-sidebar-heading: #FECACA;
+  --text-sidebar-link: #FEE2E2;
+  --text-sidebar-hover-bg: rgba(255, 255, 255, 0.12);
+  --text-sidebar-hover: #FFFFFF;
+  --active-sidebar-bg: rgba(255, 255, 255, 0.2);
+  --active-sidebar-text: #FFFFFF;
+  --active-sidebar-border: #FCA5A5;
   --bg-card: #FFFFFF;
   --border-color: #E7E5E4;
   --text-primary: #1C1917;
   --text-secondary: #57534E;
   --glow-color: rgba(153, 27, 27, 0.15);
+
+  --btn-primary-bg-from: #991B1B;
+  --btn-primary-bg-to: #7F1D1D;
+  --btn-primary-hover-from: #7F1D1D;
+  --btn-primary-hover-to: #5C1414;
+  --btn-primary-border: #EF4444;
+  --badge-role-bg: #FEF2F2;
+  --badge-role-text: #991B1B;
+  --badge-role-border: #FECACA;
 }
 
 :root[data-theme="harvard-crimson"].dark, :root[data-theme="harvard-crimson"][data-mode="dark"] {
@@ -111,14 +198,31 @@ body {
   --primary-blue-hover: #EF4444;
   --primary-light-blue: rgba(248, 113, 113, 0.12);
   --accent-gold: #FBBF24;
-  --bg-body: #120505;
-  --bg-surface: #1E0C0C;
-  --bg-sidebar: #190909;
-  --bg-card: #281111;
-  --border-color: #3D1A1A;
-  --text-primary: #FEF2F2;
+  --bg-body: #1F1010;
+  --bg-surface: #301717;
+  --bg-sidebar: #170909;
+  --border-sidebar: #4A1F1F;
+  --text-sidebar-heading: #F87171;
+  --text-sidebar-link: #FED7D7;
+  --text-sidebar-hover-bg: rgba(248, 113, 113, 0.15);
+  --text-sidebar-hover: #FEF2F2;
+  --active-sidebar-bg: rgba(248, 113, 113, 0.25);
+  --active-sidebar-text: #F87171;
+  --active-sidebar-border: #EF4444;
+  --bg-card: #301717;
+  --border-color: #552424;
+  --text-primary: #FFF5F5;
   --text-secondary: #FCA5A5;
   --glow-color: rgba(248, 113, 113, 0.25);
+
+  --btn-primary-bg-from: #EF4444;
+  --btn-primary-bg-to: #DC2626;
+  --btn-primary-hover-from: #DC2626;
+  --btn-primary-hover-to: #B91C1C;
+  --btn-primary-border: #F87171;
+  --badge-role-bg: rgba(248, 113, 113, 0.15);
+  --badge-role-text: #FCA5A5;
+  --badge-role-border: rgba(248, 113, 113, 0.35);
 }
 
 /* ⚡ 4. MIT Tech Cyber */
@@ -132,11 +236,28 @@ body {
   --bg-body: #F8FAFC;
   --bg-surface: #FFFFFF;
   --bg-sidebar: #1E293B;
+  --border-sidebar: #334155;
+  --text-sidebar-heading: #38BDF8;
+  --text-sidebar-link: #E2E8F0;
+  --text-sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+  --text-sidebar-hover: #FFFFFF;
+  --active-sidebar-bg: rgba(2, 132, 199, 0.3);
+  --active-sidebar-text: #7DD3FC;
+  --active-sidebar-border: #0284C7;
   --bg-card: #FFFFFF;
   --border-color: #CBD5E1;
   --text-primary: #0F172A;
   --text-secondary: #64748B;
   --glow-color: rgba(2, 132, 199, 0.15);
+
+  --btn-primary-bg-from: #0284C7;
+  --btn-primary-bg-to: #0369A1;
+  --btn-primary-hover-from: #0369A1;
+  --btn-primary-hover-to: #075985;
+  --btn-primary-border: #38BDF8;
+  --badge-role-bg: #F0F9FF;
+  --badge-role-text: #0369A1;
+  --badge-role-border: #BAE6FD;
 }
 
 :root[data-theme="mit-cyber-dark"].dark, :root[data-theme="mit-cyber-dark"][data-mode="dark"] {
@@ -146,14 +267,31 @@ body {
   --primary-blue-hover: #00B4D8;
   --primary-light-blue: rgba(0, 245, 212, 0.12);
   --accent-gold: #F59E0B;
-  --bg-body: #05080E;
-  --bg-surface: #0D111A;
-  --bg-sidebar: #090C12;
-  --bg-card: #121824;
-  --border-color: #1E2638;
+  --bg-body: #0E1624;
+  --bg-surface: #182338;
+  --bg-sidebar: #0B111D;
+  --border-sidebar: #243550;
+  --text-sidebar-heading: #00F5D4;
+  --text-sidebar-link: #CBD5E1;
+  --text-sidebar-hover-bg: rgba(0, 245, 212, 0.12);
+  --text-sidebar-hover: #F0F6FC;
+  --active-sidebar-bg: rgba(0, 245, 212, 0.2);
+  --active-sidebar-text: #00F5D4;
+  --active-sidebar-border: #00F5D4;
+  --bg-card: #182338;
+  --border-color: #2D4265;
   --text-primary: #F0F6FC;
-  --text-secondary: #8B949E;
+  --text-secondary: #94A3B8;
   --glow-color: rgba(0, 245, 212, 0.25);
+
+  --btn-primary-bg-from: #00B4D8;
+  --btn-primary-bg-to: #0077B6;
+  --btn-primary-hover-from: #0077B6;
+  --btn-primary-hover-to: #023E8A;
+  --btn-primary-border: #00F5D4;
+  --badge-role-bg: rgba(0, 245, 212, 0.15);
+  --badge-role-text: #00F5D4;
+  --badge-role-border: rgba(0, 245, 212, 0.35);
 }
 
 /* ☀️ 5. Stanford Cardinal */
@@ -167,11 +305,28 @@ body {
   --bg-body: #FAF7F2;
   --bg-surface: #FFFFFF;
   --bg-sidebar: #8C1515;
+  --border-sidebar: #A81B1B;
+  --text-sidebar-heading: #FCA5A5;
+  --text-sidebar-link: #FEE2E2;
+  --text-sidebar-hover-bg: rgba(255, 255, 255, 0.12);
+  --text-sidebar-hover: #FFFFFF;
+  --active-sidebar-bg: rgba(255, 255, 255, 0.2);
+  --active-sidebar-text: #FFFFFF;
+  --active-sidebar-border: #FCA5A5;
   --bg-card: #FFFFFF;
   --border-color: #E6DFD5;
   --text-primary: #2B2D42;
   --text-secondary: #5C677D;
   --glow-color: rgba(184, 58, 75, 0.15);
+
+  --btn-primary-bg-from: #8C1515;
+  --btn-primary-bg-to: #6E1010;
+  --btn-primary-hover-from: #6E1010;
+  --btn-primary-hover-to: #500C0C;
+  --btn-primary-border: #B83A4B;
+  --badge-role-bg: #FFF5F5;
+  --badge-role-text: #8C1515;
+  --badge-role-border: #FECDD3;
 }
 
 :root[data-theme="stanford-cardinal"].dark, :root[data-theme="stanford-cardinal"][data-mode="dark"] {
@@ -181,14 +336,31 @@ body {
   --primary-blue-hover: #F43F5E;
   --primary-light-blue: rgba(251, 113, 133, 0.12);
   --accent-gold: #FBBF24;
-  --bg-body: #140506;
-  --bg-surface: #200C0E;
-  --bg-sidebar: #1A090B;
-  --bg-card: #2B1215;
-  --border-color: #401B20;
+  --bg-body: #1E0C0E;
+  --bg-surface: #30161A;
+  --bg-sidebar: #17080A;
+  --border-sidebar: #4C2126;
+  --text-sidebar-heading: #FB7185;
+  --text-sidebar-link: #FECDD3;
+  --text-sidebar-hover-bg: rgba(251, 113, 133, 0.15);
+  --text-sidebar-hover: #FFF1F2;
+  --active-sidebar-bg: rgba(251, 113, 133, 0.25);
+  --active-sidebar-text: #FB7185;
+  --active-sidebar-border: #F43F5E;
+  --bg-card: #30161A;
+  --border-color: #55272D;
   --text-primary: #FFF1F2;
   --text-secondary: #FDA4AF;
   --glow-color: rgba(251, 113, 133, 0.25);
+
+  --btn-primary-bg-from: #F43F5E;
+  --btn-primary-bg-to: #E11D48;
+  --btn-primary-hover-from: #E11D48;
+  --btn-primary-hover-to: #BE123C;
+  --btn-primary-border: #FB7185;
+  --badge-role-bg: rgba(251, 113, 133, 0.15);
+  --badge-role-text: #FB7185;
+  --badge-role-border: rgba(251, 113, 133, 0.35);
 }
 
 body {
@@ -207,7 +379,34 @@ body {
 }
 
 .theme-sidebar {
-  background: linear-gradient(180deg, var(--bg-sidebar) 0%, rgba(10, 15, 25, 0.98) 100%);
+  background-color: var(--bg-sidebar);
+  border-color: var(--border-sidebar);
+  color: var(--text-sidebar-link);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.theme-sidebar-header {
+  color: var(--text-sidebar-heading);
+  border-color: var(--border-sidebar);
+}
+
+.theme-sidebar-link {
+  color: var(--text-sidebar-link);
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+}
+
+.theme-sidebar-link:hover {
+  background-color: var(--text-sidebar-hover-bg);
+  color: var(--text-sidebar-hover);
+}
+
+.theme-sidebar-link-active {
+  background-color: var(--active-sidebar-bg) !important;
+  color: var(--active-sidebar-text) !important;
+  border-left: 4px solid var(--active-sidebar-border) !important;
+  border-radius: 0.5rem !important;
+  font-weight: 700 !important;
 }
 
 .theme-canvas {
@@ -228,6 +427,26 @@ body {
 
 .theme-border {
   border-color: var(--border-color);
+}
+
+/* 🔘 Dynamic Theme-Synchronized Primary Button */
+.theme-btn-primary {
+  background: linear-gradient(to right, var(--btn-primary-bg-from), var(--btn-primary-bg-to)) !important;
+  border-color: var(--btn-primary-border) !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.theme-btn-primary:hover {
+  background: linear-gradient(to right, var(--btn-primary-hover-from), var(--btn-primary-hover-to)) !important;
+  box-shadow: 0 4px 14px var(--glow-color) !important;
+}
+
+/* 🏷️ Dynamic Theme-Synchronized Role / Action Badges */
+.theme-badge-role {
+  background-color: var(--badge-role-bg) !important;
+  color: var(--badge-role-text) !important;
+  border: 1px solid var(--badge-role-border) !important;
 }
 
 /* 📊 Dynamic Theme-Aware Table Classes */

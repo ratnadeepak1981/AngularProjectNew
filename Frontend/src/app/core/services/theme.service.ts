@@ -1,5 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { ThemeOption } from '../models/system/theme-option.model';
+import { ApiService } from './api.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class ThemeService {
     { id: 'stanford-cardinal', name: 'Stanford Cardinal', icon: '☀️' },
   ];
 
+  private readonly apiService = inject(ApiService, { optional: true });
   private readonly themeStorageKey = 'userPortalTheme';
   private readonly modeStorageKey = 'userPortalMode';
 
@@ -21,6 +23,26 @@ export class ThemeService {
 
   constructor() {
     this.applyTheme(this.currentTheme(), this.isDarkMode());
+    this.syncFromBackend();
+  }
+
+  private syncFromBackend(): void {
+    if (!this.apiService) return;
+    this.apiService.get<any>(this.apiService.routes.system.allSettings).subscribe({
+      next: (res) => {
+        const dict = res?.data || res || {};
+        const backendTheme = dict['ThemeColor'];
+        if (backendTheme && ThemeService.THEMES.some((t) => t.id === backendTheme)) {
+          const userHasExplicitChoice = localStorage.getItem(this.themeStorageKey);
+          if (!userHasExplicitChoice) {
+            this.setTheme(backendTheme);
+          }
+        }
+      },
+      error: () => {
+        // Fallback gracefully to local configuration
+      },
+    });
   }
 
   private getInitialTheme(): string {

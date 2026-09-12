@@ -628,14 +628,15 @@ namespace CampusServicesPortal.Repositories.Implementations
                     (SELECT COUNT(1) FROM dbo.LabSeats ls WHERE ls.LabId = l.Id AND ls.IsBroken = 0) AS ConfiguredSeats,
                     (SELECT COUNT(1) FROM dbo.LabBookings lb WHERE lb.LabId = l.Id AND lb.Status = 'Confirmed') AS ConfirmedBookings,
                     (SELECT COUNT(1) FROM dbo.LabBookings lb WHERE lb.LabId = l.Id AND lb.Status = 'Held' AND lb.ExpiresAt > GETUTCDATE()) AS ActiveHolds,
-                    (SELECT COUNT(1) FROM dbo.LabBookings lb WHERE lb.LabId = l.Id AND (lb.Status IN ('Cancelled', 'Expired') OR (lb.Status = 'Held' AND lb.ExpiresAt <= GETUTCDATE()))) AS CancelledOrExpired
+                    (SELECT COUNT(1) FROM dbo.LabBookings lb WHERE lb.LabId = l.Id AND (lb.Status IN ('Cancelled', 'Expired') OR (lb.Status = 'Held' AND lb.ExpiresAt <= GETUTCDATE()))) AS CancelledOrExpired,
+                    ISNULL(NULLIF((SELECT COUNT(1) FROM dbo.LabBookingTimeSlots ts WHERE ts.LabId = l.Id AND ts.IsActive = 1), 0), 4) AS ActiveTimeSlots
                 FROM dbo.Labs l
                 WHERE l.IsActive = 1
                 ORDER BY l.Name ASC;
             ";
 
             var summaries = new List<LabSummaryItemDto>();
-            int grandCapacity = 0, grandBookings = 0, grandHolds = 0;
+            int grandPhysicalCapacity = 0, grandSlotCapacity = 0, grandBookings = 0, grandHolds = 0;
 
             await using (var cmdSum = new SqlCommand(summarySql, conn))
             await using (var reader = await cmdSum.ExecuteReaderAsync())
@@ -645,6 +646,10 @@ namespace CampusServicesPortal.Repositories.Implementations
                     var cap = reader.GetInt32(2);
                     var conf = reader.IsDBNull(4) ? 0 : reader.GetInt32(4);
                     var holds = reader.IsDBNull(5) ? 0 : reader.GetInt32(5);
+                    var slotCount = reader.FieldCount > 7 && !reader.IsDBNull(7) ? reader.GetInt32(7) : 4;
+                    if (slotCount <= 0) slotCount = 4;
+                    var labSlotCapacity = cap * slotCount;
+
                     var item = new LabSummaryItemDto
                     {
                         LabId = reader.GetInt32(0),
@@ -654,9 +659,10 @@ namespace CampusServicesPortal.Repositories.Implementations
                         ConfirmedBookings = conf,
                         ActiveHolds = holds,
                         CancelledOrExpired = reader.IsDBNull(6) ? 0 : reader.GetInt32(6),
-                        UtilizationRate = cap > 0 ? Math.Round(((double)conf / Math.Max(1, cap * 10)) * 100, 1) : 0
+                        UtilizationRate = labSlotCapacity > 0 ? Math.Round(((double)conf / labSlotCapacity) * 100, 1) : 0
                     };
-                    grandCapacity += cap;
+                    grandPhysicalCapacity += cap;
+                    grandSlotCapacity += labSlotCapacity;
                     grandBookings += conf;
                     grandHolds += holds;
                     summaries.Add(item);
@@ -667,10 +673,10 @@ namespace CampusServicesPortal.Repositories.Implementations
             {
                 LabSummaries = summaries,
                 GrandTotalLabs = summaries.Count,
-                GrandTotalCapacity = grandCapacity,
+                GrandTotalCapacity = grandPhysicalCapacity,
                 GrandTotalBookings = grandBookings,
                 GrandTotalActiveHolds = grandHolds,
-                OverallUtilizationPercentage = grandCapacity > 0 ? Math.Round(((double)grandBookings / Math.Max(1, grandCapacity * 10)) * 100, 1) : 0
+                OverallUtilizationPercentage = grandSlotCapacity > 0 ? Math.Round(((double)grandBookings / grandSlotCapacity) * 100, 1) : 0
             };
 
             // 2. Booking Details / Subreport Query

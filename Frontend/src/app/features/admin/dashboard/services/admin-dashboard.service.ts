@@ -2,19 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../../core/services/api.service';
+import { AdminDashboardMetricsSummary } from '../../../../core/models/dashboard/admin-dashboard-metrics.model';
 
-export interface AdminDashboardMetricsSummary {
-  pendingHostels: number;
-  pendingComplaints: number;
-  pendingCertificates: number;
-  totalStudents: number;
-  pendingFeesCount: number;
-  pendingFeesAmount: number;
-  totalPaidFeesAmount: number;
-  totalLabs: number;
-  totalFaculties: number;
-  unreadSecurityAlerts: number;
-}
+export type { AdminDashboardMetricsSummary };
 
 @Injectable({
   providedIn: 'root',

@@ -62,7 +62,7 @@ export class ComplaintManagementPageComponent implements OnInit {
   // Reactive Forms
   public readonly resolveForm: FormGroup = this.fb.group({
     status: ['In Progress', [Validators.required]],
-    resolutionNote: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(1000)]],
+    resolutionNote: ['', [Validators.maxLength(1000)]],
   });
 
   public readonly categoryForm: FormGroup = this.fb.group({
@@ -224,6 +224,18 @@ export class ComplaintManagementPageComponent implements OnInit {
     this.pendingConfirmAction = null;
   }
 
+  private updateResolutionNoteValidators(status: string): void {
+    const noteControl = this.resolveForm.get('resolutionNote');
+    if (!noteControl) return;
+
+    if (status === 'Resolved') {
+      noteControl.setValidators([Validators.required, Validators.minLength(5), Validators.maxLength(1000)]);
+    } else {
+      noteControl.setValidators([Validators.maxLength(1000)]);
+    }
+    noteControl.updateValueAndValidity();
+  }
+
   openResolveModal(ticket: Complaint): void {
     this.selectedComplaint.set(ticket);
     const initialStatus = ticket.status === 'Pending' ? 'In Progress' : ticket.status;
@@ -231,6 +243,7 @@ export class ComplaintManagementPageComponent implements OnInit {
       status: initialStatus,
       resolutionNote: ticket.resolutionNote || '',
     });
+    this.updateResolutionNoteValidators(initialStatus);
     this.isResolveModalOpen.set(true);
   }
 
@@ -241,6 +254,7 @@ export class ComplaintManagementPageComponent implements OnInit {
 
   onSelectResolveStatus(val: string | number): void {
     this.resolveForm.patchValue({ status: val });
+    this.updateResolutionNoteValidators(String(val));
   }
 
   submitResolveTicket(): void {
@@ -251,6 +265,13 @@ export class ComplaintManagementPageComponent implements OnInit {
 
     const ticket = this.selectedComplaint()!;
     const formVal = this.resolveForm.value;
+    const cleanNote = (formVal.resolutionNote || '').trim();
+
+    if (cleanNote.length > 0 && cleanNote.length < 5) {
+      this.resolveForm.get('resolutionNote')?.setErrors({ minlength: true });
+      this.resolveForm.get('resolutionNote')?.markAsTouched();
+      return;
+    }
 
     this.triggerConfirm({
       title: 'Update Complaint Status & Notes',
@@ -264,7 +285,7 @@ export class ComplaintManagementPageComponent implements OnInit {
         this.complaintService
           .updateComplaintStatus(ticket.id, {
             status: formVal.status,
-            resolutionNote: formVal.resolutionNote.trim(),
+            resolutionNote: cleanNote,
           })
           .subscribe({
             next: () => {

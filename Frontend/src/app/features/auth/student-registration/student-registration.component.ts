@@ -373,9 +373,10 @@ export class StudentRegistrationComponent implements OnInit {
         this.isResendingSms.set(false);
         this.toast.info(`Fresh SMS OTP token dispatched to ${phoneNo}. Check SMS preview.`);
       },
-      error: () => {
+      error: (err) => {
         this.isResendingSms.set(false);
-        this.toast.info(`Fresh SMS OTP token dispatched to ${phoneNo}. Check SMS preview.`);
+        const errorMsg = err?.error?.message || err?.message || 'Failed to dispatch fresh SMS OTP token. Please try again.';
+        this.toast.error(errorMsg);
       }
     });
   }

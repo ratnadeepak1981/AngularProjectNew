@@ -1,7 +1,7 @@
-<div class="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+<div class="relative theme-card rounded-xl shadow-sm border theme-border transition-colors">
   <!-- Optional Top Global Search Bar -->
   @if (showSearch) {
-    <div class="p-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 rounded-t-xl">
+    <div class="p-3.5 border-b theme-border bg-slate-50/50 dark:bg-black/20 rounded-t-xl">
       <div class="relative w-full">
         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
           🔍
@@ -11,7 +11,7 @@
           [ngModel]="globalSearchTerm()"
           (ngModelChange)="onGlobalSearchChange($event)"
           [placeholder]="searchPlaceholder"
-          class="w-full pl-9 pr-4 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900 dark:text-white placeholder:text-slate-400"
+          class="w-full pl-9 pr-4 py-2 text-xs bg-white dark:bg-black/20 border theme-border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-900 dark:text-white placeholder:text-slate-400"
         />
       </div>
     </div>
