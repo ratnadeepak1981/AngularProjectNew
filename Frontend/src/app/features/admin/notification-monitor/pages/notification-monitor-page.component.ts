@@ -14,7 +14,7 @@ import { ConfirmModalComponent } from '../../../../shared/components/dialogs/con
 import { TableColumn } from '../../../../shared/components/data-table/models/table-column.model';
 
 @Component({
-  selector: 'app-notification-monitor-page.component',
+  selector: 'app-notification-monitor-page',
   standalone: true,
   imports: [
     CommonModule,
@@ -24,10 +24,10 @@ import { TableColumn } from '../../../../shared/components/data-table/models/tab
     TabComponent,
     ConfirmModalComponent,
   ],
-  templateUrl: './notification-monitor-page.component.component.html',
-  styleUrl: './notification-monitor-page.component.component.css',
+  templateUrl: './notification-monitor-page.component.html',
+  styleUrl: './notification-monitor-page.component.css',
 })
-export class NotificationMonitorPageComponentComponent implements OnInit {
+export class NotificationMonitorPageComponent implements OnInit {
   private readonly monitorService = inject(NotificationMonitorService);
   private readonly settingsService = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
@@ -350,6 +350,4 @@ export class NotificationMonitorPageComponentComponent implements OnInit {
     }
   }
 }
-
-export { NotificationMonitorPageComponentComponent as NotificationMonitorPageComponent };
 
