@@ -2,13 +2,12 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { ToastContainerComponent } from '../../../../shared/components/toast-container/toast-container.component';
 import { StudentSettingsService } from '../services/student-settings.service';
 
 @Component({
   selector: 'app-student-settings-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, PageHeaderComponent, ToastContainerComponent],
+  imports: [CommonModule, FormsModule, PageHeaderComponent],
   templateUrl: './student-settings-page.component.html',
 })
 export class StudentSettingsPageComponent {

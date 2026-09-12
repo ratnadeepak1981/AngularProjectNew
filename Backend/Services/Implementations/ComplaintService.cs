@@ -142,6 +142,12 @@ namespace CampusServicesPortal.Services.Implementations
                     $"Invalid status transition. Cannot move from '{complaint.Status}' to '{incomingStatus}'. Resolved and Rejected complaints are closed.", 400);
             }
 
+            if (incomingStatus == "Resolved" && (string.IsNullOrWhiteSpace(request.ResolutionNote) || request.ResolutionNote.Trim().Length < 5))
+            {
+                return ServiceResult<ComplaintResponseDto>.Failure(
+                    "A resolution note of at least 5 characters is required when resolving a complaint ticket.", 400);
+            }
+
             // 2. Mutate the tracked properties (EF Core tracks this change in memory automatically!)
             complaint.Status = incomingStatus;
             complaint.ResolutionNote = request.ResolutionNote?.Trim();

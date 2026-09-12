@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
 import { ControlPanelCardComponent } from '../../../../shared/components/cards/control-panel-card/control-panel-card.component';
 import { SearchComponent } from '../../../../shared/components/tables-utilities/search/search.component';
-import { ToastContainerComponent } from '../../../../shared/components/toast-container/toast-container.component';
 import { ToastService } from '../../../../core/services/toast.service';
 import { SystemSettingsService } from '../services/system-settings.service';
 import { ThemeService } from '../../../../core/services/theme.service';
@@ -23,7 +22,6 @@ import { DropdownOption } from '../../../../core/models/common/dropdown-option.m
     PageHeaderComponent,
     ControlPanelCardComponent,
     SearchComponent,
-    ToastContainerComponent,
     SelectDropdownComponent,
     DatePickerComponent,
   ],

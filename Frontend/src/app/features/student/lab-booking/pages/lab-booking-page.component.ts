@@ -6,7 +6,6 @@ import { TabItem } from '../../../../shared/components/tab-component/models/tab-
 import { ActionButtonComponent } from '../../../../shared/components/action-button/action-button.component';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
-import { ToastContainerComponent } from '../../../../shared/components/toast-container/toast-container.component';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 
 import { BookingSelectorsComponent } from '../../../lab-shared/components/booking-selectors/booking-selectors.component';
@@ -31,7 +30,6 @@ import { LabBooking } from '../../../../core/models/lab/lab-booking.model';
     TabComponent,
     StatusBadgeComponent,
     ConfirmModalComponent,
-    ToastContainerComponent,
     DashboardCardComponent,
     BookingSelectorsComponent,
     ActiveHoldTimerComponent,
