@@ -29,7 +29,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/venues - Admin create new Event Hall or Open Space venue (BRD Page 10)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost]
         public async Task<IActionResult> CreateVenue([FromBody] CreateVenueDto request)
         {
@@ -38,7 +38,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/venues/{id} - Admin amend venue details (BRD Page 10)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateVenue(int id, [FromBody] UpdateVenueDto request)
         {
@@ -47,7 +47,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // DELETE /api/venues/{id} - Admin soft-deactivate venue (BRD Page 10)
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteVenue(int id)
         {

@@ -130,6 +130,13 @@ namespace CampusServicesPortal.Services.Implementations
                 return ServiceResult<ComplaintResponseDto>.Failure("Invalid status parameter. Status must be 'In Progress', 'Resolved', or 'Rejected'.", 400);
             }
 
+            // BRD Rule: Enforce one-way status progression (Pending → In Progress → Resolved/Rejected)
+            if (!IsValidStatusTransition(complaint.Status, incomingStatus))
+            {
+                return ServiceResult<ComplaintResponseDto>.Failure(
+                    $"Invalid status transition. Cannot move from '{complaint.Status}' to '{incomingStatus}'. Resolved and Rejected complaints are closed.", 400);
+            }
+
             // 2. Mutate the tracked properties (EF Core tracks this change in memory automatically!)
             complaint.Status = incomingStatus;
             complaint.ResolutionNote = request.ResolutionNote?.Trim();
@@ -342,12 +349,13 @@ namespace CampusServicesPortal.Services.Implementations
             string currentStatus,
             string nextStatus)
         {
-            return
-                (currentStatus == "Pending" &&
-                 nextStatus == "In Progress")
-                ||
-                (currentStatus == "In Progress" &&
-                 nextStatus == "Resolved");
+            // BRD Rule: One-way progression only. Resolved and Rejected are terminal states.
+            return currentStatus switch
+            {
+                "Pending" => nextStatus is "In Progress" or "Rejected",
+                "In Progress" => nextStatus is "Resolved" or "Rejected",
+                _ => false // Resolved and Rejected are terminal — no further transitions
+            };
         }
     }
 }

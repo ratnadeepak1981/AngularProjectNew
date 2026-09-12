@@ -39,7 +39,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/hostel-applications/{id}/status — Admin: Approve or reject an allocation request [PDF: 0.1.7, 0.1.18]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateHostelStatusDto request)
         {
@@ -48,7 +48,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/hostel-applications/{id}/assign-room — Admin: Allocate a room number (Rule #3) [PDF: 0.1.7, 0.1.18]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id}/assign-room")]
         public async Task<IActionResult> AssignRoom(int id, [FromBody] AssignRoomDto request)
         {
@@ -66,7 +66,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/hostel-applications/pending — Admin: Review outstanding workloads [PDF: 0.1.7]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("pending")]
         public async Task<IActionResult> GetPendingApplications()
         {
@@ -75,7 +75,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/hostel-applications/all or GET /api/hostel-applications — Admin: Fetch all applications [PDF: 0.1.7]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("all")]
         public async Task<IActionResult> GetAllApplications()
         {

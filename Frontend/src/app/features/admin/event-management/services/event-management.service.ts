@@ -69,14 +69,25 @@ export class EventManagementService {
   }
 
   createVenue(payload: CreateVenuePayload): Observable<ApiResponse<AdminVenueItem>> {
-    return this.api.post<ApiResponse<AdminVenueItem>>(this.api.routes.venues.create, payload);
+    return this.api.post<ApiResponse<AdminVenueItem>>(
+      this.api.routes.venues.create,
+      payload,
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   updateVenue(id: number, payload: { name: string; venueType: string; capacity: number; isActive: boolean }): Observable<ApiResponse<AdminVenueItem>> {
-    return this.api.put<ApiResponse<AdminVenueItem>>(this.api.routes.venues.update(id), payload);
+    return this.api.put<ApiResponse<AdminVenueItem>>(
+      this.api.routes.venues.update(id),
+      payload,
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 
   deleteVenue(id: number): Observable<ApiResponse<any>> {
-    return this.api.delete<ApiResponse<any>>(this.api.routes.venues.delete(id));
+    return this.api.delete<ApiResponse<any>>(
+      this.api.routes.venues.delete(id),
+      { context: new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true) }
+    );
   }
 }

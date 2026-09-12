@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace CampusServicesPortal.Controllers
 {
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     [Route("api/admin/reports")]
     public class ReportsController : BaseApiController
     {

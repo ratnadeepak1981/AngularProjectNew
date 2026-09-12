@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Models;
+using CampusServicesPortal.Models;
 
 namespace CampusServicesPortal.Repositories.Interfaces
 {
@@ -12,6 +12,7 @@ namespace CampusServicesPortal.Repositories.Interfaces
         Task AddRoomAsync(Room room);
         Task UpdateHostelAsync(Hostel hostel);
         Task UpdateRoomAsync(Room room);
+        Task<bool> RoomNumberExistsAsync(int hostelId, string roomNumber, int? excludeRoomId = null);
         Task SaveChangesAsync();
     }
 }

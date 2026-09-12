@@ -18,7 +18,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/notifications/admin-audit-log — Admin-only system notifications audit log
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpGet("admin-audit-log")]
         public async Task<IActionResult> GetAllNotifications()
         {

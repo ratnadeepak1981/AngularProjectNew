@@ -16,7 +16,7 @@ namespace CampusServicesPortal.Interceptors
     public class AuditSaveChangesInterceptor : SaveChangesInterceptor
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly AsyncLocal<List<AuditEntry>?> _pendingAuditEntries = new();
+        private List<AuditEntry>? _pendingAuditEntries;
 
         private static readonly HashSet<string> SensitiveKeyWords = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -69,6 +69,9 @@ namespace CampusServicesPortal.Interceptors
 
         private void PrepareAuditEntries(DbContext context)
         {
+            // Crucial: Force snapshot change detection before reading ChangeTracker entries
+            context.ChangeTracker.DetectChanges();
+
             var httpContext = _httpContextAccessor.HttpContext;
             int? currentUserId = null;
             string? currentUserEmail = null;
@@ -102,7 +105,7 @@ namespace CampusServicesPortal.Interceptors
 
             if (entries.Count == 0)
             {
-                _pendingAuditEntries.Value = null;
+                _pendingAuditEntries = null;
                 return;
             }
 
@@ -145,6 +148,27 @@ namespace CampusServicesPortal.Interceptors
                     var studentIdProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "StudentId");
                     parentEntityId = studentIdProp?.CurrentValue?.ToString() ?? studentIdProp?.OriginalValue?.ToString();
                     propertyPrefix = "Phone_";
+                }
+                else if (entityName == "LabBookingTimeSlot")
+                {
+                    parentEntityName = "LabBooking";
+                    var parentIdProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "LabBookingId" || p.Metadata.Name == "BookingId");
+                    parentEntityId = parentIdProp?.CurrentValue?.ToString() ?? parentIdProp?.OriginalValue?.ToString();
+                    propertyPrefix = "TimeSlot_";
+                }
+                else if (entityName == "Room")
+                {
+                    parentEntityName = "Hostel";
+                    var parentIdProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "HostelId");
+                    parentEntityId = parentIdProp?.CurrentValue?.ToString() ?? parentIdProp?.OriginalValue?.ToString();
+                    propertyPrefix = "Room_";
+                }
+                else if (entityName == "EventRegistration")
+                {
+                    parentEntityName = "Event";
+                    var parentIdProp = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "EventId");
+                    parentEntityId = parentIdProp?.CurrentValue?.ToString() ?? parentIdProp?.OriginalValue?.ToString();
+                    propertyPrefix = "Registration_";
                 }
 
                 var beforeValues = new Dictionary<string, object?>();
@@ -227,7 +251,7 @@ namespace CampusServicesPortal.Interceptors
                 auditEntries.Add(auditEntry);
             }
 
-            _pendingAuditEntries.Value = auditEntries.Count > 0 ? auditEntries : null;
+            _pendingAuditEntries = auditEntries.Count > 0 ? auditEntries : null;
         }
 
         // =========================================================================
@@ -238,8 +262,8 @@ namespace CampusServicesPortal.Interceptors
             int result,
             CancellationToken cancellationToken = default)
         {
-            var pending = _pendingAuditEntries.Value;
-            _pendingAuditEntries.Value = null;
+            var pending = _pendingAuditEntries;
+            _pendingAuditEntries = null;
 
             if (pending != null && pending.Count > 0 && eventData.Context != null)
             {
@@ -258,8 +282,8 @@ namespace CampusServicesPortal.Interceptors
             SaveChangesCompletedEventData eventData,
             int result)
         {
-            var pending = _pendingAuditEntries.Value;
-            _pendingAuditEntries.Value = null;
+            var pending = _pendingAuditEntries;
+            _pendingAuditEntries = null;
 
             if (pending != null && pending.Count > 0 && eventData.Context != null)
             {
@@ -278,13 +302,13 @@ namespace CampusServicesPortal.Interceptors
             DbContextErrorEventData eventData,
             CancellationToken cancellationToken = default)
         {
-            _pendingAuditEntries.Value = null;
+            _pendingAuditEntries = null;
             return base.SaveChangesFailedAsync(eventData, cancellationToken);
         }
 
         public override void SaveChangesFailed(DbContextErrorEventData eventData)
         {
-            _pendingAuditEntries.Value = null;
+            _pendingAuditEntries = null;
             base.SaveChangesFailed(eventData);
         }
 
@@ -292,14 +316,13 @@ namespace CampusServicesPortal.Interceptors
         {
             if (entries == null || entries.Count == 0) return new List<AuditLog>();
 
-            // Group entries by (Module, ParentEntityName, RootEntityId, Action, TraceId) to merge parent-child twin passes
+            // Group entries by (Module, ParentEntityName/TargetEntity, RootEntityId, TraceId) to merge parent-child twin passes into a SINGLE database row
             var grouped = entries
                 .GroupBy(e => new
                 {
                     Module = e.Module,
                     TargetEntity = e.ParentEntityName ?? e.EntityName,
                     EntityId = e.ResolveRootEntityId(),
-                    Action = e.Action,
                     TraceId = e.TraceId ?? string.Empty
                 });
 
@@ -309,6 +332,29 @@ namespace CampusServicesPortal.Interceptors
             {
                 var first = group.First();
                 var resolvedId = group.Key.EntityId;
+                var targetEntity = group.Key.TargetEntity;
+
+                // Determine overall action across the group:
+                // If there's a mix of Delete & Create, or any Update -> overall action is "Update"
+                // Otherwise if all items are Create -> "Create", if all items are Delete -> "Delete"
+                var actions = group.Select(g => g.Action).Distinct().ToList();
+                string resolvedAction;
+                if (actions.Contains("Update") || (actions.Contains("Delete") && actions.Contains("Create")))
+                {
+                    resolvedAction = "Update";
+                }
+                else if (actions.All(a => a == "Create"))
+                {
+                    resolvedAction = "Create";
+                }
+                else if (actions.All(a => a == "Delete"))
+                {
+                    resolvedAction = "Delete";
+                }
+                else
+                {
+                    resolvedAction = actions.FirstOrDefault() ?? "Update";
+                }
 
                 // Merge BeforeValues: retain the earliest before-value for each property
                 var mergedBefore = new Dictionary<string, object?>();
@@ -333,23 +379,45 @@ namespace CampusServicesPortal.Interceptors
                     }
                 }
 
-                // If no actual properties changed across the entire group, do not emit an empty update
-                if (first.Action == "Update" && mergedBefore.Count == 0 && mergedAfter.Count == 0)
+                // For Update action, prune unchanged properties (where before == after) to only record real deltas
+                if (resolvedAction == "Update")
+                {
+                    var unchangedKeys = mergedBefore.Keys
+                        .Where(k => mergedAfter.ContainsKey(k) &&
+                                    (Equals(mergedBefore[k], mergedAfter[k]) ||
+                                     string.Equals(mergedBefore[k]?.ToString(), mergedAfter[k]?.ToString(), StringComparison.Ordinal)))
+                        .ToList();
+
+                    foreach (var k in unchangedKeys)
+                    {
+                        mergedBefore.Remove(k);
+                        mergedAfter.Remove(k);
+                    }
+                }
+
+                // If no actual properties changed across the entire group for an Update action, skip emitting an empty log
+                if (resolvedAction == "Update" && mergedBefore.Count == 0 && mergedAfter.Count == 0)
                 {
                     continue;
                 }
 
-                var description = first.DescriptionTemplate.Replace("{entityId}", resolvedId);
+                var description = resolvedAction switch
+                {
+                    "Create" => $"Created new {targetEntity} record #{resolvedId}.",
+                    "Delete" => $"Deleted {targetEntity} #{resolvedId} record.",
+                    _ => $"Updated properties on {targetEntity} #{resolvedId}."
+                };
 
                 result.Add(new AuditLog
                 {
                     UserId = first.UserId,
                     UserDisplayName = first.UserDisplayName ?? "System Internal",
-                    Action = first.Action,
+                    Action = resolvedAction,
                     Module = first.Module,
                     EntityId = resolvedId,
                     Timestamp = first.Timestamp,
                     IsSuccess = first.IsSuccess,
+                    IsReviewed = first.IsSuccess,
                     IpAddress = first.IpAddress,
                     TraceId = first.TraceId,
                     Description = description,

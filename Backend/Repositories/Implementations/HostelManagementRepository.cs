@@ -69,6 +69,20 @@ namespace CampusServicesPortal.Repositories
             await Task.CompletedTask;
         }
 
+        public async Task<bool> RoomNumberExistsAsync(int hostelId, string roomNumber, int? excludeRoomId = null)
+        {
+            string cleanNum = roomNumber.Trim().ToLower();
+            var query = _context.Rooms
+                .Where(r => r.HostelId == hostelId && r.RoomNumber.ToLower() == cleanNum);
+
+            if (excludeRoomId.HasValue)
+            {
+                query = query.Where(r => r.Id != excludeRoomId.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();

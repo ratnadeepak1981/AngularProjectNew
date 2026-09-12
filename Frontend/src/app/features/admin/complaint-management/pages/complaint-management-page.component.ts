@@ -126,7 +126,8 @@ export class ComplaintManagementPageComponent implements OnInit {
     { key: 'actions', header: 'Actions', sortable: false, filterable: false, type: 'actions', align: 'right' },
   ];
 
-  public readonly statusOptions: DropdownOption[] = [
+  // All possible status options (filtered dynamically based on current complaint status)
+  private readonly allStatusOptions: DropdownOption[] = [
     {
       value: 'In Progress',
       label: 'In Progress',
@@ -146,6 +147,18 @@ export class ComplaintManagementPageComponent implements OnInit {
       badgeClass: 'bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700',
     },
   ];
+
+  // BRD Status Transition: Only show valid next statuses for the selected complaint
+  public readonly statusOptions = computed<DropdownOption[]>(() => {
+    const current = this.selectedComplaint()?.status;
+    if (current === 'Pending') {
+      return this.allStatusOptions.filter(o => o.value === 'In Progress' || o.value === 'Rejected');
+    }
+    if (current === 'In Progress') {
+      return this.allStatusOptions.filter(o => o.value === 'Resolved' || o.value === 'Rejected');
+    }
+    return [];
+  });
 
   public readonly tabs = computed<TabItem[]>(() => [
     { id: 'tickets', label: 'Grievance Triage Tickets', icon: '🚨', count: this.complaints().length },

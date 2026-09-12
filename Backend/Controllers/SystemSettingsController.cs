@@ -8,7 +8,7 @@ using CampusServicesPortal.Wrappers;
 
 namespace CampusServicesPortal.Controllers
 {
-    [Authorize(Roles = "Admin,Student")]
+    [Authorize(Roles = "Admin,SuperAdmin,Student")]
     [ApiController]
     [Route("api/admin/system-settings")]
     public class SystemSettingsController : BaseApiController
@@ -21,7 +21,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/admin/system-settings/reservation-hold-minutes - BRD Page 12
-        [Authorize(Roles = "Admin,Student")]
+        [Authorize(Roles = "Admin,SuperAdmin,Student")]
         [HttpGet("reservation-hold-minutes")]
         public async Task<IActionResult> GetHoldMinutes()
         {

@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.DTOs.Requests.Hostel;
+using CampusServicesPortal.DTOs.Requests.Hostel;
 using CampusServicesPortal.DTOs.Requests.Hostel.Managment;
 using CampusServicesPortal.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace CampusServicesPortal.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")]
     [Route("api")]
     public class HostelManagmentController : BaseApiController
     {

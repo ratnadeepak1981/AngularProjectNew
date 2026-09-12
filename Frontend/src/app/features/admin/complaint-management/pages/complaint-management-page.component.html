@@ -26,13 +26,21 @@
       >
         <ng-template #cellActions let-row>
           <div class="flex items-center justify-end">
-            <app-action-button
-              variant="primary"
-              size="sm"
-              label="Update Status / Resolve →"
-              icon="edit"
-              (btnClick)="openResolveModal(row)"
-            ></app-action-button>
+            @if (row.status === 'Resolved' || row.status === 'Rejected') {
+              <span
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed select-none"
+              >
+                {{ row.status === 'Resolved' ? '✓ Case Closed' : '✕ Rejected' }}
+              </span>
+            } @else {
+              <app-action-button
+                variant="primary"
+                size="sm"
+                label="Update Status / Resolve →"
+                icon="edit"
+                (btnClick)="openResolveModal(row)"
+              ></app-action-button>
+            }
           </div>
         </ng-template>
       </app-data-table>
@@ -126,7 +134,7 @@
               Update Status <span class="text-rose-500">*</span>
             </label>
             <app-select-dropdown
-              [options]="statusOptions"
+              [options]="statusOptions()"
               [selectedValue]="resolveForm.get('status')?.value"
               placeholder="-- Select Status --"
               (selectionChange)="onSelectResolveStatus($event)"

@@ -159,6 +159,13 @@ export class ApiService {
       acknowledge: (id: number) => `/admin/audit-logs/${id}/acknowledge`,
       acknowledgeAll: '/admin/audit-logs/acknowledge-all',
     },
+    adminManagement: {
+      list: '/admin-management/admins',
+      create: '/admin-management/admins',
+      toggleStatus: (id: number) => `/admin-management/admins/${id}/status`,
+      delete: (id: number) => `/admin-management/admins/${id}`,
+      resetPassword: (id: number) => `/admin-management/admins/${id}/reset-password`,
+    },
   };
 
   get<T>(

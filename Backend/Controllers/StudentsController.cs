@@ -44,7 +44,7 @@ namespace CampusServicesPortal.Controllers
         }
       
         // GET /api/students?search=&faculty=
-        [Authorize(Roles = "Admin")] // Rule 4: Admin role authorization required [Index 0.1.18]
+        [Authorize(Roles = "Admin,SuperAdmin")] // Rule 4: Admin role authorization required [Index 0.1.18]
         [HttpGet]
         public async Task<IActionResult> SearchStudents([FromQuery] string? search, [FromQuery] string? faculty)
         {
@@ -53,7 +53,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // DELETE /api/students/{id}
-        [Authorize(Roles = "Admin")] // Rule 4: Only administrators can deactivate student accounts [Index 0.1.5, 0.1.18]
+        [Authorize(Roles = "Admin,SuperAdmin")] // Rule 4: Only administrators can deactivate student accounts [Index 0.1.5, 0.1.18]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeactivateStudent(int id)
         {
@@ -63,7 +63,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/students/{id}/reset-password
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost("{id}/reset-password")]
         public async Task<IActionResult> ResetStudentPassword(int id)
         {

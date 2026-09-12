@@ -105,20 +105,37 @@ namespace CampusServicesPortal.Services.Implementations
             _memoryCache.Set($"PasswordResetOtp_Attempts_{cleanEmail}", 0, cacheOptions);
 
             var student = await _passwordRepository.GetStudentByEmailThroughUserAsync(cleanEmail);
-            if (student != null)
+            if (user != null)
             {
-                await _passwordRepository.InvalidateExistingResetTokensAsync(student.Id);
-                string resetTokenStr = Guid.NewGuid().ToString("N");
-                var resetToken = new PasswordResetToken
+                if (student != null)
                 {
-                    StudentId = student.Id,
-                    Token = resetTokenStr,
-                    ExpiresAt = DateTime.UtcNow.AddHours(24),
-                    IsUsed = false
-                };
-                await _passwordRepository.SavePasswordResetTokenAsync(resetToken);
+                    await _passwordRepository.InvalidateExistingResetTokensAsync(student.Id);
+                    string resetTokenStr = Guid.NewGuid().ToString("N");
+                    var resetToken = new PasswordResetToken
+                    {
+                        StudentId = student.Id,
+                        Token = resetTokenStr,
+                        ExpiresAt = DateTime.UtcNow.AddHours(24),
+                        IsUsed = false
+                    };
+                    await _passwordRepository.SavePasswordResetTokenAsync(resetToken);
 
-                // Dispatch Email Notification via SMTP channel with 24h validity rich HTML template
+                    // Dispatch SMS simulation for student
+                    string phone = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() 
+                                   ?? (!string.IsNullOrWhiteSpace(student.ContactDetails) ? student.ContactDetails.Trim() : string.Empty);
+
+                    if (!string.IsNullOrWhiteSpace(phone))
+                    {
+                        await _smsService.DispatchSmsAsync(new SendSmsRequestDto
+                        {
+                            PhoneNumber = phone,
+                            Purpose = SmsPurposes.ForgotPasswordOtp,
+                            OtpCode = otpCode
+                        });
+                    }
+                }
+
+                // Dispatch Email Notification via SMTP channel with 24h validity rich HTML template (For Student, Admin, or SuperAdmin)
                 try
                 {
                     var emailPreview = await _emailService.GeneratePasswordResetEmailPreviewAsync(cleanEmail);
@@ -130,20 +147,6 @@ namespace CampusServicesPortal.Services.Implementations
                 catch
                 {
                     // Fail gracefully so preview and OTP flows still work if SMTP has transient issues
-                }
-
-                // Dispatch SMS simulation
-                string phone = student.PhoneNumbers.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() 
-                               ?? (!string.IsNullOrWhiteSpace(student.ContactDetails) ? student.ContactDetails.Trim() : string.Empty);
-
-                if (!string.IsNullOrWhiteSpace(phone))
-                {
-                    await _smsService.DispatchSmsAsync(new SendSmsRequestDto
-                    {
-                        PhoneNumber = phone,
-                        Purpose = SmsPurposes.ForgotPasswordOtp,
-                        OtpCode = otpCode
-                    });
                 }
             }
 

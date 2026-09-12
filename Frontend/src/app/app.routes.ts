@@ -4,6 +4,7 @@ import { MainLayoutComponent } from './layouts/main-layout/main-layout.component
 import { LoginComponent } from './features/auth/login/login.component';
 import { authGuard } from './core/guards/auth-guard';
 import { adminGuard } from './core/guards/admin-guard';
+import { superAdminGuard } from './core/guards/super-admin-guard';
 import { studentGuard } from './core/guards/student-guard';
 
 import { StudentRegistrationComponent } from './features/auth/student-registration/student-registration.component';
@@ -169,6 +170,14 @@ export const routes: Routes = [
         path: 'admin/audit',
         redirectTo: 'admin/audit-logs',
         pathMatch: 'full',
+      },
+      {
+        path: 'admin/admin-management',
+        loadChildren: () =>
+          import('./features/admin/admin-management/admin-management.routes').then(
+            (m) => m.ADMIN_MANAGEMENT_ROUTES
+          ),
+        canActivate: [superAdminGuard],
       },
       {
         path: 'admin/lab-management',

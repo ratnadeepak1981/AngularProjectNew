@@ -28,13 +28,14 @@ export class AuthService {
   // Reactive State Signals
   public readonly token = signal<string | null>(this.getStoredToken());
   public readonly refreshToken = signal<string | null>(this.getStoredRefreshToken());
-  public readonly role = signal<'Admin' | 'Student' | null>(this.getStoredRole());
+  public readonly role = signal<'SuperAdmin' | 'Admin' | 'Student' | null>(this.getStoredRole());
   public readonly userProfile = signal<StudentProfile | null>(this.getStoredProfile());
   public readonly mustChangePassword = signal<boolean>(this.getStoredMustChangePassword());
   public readonly forceChangeReason = signal<string | null>(this.getStoredForceReason());
 
   public readonly isAuthenticated = computed(() => !!this.token());
-  public readonly isAdmin = computed(() => this.role() === 'Admin');
+  public readonly isSuperAdmin = computed(() => this.role() === 'SuperAdmin');
+  public readonly isAdmin = computed(() => this.role() === 'Admin' || this.role() === 'SuperAdmin');
   public readonly isStudent = computed(() => this.role() === 'Student');
 
   private getStoredToken(): string | null {
@@ -45,8 +46,8 @@ export class AuthService {
     return localStorage.getItem(this.refreshTokenKey);
   }
 
-  private getStoredRole(): 'Admin' | 'Student' | null {
-    return localStorage.getItem(this.roleKey) as 'Admin' | 'Student' | null;
+  private getStoredRole(): 'SuperAdmin' | 'Admin' | 'Student' | null {
+    return localStorage.getItem(this.roleKey) as 'SuperAdmin' | 'Admin' | 'Student' | null;
   }
 
   private getStoredMustChangePassword(): boolean {
@@ -129,7 +130,8 @@ export class AuthService {
     }
 
     if (auth.role) {
-      const normalizedRole = auth.role === 'Admin' ? 'Admin' : 'Student';
+      const normalizedRole: 'SuperAdmin' | 'Admin' | 'Student' = 
+        auth.role === 'SuperAdmin' ? 'SuperAdmin' : auth.role === 'Admin' ? 'Admin' : 'Student';
       localStorage.setItem(this.roleKey, normalizedRole);
       this.role.set(normalizedRole);
     }

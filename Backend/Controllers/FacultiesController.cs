@@ -18,7 +18,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // GET /api/faculties — Fetch all university faculties [PDF: 0.1.17]
-        [Authorize(Roles = "Admin,Student")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -27,7 +27,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // POST /api/faculties — Admin Only: Register a fresh academic faculty [PDF: 0.1.17]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateFacultyRequestDto request)
         {
@@ -36,7 +36,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // PUT /api/faculties/{id} — Admin Only: Modify descriptors or toggle activity status [PDF: 0.1.17]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateFacultyRequestDto request)
         {
@@ -45,7 +45,7 @@ namespace CampusServicesPortal.Controllers
         }
 
         // DELETE /api/faculties/{id} — Admin Only: Enforces student dependency blocks before soft-deactivating [PDF: 0.1.17]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,SuperAdmin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
