@@ -31,11 +31,29 @@ export class LabGridMatrixComponent implements OnChanges {
   @Input() isModal: boolean = false;
   @Input() isStudent: boolean = false;
   @Input() showBookingStatus: boolean = true;
+  @Input() showZoom: boolean = false;
 
   @Output() seatAdded = new EventEmitter<{ seatNumber: string; row: number; col: number }>();
   @Output() seatRemoved = new EventEmitter<number>();
   @Output() closeModal = new EventEmitter<void>();
   @Output() seatSelected = new EventEmitter<LabSeat>();
+
+  // Zoom Level Signal (50% to 150%, 10% steps, identical to Admin Lab Layout)
+  public readonly zoomLevel = signal<number>(100);
+
+  public zoomIn(): void {
+    const next = Math.min(this.zoomLevel() + 10, 150);
+    this.zoomLevel.set(next);
+  }
+
+  public zoomOut(): void {
+    const next = Math.max(this.zoomLevel() - 10, 50);
+    this.zoomLevel.set(next);
+  }
+
+  public resetZoom(): void {
+    this.zoomLevel.set(100);
+  }
 
   // Reactive 2D Form Matrix Structure: Root FormGroup -> rows (FormArray) -> cells (FormArray)
   public readonly matrixForm: FormGroup = this.fb.group({
@@ -53,6 +71,9 @@ export class LabGridMatrixComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['seats'] || changes['totalRows'] || changes['totalCols']) {
       this.rebuildMatrixFormArray();
+    }
+    if (changes['labId'] || changes['isModal']) {
+      this.zoomLevel.set(100);
     }
   }
 

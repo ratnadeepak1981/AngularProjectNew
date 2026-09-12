@@ -97,13 +97,25 @@ namespace CampusServicesPortal.Services.Implementations
                 var studentCohortList = await _billingRepo.GetStudentsByFacultyIdAsync(facultyId);
                 if (studentCohortList == null || !studentCohortList.Any())
                 {
-                    return ServiceResult<object>.Failure("No active student records matched the target faculty group selection filter.", 404);
+                    return ServiceResult<object>.Success(new
+                    {
+                        Message = "The selected faculty currently has no active enrolled students. 0 fee assignments were created.",
+                        AssignedCount = 0,
+                        SkippedCount = 0
+                    }, 200);
                 }
+
+                int assignedCount = 0;
+                int skippedCount = 0;
 
                 foreach (var student in studentCohortList)
                 {
                     bool hasDuplicate = await _billingRepo.HasDuplicateUnpaidFeeAsync(student.Id, request.FeeTypeId, billingPeriodClean);
-                    if (hasDuplicate) continue;
+                    if (hasDuplicate)
+                    {
+                        skippedCount++;
+                        continue;
+                    }
 
                     var feePayment = new FeePayment
                     {
@@ -116,6 +128,7 @@ namespace CampusServicesPortal.Services.Implementations
                     };
 
                     await _billingRepo.AddFeePaymentAsync(feePayment);
+                    assignedCount++;
 
                     // AUTOMATED TRIGGER: Loop and stage individual notifications for bulk cohorts concurrently [INDEX]
                     await _notificationService.SendInternalNotificationAsync(new CreateNotificationDto
@@ -127,7 +140,12 @@ namespace CampusServicesPortal.Services.Implementations
                 }
 
                 await _billingRepo.SaveChangesAsync();
-                return ServiceResult<object>.Success(new { Message = "Bulk assignment run completed successfully." }, 201);
+                return ServiceResult<object>.Success(new
+                {
+                    Message = $"Bulk assignment run completed successfully. Assigned to {assignedCount} student(s)" + (skippedCount > 0 ? $", {skippedCount} skipped due to existing duplicate fee." : "."),
+                    AssignedCount = assignedCount,
+                    SkippedCount = skippedCount
+                }, 201);
             }
         }
 

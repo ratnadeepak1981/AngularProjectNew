@@ -49,6 +49,7 @@ namespace CampusServicesPortal.Services.Implementations
             var newAdmin = new User
             {
                 Email = cleanEmail,
+                FullName = string.IsNullOrWhiteSpace(request.FullName) ? null : request.FullName.Trim(),
                 PasswordHash = passwordHash,
                 Role = "Admin",
                 IsActive = true,
@@ -203,6 +204,7 @@ namespace CampusServicesPortal.Services.Implementations
             {
                 Id = user.Id,
                 Email = user.Email,
+                FullName = user.FullName,
                 Role = user.Role,
                 IsActive = user.IsActive,
                 CreatedAt = user.CreatedAt,

@@ -1,6 +1,7 @@
 export interface AdminUser {
   id: number;
   email: string;
+  fullName?: string;
   role: string;
   isActive: boolean;
   createdAt: string;
@@ -9,6 +10,7 @@ export interface AdminUser {
 
 export interface CreateAdminRequest {
   email: string;
+  fullName?: string;
   password: string;
 }
 

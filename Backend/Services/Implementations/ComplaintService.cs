@@ -43,6 +43,11 @@ namespace CampusServicesPortal.Services.Implementations
                 return ServiceResult<ComplaintResponseDto>.Failure("The selected complaint category is inactive.",400);
             }
 
+            if (await _complaintRepository.HasDuplicatePendingComplaintAsync(studentId, request.CategoryId, request.Description))
+            {
+                return ServiceResult<ComplaintResponseDto>.Failure("You already have an identical pending complaint ticket submitted for this category.", 409);
+            }
+
             var complaint = new Complaint
             {
                 StudentId = studentId,

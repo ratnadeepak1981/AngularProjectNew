@@ -13,14 +13,32 @@ export type BadgeSize = 'sm' | 'md';
 })
 export class StatusBadgeComponent {
   @Input() status: string = '';
+  @Input() count?: number | null;
+  @Input() countUnit: string = '';
   @Input() variant: BadgeVariant = 'auto';
   @Input({ transform: booleanAttribute }) pulse: boolean = true;
   @Input() size: BadgeSize = 'md';
   @Input() icon: string = '';
 
+  get displayStatus(): string {
+    if (this.count !== undefined && this.count !== null) {
+      const c = this.count;
+      const unit = this.countUnit || '';
+      if (unit) {
+        return `${c} ${c === 1 ? unit : unit + 's'}`;
+      }
+      return `${c}`;
+    }
+    return this.status;
+  }
+
   get resolvedVariant(): BadgeVariant {
     if (this.variant && this.variant !== 'auto') {
       return this.variant;
+    }
+
+    if (this.count !== undefined && this.count !== null) {
+      return this.count > 0 ? 'success' : 'danger';
     }
 
     const s = (this.status || '').toLowerCase().trim();

@@ -2,11 +2,12 @@ import { Component, HostListener, computed, input, output, signal } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DropdownOption } from '../../../core/models/common/dropdown-option.model';
+import { StatusBadgeComponent } from '../status-badge/status-badge.component';
 
 @Component({
   selector: 'app-select-dropdown',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatusBadgeComponent],
   templateUrl: './select-dropdown.component.html',
 })
 export class SelectDropdownComponent {

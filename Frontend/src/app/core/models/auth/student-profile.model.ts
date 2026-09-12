@@ -6,6 +6,7 @@ export interface StudentProfile {
   indexNumber: string;
   name: string;
   email: string;
+  facultyId?: number;
   facultyName?: string;
   contactDetails?: string;
   emailVerified: boolean;

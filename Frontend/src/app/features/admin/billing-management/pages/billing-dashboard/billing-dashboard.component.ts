@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { AdminBillingService, FeePaymentItem, FeeTypeItem } from '../../services/admin-billing';
+import { SystemSettingsService } from '../../../../../core/services/system-settings.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { PageHeaderComponent } from '../../../../../shared/components/page-header/page-header.component';
 import { TabComponent, TabItem } from '../../../../../shared/components/tab-component/tab.component';
@@ -36,6 +37,7 @@ import { ActionButtonComponent } from '../../../../../shared/components/action-b
 })
 export class BillingDashboardComponent implements OnInit {
   private readonly billingService = inject(AdminBillingService);
+  private readonly systemSettings = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
 
   // Active Tab State
@@ -89,6 +91,10 @@ export class BillingDashboardComponent implements OnInit {
   public readonly alertButtonText = signal<string>('Understood');
 
   ngOnInit(): void {
+    const sysSize = this.systemSettings.defaultPageSize();
+    if (sysSize && sysSize > 0) {
+      this.ledgerPageSize.set(sysSize);
+    }
     this.loadAllData();
   }
 

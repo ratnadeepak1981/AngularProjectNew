@@ -64,6 +64,14 @@ namespace CampusServicesPortal.Repositories.Implementations
             return await _context.FeeTypes.FindAsync(id);
         }
 
+        public async Task<bool> ExistsByNameAsync(string name, int? excludeFeeTypeId = null)
+        {
+            string cleanName = name.Trim().ToLower();
+            var query = _context.FeeTypes.Where(f => f.Name.ToLower() == cleanName);
+            if (excludeFeeTypeId.HasValue) query = query.Where(f => f.Id != excludeFeeTypeId.Value);
+            return await query.AnyAsync();
+        }
+
         public async Task AddFeeTypeAsync(FeeType feeType)
         {
             await _context.FeeTypes.AddAsync(feeType);

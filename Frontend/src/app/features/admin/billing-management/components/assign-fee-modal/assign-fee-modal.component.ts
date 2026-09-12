@@ -51,12 +51,47 @@ export class AssignFeeModalComponent implements OnChanges {
   public readonly isSubmitting = signal<boolean>(false);
 
   public readonly facultyDropdownOptions = computed<DropdownOption[]>(() => {
-    return (this.faculties || []).map((f: any) => ({
-      value: f.id || f.Id,
-      label: f.name || f.Name,
-      icon: '🏛️',
-      description: `Faculty Cohort ID #${f.id || f.Id}`,
-    }));
+    return (this.faculties || []).map((f: any) => {
+      const facId = f.id || f.Id;
+      const facName = (f.name || f.Name || '').toLowerCase().trim();
+      const count = (this.students || []).filter((s: any) => {
+        const studentFacId = s.facultyId ?? s.FacultyId;
+        const studentFacName = (s.facultyName || s.FacultyName || '').toLowerCase().trim();
+        const matches = (studentFacId != null && studentFacId === facId) || (facName !== '' && studentFacName === facName);
+        const active = s.isActive !== false;
+        return matches && active;
+      }).length;
+
+      return {
+        value: facId,
+        label: f.name || f.Name,
+        icon: '🏛️',
+        description: count > 0 ? `${count} active enrolled student(s)` : 'No active students enrolled',
+        count: count,
+        countUnit: 'Student',
+      };
+    });
+  });
+
+  public readonly selectedFacultyStudentCount = computed<number>(() => {
+    const facId = this.selectedFacultyId();
+    if (!facId) return 0;
+    const fac = (this.faculties || []).find((f: any) => (f.id || f.Id) === facId);
+    const facName = (fac ? (fac.name || fac.Name || '') : '').toLowerCase().trim();
+    return (this.students || []).filter((s: any) => {
+      const studentFacId = s.facultyId ?? s.FacultyId;
+      const studentFacName = (s.facultyName || s.FacultyName || '').toLowerCase().trim();
+      const matches = (studentFacId != null && studentFacId === facId) || (facName !== '' && studentFacName === facName);
+      const active = s.isActive !== false;
+      return matches && active;
+    }).length;
+  });
+
+  public readonly selectedFacultyName = computed<string>(() => {
+    const facId = this.selectedFacultyId();
+    if (!facId) return 'Faculty';
+    const fac = (this.faculties || []).find((f: any) => (f.id || f.Id) === facId);
+    return fac ? (fac.name || fac.Name) : 'Faculty';
   });
 
   public readonly feeTypeDropdownOptions = computed<DropdownOption[]>(() => {

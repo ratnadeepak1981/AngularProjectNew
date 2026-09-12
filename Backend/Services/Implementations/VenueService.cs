@@ -25,15 +25,19 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<Venue>> CreateVenueAsync(string name, string venueType, int capacity)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            string cleanName = name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
                 return ServiceResult<Venue>.Failure("Venue name is required.", 400);
 
             if (capacity <= 0)
                 return ServiceResult<Venue>.Failure("Venue capacity must be greater than zero.", 400);
 
+            if (await _venueRepository.ExistsByNameAsync(cleanName))
+                return ServiceResult<Venue>.Failure($"An event venue named '{cleanName}' already exists.", 409);
+
             var venue = new Venue
             {
-                Name = name.Trim(),
+                Name = cleanName,
                 Type = string.IsNullOrWhiteSpace(venueType) ? "Event Hall" : venueType.Trim(),
                 Capacity = capacity,
                 IsActive = true
@@ -51,7 +55,14 @@ namespace CampusServicesPortal.Services.Implementations
             if (venue == null)
                 return ServiceResult<Venue>.Failure("Target venue record not found.", 404);
 
-            venue.Name = name.Trim();
+            string cleanName = name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
+                return ServiceResult<Venue>.Failure("Venue name is required.", 400);
+
+            if (await _venueRepository.ExistsByNameAsync(cleanName, id))
+                return ServiceResult<Venue>.Failure($"An event venue named '{cleanName}' already exists.", 409);
+
+            venue.Name = cleanName;
             if (!string.IsNullOrWhiteSpace(venueType))
                 venue.Type = venueType.Trim();
             

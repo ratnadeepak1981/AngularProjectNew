@@ -24,12 +24,16 @@ namespace CampusServicesPortal.Services.Implementations
 
         public async Task<ServiceResult<FeeType>> CreateFeeTypeAsync(string name)
         {
-            if (string.IsNullOrWhiteSpace(name))
+            string cleanName = name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
                 return ServiceResult<FeeType>.Failure("Fee type name is required.", 400);
+
+            if (await _feeTypeRepository.ExistsByNameAsync(cleanName))
+                return ServiceResult<FeeType>.Failure($"A fee category named '{cleanName}' already exists.", 409);
 
             var feeType = new FeeType
             {
-                Name = name.Trim(),
+                Name = cleanName,
                 IsActive = true
             };
 
@@ -45,7 +49,14 @@ namespace CampusServicesPortal.Services.Implementations
             if (feeType == null)
                 return ServiceResult<FeeType>.Failure("Target fee type record not found.", 404);
 
-            feeType.Name = name.Trim();
+            string cleanName = name?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(cleanName))
+                return ServiceResult<FeeType>.Failure("Fee type name is required.", 400);
+
+            if (await _feeTypeRepository.ExistsByNameAsync(cleanName, id))
+                return ServiceResult<FeeType>.Failure($"A fee category named '{cleanName}' already exists.", 409);
+
+            feeType.Name = cleanName;
             feeType.IsActive = isActive;
 
             _feeTypeRepository.UpdateFeeType(feeType);

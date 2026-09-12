@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -23,6 +23,7 @@ export class HeaderComponentComponent implements OnInit, OnDestroy {
   private readonly toast = inject(ToastService);
 
   public readonly isPasswordModalOpen = signal<boolean>(false);
+  public readonly isProfileMenuOpen = signal<boolean>(false);
   public readonly unreadAlertsCount = signal<number>(0);
   public readonly isConnected = signal<boolean>(true);
   public readonly themes: ThemeOption[] = ThemeService.THEMES;
@@ -30,13 +31,56 @@ export class HeaderComponentComponent implements OnInit, OnDestroy {
 
   public readonly userInitials = computed(() => {
     const profile = this.authService.userProfile();
-    const name = profile?.name || (this.authService.isAdmin() ? 'Administrator Account' : 'Student Account');
-    const parts = name.trim().split(' ');
-    if (parts.length >= 2) {
+    let name = profile?.name?.trim();
+    if (!name || name === 'Administrator Account' || name === 'Student Account') {
+      if (profile?.email) {
+        name = profile.email.split('@')[0].replace(/[._-]/g, ' ');
+      } else {
+        name = this.authService.isAdmin() ? 'Admin User' : 'Student User';
+      }
+    }
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2 && parts[0] && parts[1]) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
   });
+
+  public readonly displayName = computed(() => {
+    const profile = this.authService.userProfile();
+    if (profile?.name && profile.name !== 'Administrator Account') {
+      return profile.name;
+    }
+    if (profile?.email) {
+      return profile.email;
+    }
+    return this.authService.role() === 'SuperAdmin' ? 'Super Administrator' : this.authService.isAdmin() ? 'Administrator' : 'Student';
+  });
+
+  public readonly roleBadgeLabel = computed(() => {
+    const role = this.authService.role();
+    if (role === 'SuperAdmin') return 'Super Admin';
+    if (role === 'Admin') return 'Administrator';
+    return 'Student';
+  });
+
+  public toggleProfileMenu(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isProfileMenuOpen.update((open) => !open);
+  }
+
+  public closeProfileMenu(): void {
+    this.isProfileMenuOpen.set(false);
+  }
+
+  @HostListener('document:click')
+  public onDocumentClick(): void {
+    if (this.isProfileMenuOpen()) {
+      this.isProfileMenuOpen.set(false);
+    }
+  }
 
   ngOnInit(): void {
     this.checkBackendHealth();

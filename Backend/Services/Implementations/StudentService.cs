@@ -67,6 +67,14 @@ namespace CampusServicesPortal.Services.Implementations
                 return ServiceResult<StudentProfileResponseDto>.Failure("Registration rejected: Email address is already in use.", 409);
             }
 
+            // 3.1 Phone check: Enforce phone uniqueness across accounts
+            string inputPhone = request.PhoneNumbers?.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber
+                ?? request.ContactDetails;
+            if (!string.IsNullOrWhiteSpace(inputPhone) && await _studentRepository.IsPhoneRegisteredAsync(inputPhone.Trim()))
+            {
+                return ServiceResult<StudentProfileResponseDto>.Failure("Registration rejected: Telephone number is already registered under another account profile.", 409);
+            }
+
             // 3.5 Password Policy Validation
             var minLengthSetting = await _passwordRepository.GetSystemSettingAsync("MinPasswordLength");
             int minLength = minLengthSetting != null && int.TryParse(minLengthSetting.SettingValue, out var ml) ? ml : 8;
@@ -285,6 +293,18 @@ namespace CampusServicesPortal.Services.Implementations
             // 2. Sync Phone Numbers
             if (request.PhoneNumbers != null && request.PhoneNumbers.Count > 0)
             {
+                // Validate duplicate phone numbers across other student profiles
+                foreach (var p in request.PhoneNumbers)
+                {
+                    if (!string.IsNullOrWhiteSpace(p.PhoneNumber))
+                    {
+                        if (await _studentRepository.IsPhoneRegisteredAsync(p.PhoneNumber.Trim(), id))
+                        {
+                            return ServiceResult<StudentProfileResponseDto>.Failure($"Telephone number '{p.PhoneNumber.Trim()}' is already registered under another account profile.", 409);
+                        }
+                    }
+                }
+
                 var updatedPhones = new List<StudentPhoneNumber>();
                 foreach (var p in request.PhoneNumbers)
                 {
@@ -384,6 +404,7 @@ namespace CampusServicesPortal.Services.Implementations
                 EmailVerified = student.EmailVerified,
                 PhoneVerified = student.PhoneNumbers.Any(p => p.IsPrimary && p.IsVerified),
                 IsActive = !student.DeactivatedAt.HasValue && (student.User == null || student.User.IsActive),
+                FacultyId = student.FacultyId,
                 FacultyName = student.Faculty?.Name ?? "Unassigned",
                 PhoneNumbers = phoneDtos,
                 Addresses = addressDtos
@@ -514,7 +535,7 @@ namespace CampusServicesPortal.Services.Implementations
                     {
                         await _studentRepository.SaveChangesAsync();
                     }
-                    catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+                    catch (Exception ex) when (ex is Microsoft.EntityFrameworkCore.DbUpdateException || ex is CampusServicesPortal.Exceptions.DuplicateBookingException)
                     {
                         return ServiceResult<int>.Success(0, 200);
                     }

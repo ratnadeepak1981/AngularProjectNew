@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, booleanAttribute } from '@angular/core';
+import { Component, EventEmitter, Input, Output, booleanAttribute } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppTooltipDirective } from '../../directives/tooltip.directive';
 import { AppHighlightDirective } from '../../directives/highlight.directive';
@@ -30,15 +30,10 @@ export class ActionButtonComponent {
 
   @Output() btnClick = new EventEmitter<MouseEvent>();
 
-  @HostListener('click', ['$event'])
-  onHostClick(event: MouseEvent): void {
-    this.onClick(event);
-  }
-
   onClick(event: MouseEvent): void {
+    event.stopPropagation();
     if (this.disabled || this.loading) {
       event.preventDefault();
-      event.stopPropagation();
       return;
     }
     this.btnClick.emit(event);

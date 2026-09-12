@@ -6,6 +6,7 @@ import { DataTableComponent } from '../../../../../shared/components/data-table/
 import { TableColumn } from '../../../../../shared/components/data-table/models/table-column.model';
 import { HostelManagementService, HostelBuilding, HostelRoom } from '../../services/hostel-management.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { SystemSettingsService } from '../../../../../core/services/system-settings.service';
 import { ActionButtonComponent } from '../../../../../shared/components/action-button/action-button.component';
 
 @Component({
@@ -17,6 +18,7 @@ import { ActionButtonComponent } from '../../../../../shared/components/action-b
 })
 export class HostelsRoomsDirectoryComponent {
   private readonly hostelService = inject(HostelManagementService);
+  private readonly systemSettings = inject(SystemSettingsService, { optional: true });
   private readonly toast = inject(ToastService);
 
   // Reactive Input Signals for Hostels and Selected Hostel ID
@@ -69,7 +71,7 @@ export class HostelsRoomsDirectoryComponent {
   public readonly roomSortColumn = signal<string>('roomNumber');
   public readonly roomSortAsc = signal<boolean>(true);
   public readonly roomPage = signal<number>(1);
-  public readonly roomPageSize = signal<number>(5);
+  public readonly roomPageSize = signal<number>(this.systemSettings?.defaultPageSize() || 5);
   public readonly columnFilters = signal<Record<string, string[]>>({});
 
   public readonly hostelBuildingTabs = computed<TabItem[]>(() => {
@@ -161,12 +163,9 @@ export class HostelsRoomsDirectoryComponent {
     });
   });
 
-  public readonly pagedRooms = computed(() => {
+  public readonly formattedRooms = computed(() => {
     const list = this.filteredRooms();
-    const page = this.roomPage();
-    const size = this.roomPageSize();
-    const start = (page - 1) * size;
-    return list.slice(start, start + size).map((r) => {
+    return list.map((r) => {
       const occ = r.currentOccupancy ?? (r as any).CurrentOccupancy ?? 0;
       return {
         ...r,
@@ -176,6 +175,8 @@ export class HostelsRoomsDirectoryComponent {
       };
     });
   });
+
+  public readonly pagedRooms = this.formattedRooms;
 
   onHostelTabChange(tabId: string): void {
     const id = parseInt(tabId, 10);

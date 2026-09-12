@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { StudentMasterService } from '../services/student-master.service';
+import { SystemSettingsService } from '../../../../core/services/system-settings.service';
 import { ToastService } from '../../../../core/services/toast.service';
 import { StudentMaster } from '../../../../core/models/student/student-master.model';
 import { StudentProfile } from '../../../../core/models/auth/student-profile.model';
@@ -35,6 +36,7 @@ import { ActionButtonComponent } from '../../../../shared/components/action-butt
 })
 export class StudentMasterPageComponent implements OnInit {
   private readonly studentMasterService = inject(StudentMasterService);
+  private readonly systemSettings = inject(SystemSettingsService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -317,6 +319,11 @@ export class StudentMasterPageComponent implements OnInit {
   public readonly errorRowCount = signal<number>(0);
 
   ngOnInit(): void {
+    const sysSize = this.systemSettings.defaultPageSize();
+    if (sysSize && sysSize > 0) {
+      this.pageSize.set(sysSize);
+      this.accountsPageSize.set(sysSize);
+    }
     this.loadFaculties();
     if (this.router.url.includes('/admin/students')) {
       this.activeTab.set('accounts');

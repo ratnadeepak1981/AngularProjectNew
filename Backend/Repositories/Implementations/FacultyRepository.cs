@@ -1,4 +1,4 @@
-﻿using CampusServicesPortal.Application.Interfaces.Repositories;
+using CampusServicesPortal.Application.Interfaces.Repositories;
 using CampusServicesPortal.Data;
 using CampusServicesPortal.Models;
 using Microsoft.EntityFrameworkCore;
@@ -26,9 +26,12 @@ namespace CampusServicesPortal.Infrastructure.Repositories
             return await _context.Faculties.FindAsync(id);
         }
 
-        public async Task<bool> ExistsByNameAsync(string name)
+        public async Task<bool> ExistsByNameAsync(string name, int? excludeId = null)
         {
-            return await _context.Faculties.AnyAsync(f => f.Name.ToLower() == name.ToLower());
+            string cleanName = name.Trim().ToLower();
+            var query = _context.Faculties.Where(f => f.Name.ToLower() == cleanName);
+            if (excludeId.HasValue) query = query.Where(f => f.Id != excludeId.Value);
+            return await query.AnyAsync();
         }
 
         public async Task<bool> HasLinkedStudentsAsync(int facultyId)

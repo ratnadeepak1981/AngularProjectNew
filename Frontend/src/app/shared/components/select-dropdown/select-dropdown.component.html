@@ -32,6 +32,13 @@
         <span [ngClass]="{ 'text-slate-400 dark:text-slate-500 font-normal': !selectedOption() }">
           {{ selectedOption() ? selectedOption()?.label : placeholder() }}
         </span>
+        @if (selectedOption()?.count !== undefined && selectedOption()?.count !== null) {
+          <app-status-badge
+            [count]="selectedOption()?.count"
+            [countUnit]="selectedOption()?.countUnit || ''"
+            size="sm"
+          ></app-status-badge>
+        }
       }
     </div>
     <span class="text-slate-400 text-xs transition-transform ml-2" [ngClass]="{ 'rotate-180': isOpen() }">▾</span>
@@ -107,9 +114,19 @@
               }
             </div>
 
-            @if (selectedValue() === opt.value) {
-              <span class="text-blue-600 dark:text-blue-400 font-bold text-sm ml-2">✓</span>
-            }
+            <div class="flex items-center gap-2 shrink-0 ml-2">
+              @if (opt.count !== undefined && opt.count !== null) {
+                <app-status-badge
+                  [count]="opt.count"
+                  [countUnit]="opt.countUnit || ''"
+                  size="sm"
+                ></app-status-badge>
+              }
+
+              @if (selectedValue() === opt.value) {
+                <span class="text-blue-600 dark:text-blue-400 font-bold text-sm">✓</span>
+              }
+            </div>
           </button>
         }
       }

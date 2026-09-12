@@ -89,34 +89,161 @@
       </button>
     }
 
-    <!-- User Profile & Avatar -->
+    <!-- 👤 User Profile Dropdown Pill & Floating Menu Card -->
     @if (authService.isAuthenticated()) {
-      <div class="flex items-center gap-2.5 pl-2 border-l border-white/20">
-        <a
-          [routerLink]="authService.isAdmin() ? '/admin/system-settings' : '/student/settings'"
-          title="Account Settings & Security"
-          class="flex items-center gap-2.5 text-inherit no-underline hover:opacity-90 transition-opacity cursor-pointer group"
+      <div class="relative pl-2 border-l border-white/20">
+        <!-- Compact Avatar Trigger Button -->
+        <button
+          type="button"
+          (click)="toggleProfileMenu($event)"
+          title="User Profile and Account Details"
+          class="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 hover:border-amber-400/80 transition-all duration-200 cursor-pointer shadow-sm group focus:outline-none focus:ring-2 focus:ring-amber-400/50"
+          [attr.aria-expanded]="isProfileMenuOpen()"
         >
-          <div class="w-8 h-8 rounded-full bg-blue-500/30 border border-blue-400/50 group-hover:border-amber-400 flex items-center justify-center font-bold text-xs text-blue-200 shadow-sm transition-colors">
+          <!-- Circular Avatar with Initials -->
+          <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 border border-white/30 group-hover:border-amber-400 flex items-center justify-center font-bold text-xs text-white shadow-sm transition-transform group-hover:scale-105">
             {{ userInitials() }}
           </div>
 
-          <div class="hidden md:flex flex-col text-left">
-            <span class="text-xs font-bold text-white leading-tight group-hover:text-amber-300 transition-colors">
-              {{ authService.userProfile()?.name || (authService.isAdmin() ? 'Administrator Account' : 'Student Account') }}
+          <!-- Compact Name / Role (visible on larger screens) -->
+          <div class="hidden lg:flex flex-col text-left max-w-[130px]">
+            <span class="text-xs font-semibold text-white truncate leading-tight group-hover:text-amber-300 transition-colors">
+              {{ displayName() }}
             </span>
             <span class="text-[10px] text-slate-300 font-medium leading-tight">
-              {{ authService.isAdmin() ? 'Administrator' : 'Student' }}
+              {{ roleBadgeLabel() }}
             </span>
           </div>
-        </a>
 
-        <button
-          (click)="onLogout()"
-          class="ml-1 px-3 py-1.5 bg-white/10 hover:bg-rose-600/80 border border-white/20 hover:border-rose-400 text-xs font-semibold text-white rounded-lg transition-colors cursor-pointer"
-        >
-          Logout
+          <!-- Subtle Chevron Indicator -->
+          <svg class="w-3.5 h-3.5 text-slate-300 group-hover:text-white transition-transform duration-200" [class.rotate-180]="isProfileMenuOpen()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
+
+        <!-- 🪟 Anchored Floating Reusable Profile Popover Menu Card -->
+        @if (isProfileMenuOpen()) {
+          <div
+            (click)="$event.stopPropagation()"
+            class="absolute right-0 top-full mt-2 w-80 sm:w-88 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden text-slate-900 dark:text-slate-100 animate-fade-in"
+          >
+            <!-- Card Header: User Identity -->
+            <div class="p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800/80 dark:to-slate-900/90 border-b border-slate-200 dark:border-slate-800 flex items-start gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white font-black text-base flex items-center justify-center shadow-md flex-shrink-0 border-2 border-white dark:border-slate-800">
+                {{ userInitials() }}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                  <span class="text-sm font-bold text-slate-900 dark:text-white truncate">
+                    {{ displayName() }}
+                  </span>
+                  <span
+                    class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    [ngClass]="{
+                      'bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800': authService.role() === 'SuperAdmin',
+                      'bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800': authService.role() === 'Admin',
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800': authService.role() === 'Student'
+                    }"
+                  >
+                    {{ roleBadgeLabel() }}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 truncate flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span class="truncate">{{ authService.userProfile()?.email || 'Authenticated User' }}</span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Role-Specific Details Section -->
+            <div class="p-3 bg-slate-50/50 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800/80 text-xs">
+              @if (authService.isAdmin()) {
+                <!-- 🛡️ Admin / SuperAdmin Information -->
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span class="font-medium text-slate-500 dark:text-slate-400">Account Role:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ authService.role() }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span class="font-medium text-slate-500 dark:text-slate-400">Department / Scope:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">{{ authService.userProfile()?.facultyName || 'Central Administration' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span class="font-medium text-slate-500 dark:text-slate-400">Privilege Scope:</span>
+                    <span class="font-semibold text-amber-600 dark:text-amber-400">
+                      {{ authService.role() === 'SuperAdmin' ? 'System Super Administrator' : 'Departmental Administrator' }}
+                    </span>
+                  </div>
+                </div>
+              } @else {
+                <!-- 🎓 Student Information -->
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span class="font-medium text-slate-500 dark:text-slate-400">Index Number:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 font-mono">{{ authService.userProfile()?.indexNumber || 'N/A' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span class="font-medium text-slate-500 dark:text-slate-400">Faculty:</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[170px] text-right">{{ authService.userProfile()?.facultyName || 'General Campus' }}</span>
+                  </div>
+                  <div class="flex items-center justify-between text-slate-600 dark:text-slate-400">
+                    <span class="font-medium text-slate-500 dark:text-slate-400">Portal Status:</span>
+                    <span class="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active Enrolled
+                    </span>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Action Navigation Items -->
+            <div class="p-2 space-y-1">
+              <a
+                [routerLink]="authService.isAdmin() ? '/admin/system-settings' : '/student/settings'"
+                (click)="closeProfileMenu()"
+                class="flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300 flex items-center justify-center text-sm">
+                  ⚙️
+                </span>
+                <div class="flex-1">
+                  <div>{{ authService.isAdmin() ? 'System Settings & Config' : 'Account & Profile Settings' }}</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Manage preferences and configurations</div>
+                </div>
+              </a>
+
+              <button
+                type="button"
+                (click)="closeProfileMenu(); openPasswordModal()"
+                class="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer text-left"
+              >
+                <span class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 flex items-center justify-center text-sm">
+                  🔑
+                </span>
+                <div class="flex-1">
+                  <div>Change Password</div>
+                  <div class="text-[10px] text-slate-400 font-normal">Update security credentials</div>
+                </div>
+              </button>
+            </div>
+
+            <!-- Sign Out Footer -->
+            <div class="p-2 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                (click)="closeProfileMenu(); onLogout()"
+                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-800 transition-colors cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign Out of Portal
+              </button>
+            </div>
+          </div>
+        }
       </div>
     }
   </div>

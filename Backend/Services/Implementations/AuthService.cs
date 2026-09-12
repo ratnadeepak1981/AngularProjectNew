@@ -211,7 +211,7 @@ namespace CampusServicesPortal.Services.Implementations
                 {
                     Id = student?.Id ?? 0,
                     IndexNumber = student?.IndexNumber ?? "N/A",
-                    Name = student?.FullName ?? "Administrator Account",
+                    Name = student?.FullName ?? (!string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : user.Email),
                     Email = user.Email,
                     FacultyName = student?.Faculty?.Name ?? "Central Administration",
                     ContactDetails = student?.ContactDetails,
@@ -334,7 +334,7 @@ namespace CampusServicesPortal.Services.Implementations
                 {
                     Id = student?.Id ?? 0,
                     IndexNumber = student?.IndexNumber ?? "N/A",
-                    Name = student?.FullName ?? "Administrator Account",
+                    Name = student?.FullName ?? (!string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : user.Email),
                     Email = user.Email,
                     FacultyName = student?.Faculty?.Name ?? "Central Administration",
                     ContactDetails = student?.ContactDetails,

@@ -34,7 +34,7 @@ namespace CampusServicesPortal.Services.Implementations
         public async Task<ServiceResult<CertificateTypeResponseDto>> CreateCertificateTypeAsync(CreateCertificateTypeRequestDto request)
         {
             if (await _repository.ExistsByNameAsync(request.Name))
-                return ServiceResult<CertificateTypeResponseDto>.Failure("A certificate type with this descriptive title already exists.", 400);
+                return ServiceResult<CertificateTypeResponseDto>.Failure("A certificate type with this title already exists.", 409);
 
             var item = new CertificateType
             {
@@ -54,6 +54,9 @@ namespace CampusServicesPortal.Services.Implementations
             var item = await _repository.GetByIdAsync(id);
             if (item == null)
                 return ServiceResult<CertificateTypeResponseDto>.Failure("Target certificate type record not found.", 404);
+
+            if (await _repository.ExistsByNameAsync(request.Name, id))
+                return ServiceResult<CertificateTypeResponseDto>.Failure("A certificate type with this title already exists.", 409);
 
             item.Name = request.Name;
             item.IsActive = request.IsActive;

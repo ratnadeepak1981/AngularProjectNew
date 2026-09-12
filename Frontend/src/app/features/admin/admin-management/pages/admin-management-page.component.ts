@@ -50,12 +50,14 @@ export class AdminManagementPageComponent implements OnInit {
 
   // Reactive Form
   public readonly createAdminForm: FormGroup = this.fb.group({
+    fullName: [''],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
   });
 
   // Table Columns (Displays only Admin users)
   public readonly adminColumns: TableColumn<AdminUser>[] = [
+    { key: 'fullName', header: 'Admin Full Name', sortable: true, filterable: true },
     { key: 'email', header: 'Admin Email Address', sortable: true, filterable: true },
     {
       key: 'role',

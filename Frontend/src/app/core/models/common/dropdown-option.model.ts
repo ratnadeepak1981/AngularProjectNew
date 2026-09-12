@@ -4,4 +4,6 @@ export interface DropdownOption {
   icon?: string;
   description?: string;
   badgeClass?: string;
+  count?: number | null;
+  countUnit?: string;
 }

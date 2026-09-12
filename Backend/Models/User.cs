@@ -20,6 +20,9 @@ public class User
     [MaxLength(20)]
     public required string Role { get; set; } // Enforces "Admin" or "Student" values
 
+    [MaxLength(150)]
+    public string? FullName { get; set; }
+
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastPasswordChangedAt { get; set; } = DateTime.UtcNow;

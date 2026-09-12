@@ -21,6 +21,16 @@ export class PaginationComponent {
   public readonly pageChange = output<number>();
   public readonly pageSizeChange = output<number>();
 
+  // Dynamic Options including active page size
+  public readonly effectivePageSizeOptions = computed<number[]>(() => {
+    const rawOptions = this.pageSizeOptions() || [5, 10, 20, 50, 100];
+    const current = this.pageSize();
+    if (current && !rawOptions.includes(current)) {
+      return Array.from(new Set([...rawOptions, current])).sort((a, b) => a - b);
+    }
+    return rawOptions;
+  });
+
   // Reactive Computed Properties
   public readonly totalPages = computed(() => {
     const total = this.totalRecords();

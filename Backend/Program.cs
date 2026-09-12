@@ -199,9 +199,6 @@ namespace CampusServicesPortal
             builder.Services.AddScoped<IAdminManagementRepository, AdminManagementRepository>();
             builder.Services.AddScoped<IAdminManagementService, AdminManagementService>();
 
-            // Module 3 & 4 Hold Sweeper Daemon Worker [PDF: 0.1.12, 0.1.19]
-            builder.Services.AddHostedService<BookingExpiryWorker>();
-
 
             // 🛠️ Staging Gate: Uncomment this line later to activate global crash interceptor track
 
@@ -277,43 +274,31 @@ namespace CampusServicesPortal
                     Console.WriteLine($">>>> [DATABASE MIGRATION NOTICE]: {ex.Message}");
                 }
 
-                // 2. SuperAdmin Account Seeding & Upgrade (guaranteed to run)
+                // 2. SuperAdmin Account Seeding: Simply insert if none exists
                 try
                 {
-                    var superAdmins = context.Users.Where(u => u.Role == "SuperAdmin").ToList();
-                    if (!superAdmins.Any())
+                    bool superAdminExists = context.Users.Any(u => u.Role == "SuperAdmin");
+                    if (!superAdminExists)
                     {
-                        var existingAdmins = context.Users.Where(u => u.Role == "Admin").ToList();
-                        if (existingAdmins.Any())
+                        var superAdmin = new CampusServicesPortal.Models.User
                         {
-                            foreach (var admin in existingAdmins)
-                            {
-                                admin.Role = "SuperAdmin";
-                            }
-                            context.SaveChanges();
-                            Console.WriteLine($">>>> [SUPERADMIN SEED SUCCESS]: Upgraded {existingAdmins.Count} existing Admin account(s) to SuperAdmin: {string.Join(", ", existingAdmins.Select(a => a.Email))}.");
-                        }
-                        else
-                        {
-                            var defaultAdmin = new CampusServicesPortal.Models.User
-                            {
-                                Email = "admin@campus.edu",
-                                PasswordHash = testHash,
-                                Role = "SuperAdmin",
-                                IsActive = true,
-                                CreatedAt = DateTime.UtcNow,
-                                LastPasswordChangedAt = DateTime.UtcNow,
-                                MustChangePassword = false,
-                                FailedLoginAttempts = 0
-                            };
-                            context.Users.Add(defaultAdmin);
-                            context.SaveChanges();
-                            Console.WriteLine(">>>> [SUPERADMIN SEED SUCCESS]: Created default SuperAdmin account 'admin@campus.edu'.");
-                        }
+                            Email = "admin@campus.edu",
+                            FullName = "System Administrator",
+                            PasswordHash = testHash,
+                            Role = "SuperAdmin",
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow,
+                            LastPasswordChangedAt = DateTime.UtcNow,
+                            MustChangePassword = false,
+                            FailedLoginAttempts = 0
+                        };
+                        context.Users.Add(superAdmin);
+                        context.SaveChanges();
+                        Console.WriteLine(">>>> [SUPERADMIN SEEDED]: Created default SuperAdmin 'admin@campus.edu'.");
                     }
                     else
                     {
-                        Console.WriteLine($">>>> [SUPERADMIN SEED VERIFIED]: Active SuperAdmin account(s): {string.Join(", ", superAdmins.Select(u => u.Email))}.");
+                        Console.WriteLine(">>>> [SUPERADMIN VERIFIED]: SuperAdmin account exists.");
                     }
                 }
                 catch (Exception ex)

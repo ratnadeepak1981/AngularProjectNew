@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.EntityFrameworkCore;
 using CampusServicesPortal.Models;
 
@@ -614,7 +614,34 @@ namespace CampusServicesPortal.Data
                 .HasDatabaseName("IX_Students_ContactDetails")
                 .IsUnique();
 
+            // 🔒 Enforce Unique Master Data (Faculty, CertificateType, ComplaintCategory)
+            modelBuilder.Entity<Faculty>()
+                .HasIndex(f => f.Name)
+                .HasDatabaseName("IX_Faculties_Name")
+                .IsUnique();
 
+            modelBuilder.Entity<CertificateType>()
+                .HasIndex(ct => ct.Name)
+                .HasDatabaseName("IX_CertificateTypes_Name")
+                .IsUnique();
+
+            modelBuilder.Entity<ComplaintCategory>()
+                .HasIndex(cc => cc.Name)
+                .HasDatabaseName("IX_ComplaintCategories_Name")
+                .IsUnique();
+
+            // 🔒 Enforce Unique Pending Certificate Requests per student per type
+            modelBuilder.Entity<CertificateRequest>()
+                .HasIndex(cr => new { cr.StudentId, cr.CertificateTypeId })
+                .HasDatabaseName("UX_CertificateRequests_Student_Pending")
+                .HasFilter("[Status] = 'Pending'")
+                .IsUnique();
+
+            // 🔒 Enforce Unique Event Registration per student per event
+            modelBuilder.Entity<EventRegistration>()
+                .HasIndex(er => new { er.EventId, er.StudentId })
+                .HasDatabaseName("UX_EventRegistrations_Event_Student")
+                .IsUnique();
         }
     }
 }
