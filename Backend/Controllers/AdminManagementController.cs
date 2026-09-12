@@ -50,6 +50,14 @@ namespace CampusServicesPortal.Controllers
             return ProcessServiceResult(result, "Admin account deleted successfully.");
         }
 
+        // POST /api/admin-management/admins/{id}/reset-password — SuperAdmin Only: Reset admin password / unlock account
+        [HttpPost("admins/{id:int}/reset-password")]
+        public async Task<IActionResult> ResetAdminPassword(int id)
+        {
+            var result = await _adminService.ResetAdminPasswordAsync(id, GetCurrentUserId());
+            return ProcessServiceResult(result, "Admin account password reset initiated.");
+        }
+
         private int GetCurrentUserId()
         {
             var claim = User.FindFirst("UserId")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;

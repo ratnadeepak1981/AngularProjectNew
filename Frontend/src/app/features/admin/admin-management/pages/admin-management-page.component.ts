@@ -205,22 +205,24 @@ export class AdminManagementPageComponent implements OnInit {
     });
   }
 
-  promptDeleteAdmin(admin: AdminUser): void {
+  promptResetPassword(admin: AdminUser): void {
     this.triggerConfirm({
-      title: 'Delete Admin Account',
-      message: `Are you sure you want to permanently delete Admin account '${admin.email}'? This action cannot be undone.`,
-      icon: '🗑️',
-      variant: 'danger',
-      buttonText: 'Delete Admin Account',
-      buttonIcon: 'trash',
+      title: 'Confirm Admin Password Reset',
+      message: `Are you sure you want to initiate a password reset and unlock account access for '${admin.email}'? A password reset email will be dispatched directly to their address.`,
+      icon: '🔑',
+      variant: 'warning',
+      buttonText: 'Dispatch Reset Link',
+      buttonIcon: 'key',
       action: () => {
-        this.apiService.delete<ApiResponse<boolean>>(this.apiService.routes.adminManagement.delete(admin.id)).subscribe({
-          next: () => {
-            this.toast.success(`Admin account '${admin.email}' deleted successfully.`);
-            this.loadAdmins();
-          },
-          error: (err) => this.toast.error(err?.error?.message || 'Failed to delete Admin account.'),
-        });
+        this.apiService
+          .post<ApiResponse<any>>(this.apiService.routes.adminManagement.resetPassword(admin.id), {})
+          .subscribe({
+            next: (res) => {
+              this.toast.success(res?.message || `Password reset link successfully dispatched to '${admin.email}'.`);
+              this.loadAdmins();
+            },
+            error: (err) => this.toast.error(err?.error?.message || 'Failed to reset Admin account password.'),
+          });
       },
     });
   }

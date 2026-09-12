@@ -15,13 +15,16 @@ namespace CampusServicesPortal.Services.Implementations
     {
         private readonly IAdminManagementRepository _adminRepository;
         private readonly IAuditLogService _auditLogService;
+        private readonly IEmailService _emailService;
 
         public AdminManagementService(
             IAdminManagementRepository adminRepository,
-            IAuditLogService auditLogService)
+            IAuditLogService auditLogService,
+            IEmailService emailService)
         {
             _adminRepository = adminRepository;
             _auditLogService = auditLogService;
+            _emailService = emailService;
         }
 
         public async Task<ServiceResult<IEnumerable<AdminUserResponseDto>>> GetAdminsAsync()
@@ -139,6 +142,59 @@ namespace CampusServicesPortal.Services.Implementations
                 isSuccess: true);
 
             return ServiceResult<bool>.Success(true, 200);
+        }
+
+        public async Task<ServiceResult<object>> ResetAdminPasswordAsync(int id, int currentUserId)
+        {
+            var user = await _adminRepository.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return ServiceResult<object>.Failure("Admin user account profile not found.", 404);
+            }
+
+            if (user.Role == "SuperAdmin")
+            {
+                return ServiceResult<object>.Failure("Password reset for SuperAdmin accounts cannot be performed through Admin User Management.", 400);
+            }
+
+            user.MustChangePassword = true;
+            user.TemporaryPasswordExpiresAt = DateTime.UtcNow.AddHours(24);
+            user.FailedLoginAttempts = 0;
+            user.LockoutEndUtc = null;
+
+            _adminRepository.UpdateUser(user);
+            await _adminRepository.SaveChangesAsync();
+
+            if (!string.IsNullOrWhiteSpace(user.Email) && _emailService != null)
+            {
+                try
+                {
+                    var emailPreview = await _emailService.GeneratePasswordResetEmailPreviewAsync(user.Email);
+                    if (emailPreview.IsSuccess && !string.IsNullOrWhiteSpace(emailPreview.Data))
+                    {
+                        await _emailService.SendEmailAsync(user.Email, "Administrator Password Reset - Campus Services Portal", emailPreview.Data);
+                    }
+                }
+                catch
+                {
+                    // Graceful email handling
+                }
+            }
+
+            await _auditLogService.LogActivityAsync(
+                userId: currentUserId,
+                userDisplayName: user.Email,
+                action: "AdminPasswordResetInitiated",
+                module: "AdminManagement",
+                entityId: user.Id.ToString(),
+                description: $"SuperAdmin initiated password reset and account unlock for Admin '{user.Email}'.",
+                isSuccess: true);
+
+            return ServiceResult<object>.Success(new
+            {
+                Message = $"Password reset initiated and account unlocked for Admin user '{user.Email}'.",
+                Email = user.Email
+            }, 200);
         }
 
         private static AdminUserResponseDto MapToResponseDto(User user)

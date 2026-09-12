@@ -12,5 +12,6 @@ namespace CampusServicesPortal.Services.Interfaces
         Task<ServiceResult<AdminUserResponseDto>> CreateAdminAsync(CreateAdminRequestDto request, int currentUserId);
         Task<ServiceResult<AdminUserResponseDto>> ToggleAdminStatusAsync(int id, bool isActive, int currentUserId);
         Task<ServiceResult<bool>> DeleteAdminAsync(int id, int currentUserId);
+        Task<ServiceResult<object>> ResetAdminPasswordAsync(int id, int currentUserId);
     }
 }

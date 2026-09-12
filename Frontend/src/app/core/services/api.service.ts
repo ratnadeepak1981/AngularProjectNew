@@ -164,6 +164,7 @@ export class ApiService {
       create: '/admin-management/admins',
       toggleStatus: (id: number) => `/admin-management/admins/${id}/status`,
       delete: (id: number) => `/admin-management/admins/${id}`,
+      resetPassword: (id: number) => `/admin-management/admins/${id}/reset-password`,
     },
   };
 

@@ -37,6 +37,13 @@
     >
       <ng-template #cellActions let-row>
         <div class="flex items-center justify-end gap-2">
+          <app-action-button
+            variant="warning"
+            size="sm"
+            label="Reset Password"
+            icon="key"
+            (btnClick)="promptResetPassword(row)"
+          ></app-action-button>
           @if (row.isActive) {
             <app-action-button
               variant="warning"
@@ -54,13 +61,6 @@
               (btnClick)="promptToggleStatus(row)"
             ></app-action-button>
           }
-          <app-action-button
-            variant="danger"
-            size="sm"
-            label="Delete"
-            icon="trash"
-            (btnClick)="promptDeleteAdmin(row)"
-          ></app-action-button>
         </div>
       </ng-template>
     </app-data-table>

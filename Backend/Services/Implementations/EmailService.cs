@@ -14,6 +14,8 @@ using CampusServicesPortal.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 
+using Microsoft.Extensions.Caching.Memory;
+
 namespace CampusServicesPortal.Services.Implementations
 {
     public class EmailService : IEmailService
@@ -24,6 +26,7 @@ namespace CampusServicesPortal.Services.Implementations
         private readonly IWebHostEnvironment _env;
         private readonly ILogger<EmailService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _memoryCache;
 
         public EmailService(
             IAccountRepository accountRepo,
@@ -31,7 +34,8 @@ namespace CampusServicesPortal.Services.Implementations
             AppDbContext context,
             IWebHostEnvironment env,
             ILogger<EmailService> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMemoryCache memoryCache)
         {
             _accountRepo = accountRepo;
             _passwordRepo = passwordRepo;
@@ -39,6 +43,7 @@ namespace CampusServicesPortal.Services.Implementations
             _env = env;
             _logger = logger;
             _configuration = configuration;
+            _memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -165,21 +170,56 @@ namespace CampusServicesPortal.Services.Implementations
             if (string.IsNullOrWhiteSpace(email)) return ServiceResult<string>.Failure("Email parameter is required.", 400);
 
             string cleanEmail = email.Trim().ToLowerInvariant();
-            var student = await _passwordRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
-            if (student == null) return ServiceResult<string>.Failure($"No student account record found for email '{cleanEmail}'.", 404);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == cleanEmail);
+            if (user == null) return ServiceResult<string>.Failure($"No account record found for email '{cleanEmail}'.", 404);
 
-            // Call the same single helper method here
+            var student = await _passwordRepo.GetStudentByEmailThroughUserAsync(cleanEmail);
             var systemSettings = await GetDynamicSystemSettingsAsync();
 
-            var activeToken = await _context.PasswordResetTokens
-                .Where(p => p.StudentId == student.Id && !p.IsUsed && p.ExpiresAt >= DateTime.UtcNow)
-                .OrderByDescending(p => p.Id)
-                .FirstOrDefaultAsync();
+            string userCategory;
+            string fullName;
+            string indexNumber;
+            string facultyName;
+            bool isActive = user.IsActive;
+            string token = "NO-ACTIVE-TOKEN";
+            string expiresStr = "24 Hours from Issue";
 
-            string token = activeToken?.Token ?? "NO-ACTIVE-TOKEN";
-            string expiresStr = activeToken != null ? activeToken.ExpiresAt.ToString("g") + " UTC" : "24 Hours from Issue";
+            if (student != null)
+            {
+                userCategory = "Registered Student";
+                fullName = student.FullName ?? "Student User";
+                indexNumber = student.IndexNumber ?? "N/A";
+                facultyName = student.Faculty?.Name ?? systemSettings.InstitutionName;
+                isActive = student.User?.IsActive == true;
 
-            string statusBadge = student.User?.IsActive == true
+                var activeToken = await _context.PasswordResetTokens
+                    .Where(p => p.StudentId == student.Id && !p.IsUsed && p.ExpiresAt >= DateTime.UtcNow)
+                    .OrderByDescending(p => p.Id)
+                    .FirstOrDefaultAsync();
+
+                if (activeToken != null)
+                {
+                    token = activeToken.Token;
+                    expiresStr = activeToken.ExpiresAt.ToString("g") + " UTC";
+                }
+            }
+            else
+            {
+                userCategory = user.Role == "SuperAdmin" ? "Super Administrator" : "System Administrator";
+                fullName = user.Role == "SuperAdmin" ? "Super Administrator" : "System Administrator";
+                indexNumber = user.Role == "SuperAdmin" ? "SUPERADMIN-ACCOUNT" : "ADMIN-ACCOUNT";
+                facultyName = "System Administration";
+
+                token = Guid.NewGuid().ToString("N");
+                expiresStr = DateTime.UtcNow.AddHours(24).ToString("g") + " UTC";
+            }
+
+            if (!string.IsNullOrEmpty(token) && token != "NO-ACTIVE-TOKEN")
+            {
+                _memoryCache.Set($"PasswordResetTicket_{token}", cleanEmail, TimeSpan.FromHours(24));
+            }
+
+            string statusBadge = isActive
                 ? "<span style='background: #dcfce7; color: #15803d; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 12px;'>ACCOUNT ACTIVE</span>"
                 : "<span style='background: #fee2e2; color: #b91c1c; padding: 4px 12px; border-radius: 12px; font-weight: bold; font-size: 12px;'>ACCOUNT LOCKED</span>";
 
@@ -199,10 +239,11 @@ namespace CampusServicesPortal.Services.Implementations
                 .Replace("{{ACADEMIC_YEAR}}", systemSettings.AcademicYear, StringComparison.Ordinal)
                 .Replace("{{SEMESTER}}", systemSettings.Semester, StringComparison.Ordinal)
                 .Replace("{{STATUS_BADGE}}", statusBadge, StringComparison.Ordinal)
-                .Replace("{{FULL_NAME}}", student.FullName ?? "Student User", StringComparison.Ordinal)
-                .Replace("{{INDEX_NUMBER}}", student.IndexNumber ?? "N/A", StringComparison.Ordinal)
-                .Replace("{{REGISTERED_EMAIL}}", student.User?.Email ?? cleanEmail, StringComparison.Ordinal)
-                .Replace("{{FACULTY_NAME}}", student.Faculty?.Name ?? systemSettings.InstitutionName, StringComparison.Ordinal)
+                .Replace("{{USER_CATEGORY}}", userCategory, StringComparison.Ordinal)
+                .Replace("{{FULL_NAME}}", fullName, StringComparison.Ordinal)
+                .Replace("{{INDEX_NUMBER}}", indexNumber, StringComparison.Ordinal)
+                .Replace("{{REGISTERED_EMAIL}}", user.Email ?? cleanEmail, StringComparison.Ordinal)
+                .Replace("{{FACULTY_NAME}}", facultyName, StringComparison.Ordinal)
                 .Replace("{{RESET_URL}}", resetUrl, StringComparison.Ordinal)
                 .Replace("{{TOKEN}}", token, StringComparison.Ordinal)
                 .Replace("{{EXPIRES_STR}}", expiresStr, StringComparison.Ordinal);
