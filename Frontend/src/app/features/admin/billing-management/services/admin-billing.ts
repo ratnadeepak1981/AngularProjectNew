@@ -2,16 +2,12 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { ApiResponse } from '../../../../core/models/common/api-response.model';
+import { PagedResponse } from '../../../../core/models/common/paged-response.model';
 import { FeePaymentItem } from '../../../../core/models/billing/fee-payment-item.model';
 import { FeeTypeItem } from '../../../../core/models/billing/fee-type-item.model';
 import { AssignFeePayload } from '../../../../core/models/billing/assign-fee-payload.model';
 
 export type { FeePaymentItem, FeeTypeItem, AssignFeePayload };
-
-export interface FormattedLedgerResponse {
-  items: FeePaymentItem[];
-  totalRecords: number;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -26,13 +22,22 @@ export class AdminBillingService {
     });
   }
 
-  getFormattedFeeLedger(page: number = 1, size: number = 5): Observable<FormattedLedgerResponse> {
+  getFormattedFeeLedger(page: number = 1, size: number = 5): Observable<PagedResponse<FeePaymentItem>> {
     return this.getFeeLedger(page, size).pipe(
       map((res: any) => {
         const payload = res?.data || res || {};
         const items: FeePaymentItem[] = Array.isArray(payload) ? payload : (payload.items || payload.Items || []);
         const total = payload.totalRecords || payload.totalCount || payload.totalItems || items.length;
-        return { items, totalRecords: total };
+        const totalPages = Math.ceil(total / size);
+        return {
+          items,
+          totalRecords: total,
+          pageNumber: page,
+          pageSize: size,
+          totalPages,
+          hasPreviousPage: page > 1,
+          hasNextPage: page < totalPages,
+        };
       })
     );
   }

@@ -85,18 +85,15 @@ namespace CampusServicesPortal.Services.Implementations
             if (currentRegisteredCount >= targetEvent.Capacity)
                 return ServiceResult<EventResponseDto>.Failure("Registration Full. This event has reached its maximum capacity limit.", 409);
 
-            // 4. Calculate time-bound temporary hold expiration window from System Settings (BRD Rule #12)
-            var holdSetting = await _context.SystemSettings
-                .FirstOrDefaultAsync(s => s.SettingKey == "LabBookingHoldMinutes" || s.SettingKey == "reservation-hold-minutes");
-            int holdMinutes = (holdSetting != null && int.TryParse(holdSetting.SettingValue, out int val) && val > 0) ? val : 15;
-            DateTime expiresAt = DateTime.UtcNow.AddMinutes(holdMinutes);
+            // 4. Set registration expiration timestamp to event conclusion
+            DateTime expiresAt = targetEvent.EndDateTime > DateTime.UtcNow ? targetEvent.EndDateTime : DateTime.MaxValue;
 
-            // 5. Save registration record as a temporary 'Held' state [PDF: 0.1.12]
+            // 5. Save registration record as permanent 'Confirmed' state
             var registration = new EventRegistration
             {
                 EventId = request.EventId,
                 StudentId = studentId,
-                Status = "Held",
+                Status = "Confirmed",
                 ExpiresAt = expiresAt
             };
 
@@ -112,8 +109,8 @@ namespace CampusServicesPortal.Services.Implementations
             await _notificationService.SendInternalNotificationAsync(new CreateNotificationDto
             {
                 StudentId = studentId, // Targets exclusively the single registering student [INDEX]
-                Type = "EventRegistrationHeld",
-                Message = $"Reservation hold initiated! A seat for '{eventTitle}' at venue '{locationVenue}' has been temporarily locked for you. Complete confirmation within 15 minutes."
+                Type = "EventRegistrationConfirmed",
+                Message = $"Registration confirmed! Your seat for '{eventTitle}' at venue '{locationVenue}' has been successfully reserved."
             });
             // =========================================================================
 

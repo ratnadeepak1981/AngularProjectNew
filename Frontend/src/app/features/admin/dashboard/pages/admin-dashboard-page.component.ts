@@ -1,7 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AdminDashboardMetricsSummary, AdminDashboardService } from '../services/admin-dashboard.service';
+import { AdminDashboardService } from '../services/admin-dashboard.service';
+import { AdminDashboardMetricsSummary } from '../../../../core/models/dashboard/admin-dashboard-metrics.model';
 import { ToastService } from '../../../../core/services/toast.service';
 import { DashboardCardComponent } from '../../../../shared/components/cards/dashboard-card/dashboard-card.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';

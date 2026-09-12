@@ -8,9 +8,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ConfirmModalComponent } from '../../../../shared/components/dialogs/confirm-modal/confirm-modal.component';
 import { PageHeaderComponent } from '../../../../shared/components/page-header/page-header.component';
-import { HostelApplication } from '../../../../core/models/hostel/hostel-application.model';
-
-export type StudentHousingRecord = HostelApplication;
+import { HousingApplication } from '../../../../core/models/hostel/hostel-application.model';
 
 @Component({
   selector: 'app-hostel-application-page',
@@ -27,7 +25,7 @@ export class HostelApplicationPageComponent implements OnInit {
 
   // Data State Signals
   public readonly hostelsList = signal<any[]>([]);
-  public readonly myApplications = signal<StudentHousingRecord[]>([]);
+  public readonly myApplications = signal<HousingApplication[]>([]);
   public readonly isLoading = signal<boolean>(false);
   public readonly isSubmitting = signal<boolean>(false);
 
@@ -56,7 +54,7 @@ export class HostelApplicationPageComponent implements OnInit {
   public readonly confirmButtonIcon = signal<string>('✓');
 
   // Business Rule: One active application per student
-  public readonly activeApplication = computed<StudentHousingRecord | null>(() => {
+  public readonly activeApplication = computed<HousingApplication | null>(() => {
     const list = this.myApplications();
     return list.find((a) => a.status !== 'Rejected' && a.status !== 'Cancelled') || null;
   });

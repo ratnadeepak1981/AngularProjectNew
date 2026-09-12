@@ -6,19 +6,17 @@ import { ApiResponse } from '../../../../core/models/common/api-response.model';
 import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { CampusEvent } from '../../../../core/models/event/event.model';
 
-export type StudentEventDto = CampusEvent;
-
 @Injectable({
   providedIn: 'root',
 })
 export class EventService {
   private readonly api = inject(ApiService);
 
-  getAvailableEvents(): Observable<ApiResponse<StudentEventDto[]> | StudentEventDto[]> {
-    return this.api.get<ApiResponse<StudentEventDto[]> | StudentEventDto[]>(this.api.routes.events.list);
+  getAvailableEvents(): Observable<ApiResponse<CampusEvent[]> | CampusEvent[]> {
+    return this.api.get<ApiResponse<CampusEvent[]> | CampusEvent[]>(this.api.routes.events.list);
   }
 
-  getFormattedEvents(): Observable<StudentEventDto[]> {
+  getFormattedEvents(): Observable<CampusEvent[]> {
     return this.getAvailableEvents().pipe(
       map((res: any) => {
         const data = res?.data || res || [];
