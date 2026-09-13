@@ -78,7 +78,8 @@ export class LabBookingService {
    * Place temporary hold on a workstation seat
    */
   createHold(payload: CreateHoldPayload): Observable<{ success: boolean; data?: LabBooking; message?: string }> {
-    return this.api.post<any>('/lab-bookings', payload).pipe(
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.api.post<any>('/lab-bookings', payload, { context }).pipe(
       map((res) => {
         const raw = res?.data || res || {};
         const booking: LabBooking = {
@@ -110,7 +111,8 @@ export class LabBookingService {
    * Confirm temporary 15-minute held seat reservation
    */
   confirmBooking(bookingId: number): Observable<{ success: boolean; message?: string }> {
-    return this.api.put<any>(`/lab-bookings/${bookingId}/confirm`, {}).pipe(
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.api.put<any>(`/lab-bookings/${bookingId}/confirm`, {}, { context }).pipe(
       map(() => ({ success: true })),
       catchError((err: any) => {
         const msg = err?.error?.message || err?.error || 'Reservation hold expired or confirmation failed.';

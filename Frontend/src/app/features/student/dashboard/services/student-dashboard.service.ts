@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiService } from '../../../../core/services/api.service';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { Notification } from '../../../../core/models/system/notification.model';
 import { UpdateStudentProfileRequest } from '../../../../core/models/auth/student-profile.model';
 import { StudentDashboardMetricsSummary } from '../../../../core/models/dashboard/student-dashboard-metrics.model';
@@ -22,7 +24,8 @@ export class StudentDashboardService {
     studentId: number,
     payload: UpdateStudentProfileRequest
   ): Observable<any> {
-    return this.apiService.put(this.apiService.routes.students.updateProfile(studentId), payload);
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.apiService.put(this.apiService.routes.students.updateProfile(studentId), payload, { context });
   }
 
   getDashboardMetrics(studentId: number): Observable<StudentDashboardMetricsSummary> {

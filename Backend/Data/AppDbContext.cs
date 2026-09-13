@@ -268,7 +268,7 @@ namespace CampusServicesPortal.Data
                 .HasForeignKey(lb => lb.TimeSlotId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Prevent duplicate confirmed booking for the same student,
+            // Prevent duplicate active/held booking for the same student,
             // date and time slot.
             modelBuilder.Entity<LabBooking>()
                 .HasIndex(lb => new
@@ -278,7 +278,7 @@ namespace CampusServicesPortal.Data
                     lb.TimeSlot
                 })
                 .HasDatabaseName("UX_LabBookings_Student_ActiveSlot")
-                .HasFilter("[Status] = 'Confirmed'")
+                .HasFilter("[Status] IN ('Held', 'Confirmed')")
                 .IsUnique();
 
             // Prevent two students from booking the same seat,
@@ -291,7 +291,7 @@ namespace CampusServicesPortal.Data
                     lb.TimeSlot
                 })
                 .HasDatabaseName("UX_LabBookings_Seat_ActiveSlot")
-                .HasFilter("[Status] = 'Confirmed'")
+                .HasFilter("[Status] IN ('Held', 'Confirmed')")
                 .IsUnique();
 
             // ========================================================
@@ -303,6 +303,11 @@ namespace CampusServicesPortal.Data
                 .WithMany()
                 .HasForeignKey(e => e.VenueId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EventRegistration>()
+                .HasIndex(er => new { er.EventId, er.StudentId })
+                .HasDatabaseName("UX_EventRegistrations_Event_Student")
+                .IsUnique();
 
             modelBuilder.Entity<EventRegistration>()
                 .HasOne(er => er.Event)
@@ -331,6 +336,13 @@ namespace CampusServicesPortal.Data
                 .WithMany()
                 .HasForeignKey(c => c.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Prevent duplicate pending complaint tickets for the same student, category, and description
+            modelBuilder.Entity<Complaint>()
+                .HasIndex(c => new { c.StudentId, c.CategoryId, c.Description })
+                .HasDatabaseName("UX_Complaints_Student_Pending_Ticket")
+                .HasFilter("[Status] = 'Pending'")
+                .IsUnique();
 
             // Prevent duplicate complaint category names.
             modelBuilder.Entity<ComplaintCategory>()

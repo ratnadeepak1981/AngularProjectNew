@@ -79,7 +79,8 @@ export class LabManagementService {
    * Create a new campus laboratory
    */
   createLab(data: { name: string; labType: string; capacity: number; totalRows?: number; totalColumns?: number }): Observable<boolean> {
-    return this.api.post<unknown>('/labs', data).pipe(
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.api.post<unknown>('/labs', data, { context }).pipe(
       map(() => true),
       catchError((err: unknown) => {
         console.error('Failed to create laboratory:', err);

@@ -138,6 +138,12 @@ namespace CampusServicesPortal.Middleware
             if (sqlMessage.Contains("IX_Students_IndexNumber"))
                 return "This Student Index Number is already allocated to an active profile container.";
 
+            if (sqlMessage.Contains("IX_StudentMasterLists_IndexNumber"))
+                return "This student Index Number is already registered in the master list.";
+
+            if (sqlMessage.Contains("IX_Users_Email"))
+                return "A user profile with this email address already exists.";
+
             if (sqlMessage.Contains("IX_Students_ContactDetails"))
                 return "This primary contact telephone number string is already registered to another user profile.";
 
@@ -149,6 +155,9 @@ namespace CampusServicesPortal.Middleware
 
             if (sqlMessage.Contains("IX_ComplaintCategories_Name"))
                 return "A complaint category with this name already exists.";
+
+            if (sqlMessage.Contains("UX_Complaints_Student_Pending_Ticket"))
+                return "You already have an identical pending complaint ticket submitted for this category.";
 
             if (sqlMessage.Contains("IX_Faculties_Name"))
                 return "A faculty with this designated title already exists.";

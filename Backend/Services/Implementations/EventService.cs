@@ -78,7 +78,7 @@ namespace CampusServicesPortal.Services.Implementations
             // 2. Rule #1: Guard against duplicate registrations [PDF: 0.1.10, 0.1.19]
             var existingRegistration = await _eventRepository.GetRegistrationAsync(request.EventId, studentId);
             if (existingRegistration != null)
-                return ServiceResult<EventResponseDto>.Failure("Operation Rejected. You are already registered for this event.", 400);
+                return ServiceResult<EventResponseDto>.Failure("Operation Rejected. You are already registered for this event.", 409);
 
             // 3. Rule #7: Block additions once the event hits its target capacity ceiling [PDF: 0.1.10, 0.1.20]
             int currentRegisteredCount = await _eventRepository.GetRegistrationCountAsync(request.EventId);
