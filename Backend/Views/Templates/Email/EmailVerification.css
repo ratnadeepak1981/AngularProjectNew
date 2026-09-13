@@ -17,6 +17,9 @@ body {
 }
 
 .email-header {
+    background-color: #0F2C59;
+    background: #0F2C59;
+    background: -webkit-linear-gradient(135deg, #0F2C59 0%, #1E3A8A 100%);
     background: linear-gradient(135deg, #0F2C59 0%, #1E3A8A 100%);
     color: #ffffff;
     padding: 28px 30px;

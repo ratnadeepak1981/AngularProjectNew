@@ -2,6 +2,7 @@ using CampusServicesPortal.Data;
 using CampusServicesPortal.DTOs.Requests.Labs;
 using CampusServicesPortal.DTOs.Requests.Nortifcation;
 using CampusServicesPortal.DTOs.Responses.Labs;
+using CampusServicesPortal.Exceptions;
 using CampusServicesPortal.Models;
 using CampusServicesPortal.Repositories.Implementations;
 using CampusServicesPortal.Repositories.Interfaces;
@@ -133,6 +134,45 @@ public class LabBookingService : ILabBookingService
                     throw new InvalidOperationException($"Daily limit reached: Maximum {maxDailySlots} slots ({maxDailySlots * 2} hours total) allowed per calendar day.");
                 }
 
+                // Check if student already holds an active or confirmed booking in this time slot
+                var existingStudentBooking = await _context.LabBookings
+                    .FirstOrDefaultAsync(b => b.StudentId == requestDto.StudentId
+                        && b.BookingDate.Date == requestDto.BookingDate.Date
+                        && b.TimeSlot == requestDto.TimeSlot
+                        && (b.Status == "Confirmed" || (b.Status == "Held" && b.ExpiresAt > DateTime.UtcNow)));
+
+                if (existingStudentBooking != null)
+                {
+                    // If the student clicked the exact same seat they already hold, renew the hold
+                    if (requestDto.SeatId.HasValue && existingStudentBooking.SeatId == requestDto.SeatId && existingStudentBooking.Status == "Held")
+                    {
+                        var holdSettingRenew = await _context.SystemSettings
+                            .FirstOrDefaultAsync(s => s.SettingKey == "LabBookingHoldMinutes" || s.SettingKey == "reservation-hold-minutes");
+                        int renewMinutes = holdSettingRenew != null && int.TryParse(holdSettingRenew.SettingValue, out var rm) ? rm : _config.GetValue<int>("SystemSettings:ReservationHoldMinutes", 15);
+                        existingStudentBooking.ExpiresAt = DateTime.UtcNow.AddMinutes(renewMinutes);
+                        await _bookingRepo.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        var seatList = await _labRepo.GetSeatsByLabIdAsync(requestDto.LabId);
+                        var s = seatList?.FirstOrDefault(x => x.Id == requestDto.SeatId);
+
+                        return new LabBookingResponseDto
+                        {
+                            Id = existingStudentBooking.Id,
+                            StudentId = existingStudentBooking.StudentId,
+                            LabName = lab.Name,
+                            LabType = lab.LabType,
+                            SeatNumber = s?.SeatNumber,
+                            BookingDate = existingStudentBooking.BookingDate,
+                            TimeSlot = existingStudentBooking.TimeSlot,
+                            Status = existingStudentBooking.Status,
+                            ExpiresAt = existingStudentBooking.ExpiresAt
+                        };
+                    }
+
+                    throw new DuplicateBookingException("You already hold an active booking slot for this specific date and time frame.");
+                }
+
                 if (lab.LabType.Equals("Computer", StringComparison.OrdinalIgnoreCase)) // Rule 8
                 {
                     if (!requestDto.SeatId.HasValue) throw new ArgumentException("Seat selection required for Computer Labs.");
@@ -140,33 +180,6 @@ public class LabBookingService : ILabBookingService
                     var activeBooking = await _bookingRepo.GetActiveBookingForSeatAsync(requestDto.LabId, requestDto.SeatId.Value, requestDto.BookingDate, requestDto.TimeSlot);
                     if (activeBooking != null)
                     {
-                        // If it's already held by the same student, renew the hold
-                        if (activeBooking.StudentId == requestDto.StudentId && activeBooking.Status == "Held")
-                        {
-                            var holdSettingRenew = await _context.SystemSettings
-                                .FirstOrDefaultAsync(s => s.SettingKey == "LabBookingHoldMinutes" || s.SettingKey == "reservation-hold-minutes");
-                            int renewMinutes = holdSettingRenew != null && int.TryParse(holdSettingRenew.SettingValue, out var rm) ? rm : _config.GetValue<int>("SystemSettings:ReservationHoldMinutes", 15);
-                            activeBooking.ExpiresAt = DateTime.UtcNow.AddMinutes(renewMinutes);
-                            await _bookingRepo.SaveChangesAsync();
-                            await transaction.CommitAsync();
-
-                            var seatList = await _labRepo.GetSeatsByLabIdAsync(requestDto.LabId);
-                            var s = seatList?.FirstOrDefault(x => x.Id == requestDto.SeatId);
-
-                            return new LabBookingResponseDto
-                            {
-                                Id = activeBooking.Id,
-                                StudentId = activeBooking.StudentId,
-                                LabName = lab.Name,
-                                LabType = lab.LabType,
-                                SeatNumber = s?.SeatNumber,
-                                BookingDate = activeBooking.BookingDate,
-                                TimeSlot = activeBooking.TimeSlot,
-                                Status = activeBooking.Status,
-                                ExpiresAt = activeBooking.ExpiresAt
-                            };
-                        }
-
                         throw new InvalidOperationException("The requested workstation seat is already occupied or held by another student.");
                     }
                 }

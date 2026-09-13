@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CampusServicesPortal.DTOs.Requests.Labs;
+using CampusServicesPortal.Exceptions;
 using CampusServicesPortal.Services.Interfaces;
+using CampusServicesPortal.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CampusServicesPortal.Controllers;
@@ -65,17 +67,22 @@ public class LabBookingsController : BaseApiController
             var holdResult = await _bookingService.CreateReservationHoldAsync(requestDto);
             return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(holdResult, 201), "Lab seat hold placed successfully.");
         }
+        catch (DuplicateBookingException ex) { return StatusCode(409, new ApiResponse<object>(ex.Message)); }
         catch (ArgumentException ex) { return BadRequest(ex.Message); }
-        catch (InvalidOperationException ex) { return StatusCode(409, new { message = ex.Message, isConflict = true }); }
+        catch (InvalidOperationException ex) { return StatusCode(409, new ApiResponse<object>(ex.Message)); }
         catch (KeyNotFoundException ex) { return NotFound(ex.Message); }
     }
 
     [HttpPut("{id:int}/confirm")]
     public async Task<IActionResult> ConfirmHold(int id)
     {
-        var success = await _bookingService.ConfirmBookingAsync(id);
-        if (!success) return StatusCode(409, new { message = "Lock window expired or hold reservation context missing.", isConflict = true });
-        return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(new { Message = "Booking confirmed." }, 200), "Lab booking confirmed.");
+        try
+        {
+            var success = await _bookingService.ConfirmBookingAsync(id);
+            if (!success) return StatusCode(409, new ApiResponse<object>("Lock window expired or hold reservation context missing."));
+            return ProcessServiceResult(Wrappers.ServiceResult<object>.Success(new { Message = "Booking confirmed." }, 200), "Lab booking confirmed.");
+        }
+        catch (DuplicateBookingException ex) { return StatusCode(409, new ApiResponse<object>(ex.Message)); }
     }
 
     [HttpDelete("{id:int}")]

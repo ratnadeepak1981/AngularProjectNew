@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpContext } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
+import { SKIP_GLOBAL_ERROR_TOAST } from '../../../../core/interceptors/error-interceptor';
 import { ApiResponse } from '../../../../core/models/common/api-response.model';
 import { PagedResponse } from '../../../../core/models/common/paged-response.model';
 import { FeePaymentItem } from '../../../../core/models/billing/fee-payment-item.model';
@@ -90,7 +92,8 @@ export class AdminBillingService {
   }
 
   createFeeType(name: string): Observable<ApiResponse<FeeTypeItem>> {
-    return this.apiService.post<ApiResponse<FeeTypeItem>>(this.apiService.routes.billing.createFeeType, { name });
+    const context = new HttpContext().set(SKIP_GLOBAL_ERROR_TOAST, true);
+    return this.apiService.post<ApiResponse<FeeTypeItem>>(this.apiService.routes.billing.createFeeType, { name }, { context });
   }
 
   deactivateFeeType(id: number): Observable<ApiResponse<any>> {
