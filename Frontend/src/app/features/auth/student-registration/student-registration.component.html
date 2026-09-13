@@ -309,9 +309,11 @@
   [isVerifying]="isVerifyingToken() || isVerifyingSms()"
   [isResending]="isResendingToken() || isResendingSms()"
   [canClose]="true"
+  [allowSkip]="true"
   (verifyEmail)="submitEmailVerification($event)"
   (verifyOtp)="submitSmsVerification($event)"
   (resendEmail)="resendVerificationToken()"
   (resendSms)="resendSmsOtp()"
   (cancelled)="isVerifyModalOpen.set(false)"
+  (skipped)="skipPhoneVerification()"
 ></app-otp-verification-modal>

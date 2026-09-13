@@ -38,6 +38,28 @@ export class AuthService {
   public readonly isAdmin = computed(() => this.role() === 'Admin' || this.role() === 'SuperAdmin');
   public readonly isStudent = computed(() => this.role() === 'Student');
 
+  public readonly isMobileVerified = computed(() => {
+    if (!this.isStudent()) return true;
+    const profile = this.userProfile();
+    if (!profile) return false;
+    if (profile.phoneVerified === true) return true;
+    if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
+      return profile.phoneNumbers.some(p => (p.isPrimary || p.phoneType === 'Primary Mobile') && p.isVerified);
+    }
+    return false;
+  });
+
+  public readonly primaryMobileNumber = computed(() => {
+    const profile = this.userProfile();
+    if (!profile) return '';
+    if (profile.phoneNumbers && profile.phoneNumbers.length > 0) {
+      const prim = profile.phoneNumbers.find(p => p.isPrimary || p.phoneType === 'Primary Mobile');
+      if (prim?.phoneNumber) return prim.phoneNumber.trim();
+      return profile.phoneNumbers[0]?.phoneNumber?.trim() || '';
+    }
+    return profile.contactDetails || '';
+  });
+
   private getStoredToken(): string | null {
     return localStorage.getItem(this.tokenKey);
   }

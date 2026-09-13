@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -28,10 +28,10 @@ import { ApiResponse } from '../../../../core/models/common/api-response.model';
     RouterModule,
     DashboardCardComponent,
     PageHeaderComponent,
-    ActionButtonComponent,
     PhoneNumbersFormComponent,
     AddressEditorComponent,
     OtpVerificationModalComponent,
+    ActionButtonComponent,
   ],
   templateUrl: './student-dashboard-page.component.html',
   styleUrl: './student-dashboard-page.component.css',
@@ -42,6 +42,14 @@ export class StudentDashboardPageComponent implements OnInit {
   private readonly apiService = inject(ApiService);
   public readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
+
+  constructor() {
+    effect(() => {
+      if (this.authService.isMobileVerified()) {
+        this.isPrimaryPhoneVerified.set(true);
+      }
+    });
+  }
 
   public readonly studentId = signal<number>(0);
   public readonly indexNumber = signal<string>('Loading...');

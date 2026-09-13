@@ -202,6 +202,7 @@ export class LabBookingPageComponent implements OnInit {
     if (!labId || !date) {
       this.availableTimeSlots.set([]);
       this.selectedTimeSlot.set('');
+      this.layoutSeats.set([]);
       return;
     }
 
@@ -212,8 +213,10 @@ export class LabBookingPageComponent implements OnInit {
         if (!this.selectedTimeSlot() || !strList.includes(this.selectedTimeSlot())) {
           this.selectedTimeSlot.set(strList[0]);
         }
+        this.loadLayout();
       } else {
         this.selectedTimeSlot.set('');
+        this.layoutSeats.set([]);
       }
     });
   }
@@ -228,7 +231,6 @@ export class LabBookingPageComponent implements OnInit {
         if (data.length > 0 && (!this.selectedLabId() || !data.some((l) => l.id === this.selectedLabId()))) {
           this.selectedLabId.set(data[0].id);
           this.loadAvailableTimeSlots();
-          this.loadLayout();
         }
       },
       error: () => this.isLoadingLabs.set(false),
@@ -239,14 +241,12 @@ export class LabBookingPageComponent implements OnInit {
     this.selectedLabId.set(labId);
     this.selectedSeat.set(null);
     this.loadAvailableTimeSlots();
-    this.loadLayout();
   }
 
   public onDateChange(dateStr: string): void {
     this.selectedDate.set(dateStr);
     this.selectedSeat.set(null);
     this.loadAvailableTimeSlots();
-    this.loadLayout();
   }
 
   public onTimeSlotChange(slotStr: string): void {

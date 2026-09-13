@@ -29,32 +29,6 @@
     </div>
   </app-page-header>
 
-  <!-- Progressive Verification Alert Banner: Primary Mobile Verification Required -->
-  @if (!isPrimaryPhoneVerified()) {
-    <div class="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-400/50 dark:border-amber-500/40 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-fade-in">
-      <div class="flex items-center gap-3.5">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-400/50 dark:border-amber-500/40 flex items-center justify-center text-xl shrink-0">
-          ⚠️
-        </div>
-        <div>
-          <h4 class="text-sm font-bold text-amber-950 dark:text-amber-200 flex items-center gap-2">
-            Primary Mobile Number Unverified
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 dark:border-amber-500/30">Action Needed</span>
-          </h4>
-          <p class="text-xs text-slate-700 dark:text-slate-300 font-medium mt-0.5">
-            Your primary mobile <strong class="text-slate-900 dark:text-white font-bold">({{ primaryPhoneNumber() }})</strong> is not verified yet. Verify via SMS OTP to enable Fee Payments, Hostel Allocation, and instant SMS receipts.
-          </p>
-        </div>
-      </div>
-      <button
-        (click)="openDirectPhoneVerification()"
-        class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide transition-all shadow-md hover:shadow-amber-500/30 shrink-0 flex items-center gap-2 cursor-pointer"
-      >
-        <span>📱</span> Verify Mobile Now
-      </button>
-    </div>
-  }
-
   <!-- 2. Full 6 Live Quick Metrics Grid (Reusable DashboardCardComponent in 3x2 Grid) -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
     <!-- Metric 1: Hostel Application -->
