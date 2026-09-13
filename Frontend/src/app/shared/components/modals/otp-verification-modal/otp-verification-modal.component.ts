@@ -133,6 +133,16 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
                 </button>
 
                 <div class="flex items-center gap-2">
+                  @if (allowSkip) {
+                    <button
+                      type="button"
+                      (click)="onSkip()"
+                      class="px-3 py-2 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl transition-colors cursor-pointer flex items-center gap-1"
+                      title="Skip SMS verification and verify later before payments"
+                    >
+                      <span>⏭️</span> Verify Later
+                    </button>
+                  }
                   @if (canClose) {
                     <button
                       type="button"
@@ -167,6 +177,7 @@ export class OtpVerificationModalComponent implements OnInit, OnChanges, OnDestr
   @Input() isVerifying: boolean = false;
   @Input() isResending: boolean = false;
   @Input() canClose: boolean = true;
+  @Input() allowSkip: boolean = false;
   @Input() validityMinutes: number = 3;
 
   @Output() verifyEmail = new EventEmitter<string>();
@@ -174,6 +185,7 @@ export class OtpVerificationModalComponent implements OnInit, OnChanges, OnDestr
   @Output() resendEmail = new EventEmitter<void>();
   @Output() resendSms = new EventEmitter<void>();
   @Output() cancelled = new EventEmitter<void>();
+  @Output() skipped = new EventEmitter<void>();
 
   // Dynamic Live Countdown Timer
   public readonly countdownSeconds = signal<number>(180);
@@ -272,5 +284,10 @@ export class OtpVerificationModalComponent implements OnInit, OnChanges, OnDestr
   onCancel(): void {
     this.stopTimer();
     this.cancelled.emit();
+  }
+
+  onSkip(): void {
+    this.stopTimer();
+    this.skipped.emit();
   }
 }

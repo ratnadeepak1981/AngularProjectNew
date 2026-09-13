@@ -255,13 +255,12 @@ namespace CampusServicesPortal.Services.Implementations
                 ?? string.Empty;
             var newPrimary = request.PhoneNumbers?.FirstOrDefault(p => p.IsPrimary)?.PhoneNumber?.Trim() ?? string.Empty;
 
-            bool isPrimaryMobileChanged = !string.IsNullOrWhiteSpace(existingPrimary) 
-                && !string.IsNullOrWhiteSpace(newPrimary) 
-                && !NormalizePhone(newPrimary).Equals(NormalizePhone(existingPrimary), StringComparison.OrdinalIgnoreCase);
+            bool isPrimaryMobileChanged = !string.IsNullOrWhiteSpace(newPrimary)
+                && (string.IsNullOrWhiteSpace(existingPrimary) || !NormalizePhone(newPrimary).Equals(NormalizePhone(existingPrimary), StringComparison.OrdinalIgnoreCase));
 
-            if (isPrimaryMobileChanged)
+            if (isPrimaryMobileChanged && !string.IsNullOrWhiteSpace(request.MobileOtpCode))
             {
-                string inputOtp = request.MobileOtpCode?.Trim() ?? string.Empty;
+                string inputOtp = request.MobileOtpCode.Trim();
                 string cleanNewPhone = NormalizePhoneKey(newPrimary);
                 string userKey = student.IndexNumber.Trim().ToLowerInvariant();
 
@@ -281,6 +280,10 @@ namespace CampusServicesPortal.Services.Implementations
                 {
                     return ServiceResult<StudentProfileResponseDto>.Failure("OTP verification required: Please verify the dynamic OTP sent to your new primary mobile number.", 400);
                 }
+            }
+            else if (isPrimaryMobileChanged && !string.IsNullOrWhiteSpace(existingPrimary))
+            {
+                return ServiceResult<StudentProfileResponseDto>.Failure("OTP verification required: Please verify the dynamic OTP sent to your new primary mobile number.", 400);
             }
 
             if (!string.IsNullOrWhiteSpace(request.FullName))

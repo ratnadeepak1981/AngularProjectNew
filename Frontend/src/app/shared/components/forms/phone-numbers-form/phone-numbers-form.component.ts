@@ -15,10 +15,10 @@ import { ActionButtonComponent } from '../../action-button/action-button.compone
           <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <span>📱</span>
             <span>Telephone & Mobile Contact Coordinates</span>
-            <span class="text-rose-500 font-bold">*</span>
+            <span class="text-xs font-normal text-slate-400 dark:text-slate-500">(Optional)</span>
           </h3>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Your Primary Mobile is used for 2-Factor SMS OTP authentication and emergency notices.
+            Your Primary Mobile is used for 2-Factor SMS OTP authentication and is required before online fee payments.
           </p>
         </div>
         
@@ -28,8 +28,8 @@ import { ActionButtonComponent } from '../../action-button/action-button.compone
               ✓ SMS OTP Verified
             </span>
           } @else {
-            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-amber-50 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 rounded-md border border-amber-300/80">
-              📱 SMS OTP Required
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-md border border-slate-300 dark:border-slate-700">
+              📱 SMS OTP
             </span>
           }
 
@@ -137,14 +137,9 @@ export class PhoneNumbersFormComponent {
   }
 
   public createPhoneGroup(defaultType: string = 'Primary Mobile', number: string = '', isPrimary: boolean = false): FormGroup {
-    const isMandatory = defaultType === 'Primary Mobile';
-    const validators = isMandatory
-      ? [Validators.required, Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]
-      : [Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')];
-
     return this.fb.group({
       phoneType: [defaultType, [Validators.required]],
-      phoneNumber: [number, validators],
+      phoneNumber: [number, [Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]],
       isPrimary: [isPrimary || defaultType === 'Primary Mobile'],
       isVerified: [false]
     });

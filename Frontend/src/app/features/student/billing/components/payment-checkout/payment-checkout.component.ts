@@ -5,11 +5,14 @@ import { FeePaymentItem, StudentBillingService } from '../../services/student-bi
 import { ApiService } from '../../../../../core/services/api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { ApiResponse } from '../../../../../core/models/common/api-response.model';
+
+import { OtpVerificationModalComponent } from '../../../../../shared/components/modals/otp-verification-modal/otp-verification-modal.component';
 
 @Component({
   selector: 'app-payment-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, OtpVerificationModalComponent],
   templateUrl: './payment-checkout.component.html',
   styleUrl: './payment-checkout.component.css',
 })
@@ -39,6 +42,12 @@ export class PaymentCheckoutComponent implements OnInit, OnDestroy {
   public readonly is3DSecureOpen = signal<boolean>(false);
   public readonly cardOtpCode = signal<string>('');
   public readonly validatedCardDetails = signal<any>(null);
+
+  // Inline Pre-Payment Mobile Verification Modal Signals
+  public readonly isMobilePromptOpen = signal<boolean>(false);
+  public readonly mobileInputNumber = signal<string>('');
+  public readonly isSendingMobileOtp = signal<boolean>(false);
+  public readonly isVerifyingMobileOtp = signal<boolean>(false);
   
   public readonly otpValidityMinutes = signal<number>(3);
   public readonly countdownSeconds = signal<number>(180);
@@ -215,7 +224,15 @@ export class PaymentCheckoutComponent implements OnInit, OnDestroy {
           this.toast.success(res?.message || res?.data?.message || '3D Secure OTP dispatched to your registered primary mobile!');
         },
         error: (err: any) => {
+          const status = err?.status;
           const errMsg = err?.error?.message || err?.error?.Message || 'Failed to dispatch 3D Secure Payment OTP. Please ensure your mobile line is verified.';
+
+          // If mobile is missing (400) or unverified (403), open the inline verification gate
+          if (status === 400 || status === 403 || errMsg.includes('primary mobile number')) {
+            this.openMobileVerificationGate();
+            return;
+          }
+
           this.toast.error(errMsg);
         },
       });
@@ -282,6 +299,109 @@ export class PaymentCheckoutComponent implements OnInit, OnDestroy {
     this.stopTimer();
     this.is3DSecureOpen.set(false);
     this.toast.info('Payment authorization cancelled.');
+  }
+
+  public openMobileVerificationGate(): void {
+    const rawMobile = this.getStudentPrimaryMobile();
+    if (rawMobile && rawMobile !== 'Registered Mobile Line') {
+      this.mobileInputNumber.set(rawMobile);
+    } else {
+      this.mobileInputNumber.set('');
+    }
+    this.isMobilePromptOpen.set(true);
+    this.toast.info('Mobile verification required: Please enter and verify your primary mobile number to continue with 3D Secure payment.');
+  }
+
+  public sendMobileVerificationOtp(): void {
+    const phone = this.mobileInputNumber().trim();
+    if (!phone || !/^[+]*[(]?[0-9]{1,4}[)]?[-\s./0-9]{7,15}$/.test(phone)) {
+      this.toast.error('Please enter a valid telephone number format (e.g. +94 77 123 4567).');
+      return;
+    }
+
+    this.isSendingMobileOtp.set(true);
+    const profile = this.authService.userProfile();
+    const req = {
+      emailOrIndex: profile?.email || profile?.indexNumber,
+      phoneNumber: phone,
+      purpose: 'PaymentMobileVerification'
+    };
+
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.sendPhoneOtp, req).subscribe({
+      next: (res) => {
+        this.isSendingMobileOtp.set(false);
+        const mins = res?.data?.validityMinutes ?? res?.data?.ValidityMinutes ?? this.otpValidityMinutes();
+        if (mins > 0) {
+          this.otpValidityMinutes.set(mins);
+        }
+        this.toast.info(`SMS verification code dispatched to ${phone}. Check SMS preview.`);
+      },
+      error: (err) => {
+        this.isSendingMobileOtp.set(false);
+        const errorMsg = err?.error?.message || err?.error?.Message || 'Failed to dispatch SMS OTP. Please try again.';
+        this.toast.error(errorMsg);
+      }
+    });
+  }
+
+  public verifyMobileOtpAndResume(otpCode: string): void {
+    if (!otpCode) return;
+
+    const phone = this.mobileInputNumber().trim();
+    this.isVerifyingMobileOtp.set(true);
+    const profile = this.authService.userProfile();
+
+    const req = {
+      emailOrIndex: profile?.email || profile?.indexNumber,
+      phoneNumber: phone,
+      otpCode: otpCode.trim()
+    };
+
+    this.apiService.post<ApiResponse<any>>(this.apiService.routes.account.verifyPhoneOtp, req).subscribe({
+      next: () => {
+        this.isVerifyingMobileOtp.set(false);
+        this.isMobilePromptOpen.set(false);
+        this.toast.success(`Primary mobile (${phone}) verified successfully! Resuming 3D Secure payment authorization...`);
+
+        // Update cached profile
+        if (profile) {
+          const updatedPhones = [...(profile.phoneNumbers || [])];
+          const primIdx = updatedPhones.findIndex(p => p.isPrimary || p.phoneType === 'Primary Mobile');
+          if (primIdx >= 0) {
+            updatedPhones[primIdx] = {
+              ...updatedPhones[primIdx],
+              phoneNumber: phone,
+              isVerified: true
+            };
+          } else {
+            updatedPhones.push({
+              phoneType: 'Primary Mobile',
+              phoneNumber: phone,
+              isPrimary: true,
+              isVerified: true
+            });
+          }
+          this.authService.updateStoredProfile({
+            phoneVerified: true,
+            contactDetails: phone,
+            phoneNumbers: updatedPhones
+          });
+        }
+
+        // Automatically re-trigger card payment submission with verified phone!
+        this.onSubmit();
+      },
+      error: (err) => {
+        this.isVerifyingMobileOtp.set(false);
+        const errorMsg = err?.error?.message || err?.error?.Message || 'Invalid or expired OTP code. Please try again.';
+        this.toast.error(errorMsg);
+      }
+    });
+  }
+
+  public closeMobileVerificationModal(): void {
+    this.isMobilePromptOpen.set(false);
+    this.toast.info('Mobile verification cancelled. Payment was not submitted.');
   }
 
   private startTimer(): void {

@@ -1,67 +1,110 @@
-<div class="theme-header relative overflow-hidden rounded-2xl shadow-md border border-white/10 p-5 sm:p-6 text-white transition-all">
-  <!-- Subtle ambient background glow overlay -->
-  <div class="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-white/5 blur-2xl pointer-events-none"></div>
+<div class="space-y-4">
+  <div class="theme-header relative overflow-hidden rounded-2xl shadow-md border border-white/10 p-5 sm:p-6 text-white transition-all">
+    <!-- Subtle ambient background glow overlay -->
+    <div class="absolute -right-12 -top-12 w-56 h-56 rounded-full bg-white/5 blur-2xl pointer-events-none"></div>
 
-  <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-    
-    @if (authService.isStudent()) {
-      <!-- Student Hero Header Layout with Faculty & Academic Year (Matching Mockup Screenshot) -->
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner shrink-0">
-          {{ avatarInitials }}
+    <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      @if (authService.isStudent()) {
+        <!-- Student Hero Header Layout with Faculty & Academic Year (Matching Mockup Screenshot) -->
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-xl sm:text-2xl font-black text-white shadow-inner shrink-0">
+            {{ avatarInitials }}
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
+                Welcome back, {{ studentName }}! 👋
+              </h1>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                Active Student
+              </span>
+            </div>
+            <p class="text-xs text-slate-100/90 font-medium mt-1 flex flex-wrap items-center gap-2.5">
+              <span>🆔 <strong>Index:</strong> {{ studentIndex }}</span>
+              <span>•</span>
+              <span>🏛️ <strong>Faculty:</strong> {{ studentFaculty }}</span>
+              <span>•</span>
+              <span>📅 <strong>Academic Year:</strong> {{ academicYear() }} ({{ semester() }})</span>
+              @if (title() && title() !== 'Student Workspace') {
+                <span>•</span>
+                <span class="font-bold text-white bg-white/10 px-2 py-0.5 rounded-md">📍 {{ title() }}</span>
+              }
+            </p>
+          </div>
+        </div>
+      } @else {
+        <!-- Admin / Standard Page Header Layout -->
+        <div class="flex items-center gap-3">
+          @if (icon()) {
+            <span class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-lg shrink-0 shadow-inner">
+              {{ icon() }}
+            </span>
+          }
+          <div>
+            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
+              {{ title() }}
+            </h1>
+            @if (description()) {
+              <p class="text-xs sm:text-sm text-slate-100/90 font-medium mt-1">
+                {{ description() }}
+              </p>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Varying Action Buttons projected via ng-content per page -->
+      <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
+        @if (badgeText()) {
+          <span class="px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs font-extrabold rounded-xl shadow-2xs">
+            {{ badgeText() }}
+          </span>
+        }
+        <ng-content />
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Progressive Verification Alert Banner: Primary Mobile Verification Required Across All Modules -->
+  @if (authService.isStudent() && !authService.isMobileVerified()) {
+    <div class="p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/40 border border-amber-400/50 dark:border-amber-500/40 backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-fade-in">
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-400/50 dark:border-amber-500/40 flex items-center justify-center text-xl shrink-0">
+          ⚠️
         </div>
         <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
-              Welcome back, {{ studentName }}! 👋
-            </h1>
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-              Active Student
-            </span>
-          </div>
-          <p class="text-xs text-slate-100/90 font-medium mt-1 flex flex-wrap items-center gap-2.5">
-            <span>🆔 <strong>Index:</strong> {{ studentIndex }}</span>
-            <span>•</span>
-            <span>🏛️ <strong>Faculty:</strong> {{ studentFaculty }}</span>
-            <span>•</span>
-            <span>📅 <strong>Academic Year:</strong> {{ academicYear() }} ({{ semester() }})</span>
-            @if (title() && title() !== 'Student Workspace') {
-              <span>•</span>
-              <span class="font-bold text-white bg-white/10 px-2 py-0.5 rounded-md">📍 {{ title() }}</span>
-            }
+          <h4 class="text-sm font-bold text-amber-950 dark:text-amber-200 flex items-center gap-2">
+            Primary Mobile Number Unverified
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 dark:border-amber-500/30">Action Needed</span>
+          </h4>
+          <p class="text-xs text-slate-700 dark:text-slate-300 font-medium mt-0.5">
+            Your primary mobile <strong class="text-slate-900 dark:text-white font-bold">({{ authService.primaryMobileNumber() || 'Not Provided' }})</strong> is not verified yet. Verify via SMS OTP to enable Fee Payments, Hostel Allocation, and instant SMS receipts.
           </p>
         </div>
       </div>
-    } @else {
-      <!-- Admin / Standard Page Header Layout -->
-      <div class="flex items-center gap-3">
-        @if (icon()) {
-          <span class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-lg shrink-0 shadow-inner">
-            {{ icon() }}
-          </span>
-        }
-        <div>
-          <h1 class="text-xl sm:text-2xl font-black tracking-tight text-white">
-            {{ title() }}
-          </h1>
-          @if (description()) {
-            <p class="text-xs sm:text-sm text-slate-100/90 font-medium mt-1">
-              {{ description() }}
-            </p>
-          }
-        </div>
-      </div>
-    }
-
-    <!-- Varying Action Buttons projected via ng-content per page -->
-    <div class="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">
-      @if (badgeText()) {
-        <span class="px-3 py-1.5 bg-white/15 backdrop-blur-md border border-white/25 text-white text-xs font-extrabold rounded-xl shadow-2xs">
-          {{ badgeText() }}
-        </span>
-      }
-      <ng-content />
+      <button
+        (click)="openDirectPhoneVerification()"
+        class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs tracking-wide transition-all shadow-md hover:shadow-amber-500/30 shrink-0 flex items-center gap-2 cursor-pointer"
+      >
+        <span>📱</span> Verify Mobile Now
+      </button>
     </div>
-
-  </div>
+  }
 </div>
+
+@if (authService.isStudent()) {
+  <app-otp-verification-modal
+    [isOpen]="isOtpModalOpen()"
+    [mode]="'phone-only'"
+    [phoneNumber]="authService.primaryMobileNumber()"
+    [isVerifying]="isVerifyingSms()"
+    [isResending]="isResendingSms()"
+    [validityMinutes]="otpValidityMinutes()"
+    [canClose]="true"
+    (verifyOtp)="submitPhoneOtp($event)"
+    (resendSms)="resendPhoneOtp()"
+    (cancelled)="isOtpModalOpen.set(false)"
+  />
+}

@@ -134,14 +134,9 @@ export class StudentRegistrationComponent implements OnInit {
   });
 
   private createPhoneControl(defaultType: string = 'Primary Mobile'): FormGroup {
-    const isMandatory = defaultType === 'Primary Mobile';
-    const validators = isMandatory
-      ? [Validators.required, Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]
-      : [Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')];
-
     return this.fb.group({
       phoneType: [defaultType, [Validators.required]],
-      phoneNumber: ['', validators],
+      phoneNumber: ['', [Validators.pattern('^[+]*[(]?[0-9]{1,4}[)]?[-\\s./0-9]{7,15}$')]],
       isPrimary: [defaultType === 'Primary Mobile'],
       isVerified: [false]
     });
@@ -218,7 +213,7 @@ export class StudentRegistrationComponent implements OnInit {
 
     if (this.registrationForm.invalid) {
       this.registrationForm.markAllAsTouched();
-      this.toast.warning('Please fill in all required registration fields including address and primary mobile.');
+      this.toast.warning('Please fill in all required registration fields including address and email credentials.');
       return;
     }
 
@@ -287,6 +282,21 @@ export class StudentRegistrationComponent implements OnInit {
       next: () => {
         this.isVerifyingToken.set(false);
         this.isEmailVerified.set(true);
+
+        const phoneNo = this.getPrimaryMobileNumber();
+        if (!phoneNo) {
+          // No phone number provided at registration -> Complete account creation immediately
+          this.toast.success(
+            'University Email Verified! Your student account is now active. You can add and verify a mobile number later before payments. Redirecting to sign in...'
+          );
+          this.isVerifyModalOpen.set(false);
+          setTimeout(() => {
+            this.router.navigate(['/auth/login']);
+          }, 800);
+          return;
+        }
+
+        // Phone number provided -> Proceed to Step 2: Primary Mobile SMS Verification
         this.toast.success('Step 1 Complete: University Email Verified! Proceeding to Step 2: Primary Mobile SMS Verification.');
         this.verificationStep.set(2);
         // Automatically generate & dispatch Primary Mobile SMS OTP for Step 2
@@ -298,6 +308,16 @@ export class StudentRegistrationComponent implements OnInit {
         this.toast.error(errorMsg);
       },
     });
+  }
+
+  skipPhoneVerification(): void {
+    this.isVerifyModalOpen.set(false);
+    this.toast.info(
+      'Mobile verification skipped. You can verify your primary mobile anytime in Profile Settings or before making online payments. Redirecting to sign in...'
+    );
+    setTimeout(() => {
+      this.router.navigate(['/auth/login']);
+    }, 800);
   }
 
   submitSmsVerification(smsCode: string): void {
